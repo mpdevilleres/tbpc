@@ -1,0 +1,12 @@
+
+{% load custom_form_tags %}
+
+<div class="form-group">
+    <label class="control-label col-md-3" for="{{ form.name }}"> {{ form.label }} </label>
+    <div class="col-md-7">
+        {{ form }}
+        <span class="text-danger help-block">
+            {{ form.errors|striptags }}
+        </span>
+    </div>
+</div>

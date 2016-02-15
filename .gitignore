@@ -1,0 +1,16 @@
+env
+venv
+temp
+tmp
+__pycahe__
+dump
+
+*.pyc
+.env
+.idea
+
+/nginx/ssl
+/nginx/logs
+/web/static
+/web/project/static/theme
+/db_backup
