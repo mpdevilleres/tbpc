@@ -11,6 +11,7 @@ dump
 
 /nginx/ssl
 /nginx/logs
+/web/py_pkg
 /web/static
 /web/project/static/theme
 /db_backup
