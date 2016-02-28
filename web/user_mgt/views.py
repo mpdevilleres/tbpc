@@ -10,12 +10,14 @@ from .forms import LoginForm, ChangePasswordForm
 def _login(request):
     form = LoginForm(request.POST or None)
     if form.is_valid():
+
         username = form.cleaned_data.get('username')
         password = form.cleaned_data.get('password')
         user = authenticate(username=username, password=password)
         if user is not None:
             if user.is_active:
                 login(request, user)
+                request.session.set_expiry(0)
                 return redirect('main:index')
             else:
                 messages.warning(request, 'User is Inactive, Please Contact the Administrator')

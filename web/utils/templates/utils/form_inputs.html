@@ -1,12 +1,31 @@
 
-{% load custom_form_tags %}
+{% load custom_tags %}
 
-<div class="form-group">
-    <label class="control-label col-md-3" for="{{ form.name }}"> {{ form.label }} </label>
-    <div class="col-md-7">
-        {{ form }}
-        <span class="text-danger help-block">
-            {{ form.errors|striptags }}
-        </span>
+{% if form|fieldtype == 'EnhancedDateField' %}
+    <div class="form-group">
+        <label class="control-label col-md-3" for="{{ form.name }}"> {{ form.label }} </label>
+        <div class="col-md-8">
+            <div class="input-group input-large date date-picker" data-date-format="yyyy-mm-dd">
+                <span class="input-group-btn">
+                    <button class="btn default date-set" type="button"><i class="fa fa-calendar"></i></button>
+                </span>
+                {{ form }}
+            </div>
+            <span class="text-danger help-block">
+                {{ form.errors|striptags }}
+            </span>
+        </div>
     </div>
-</div>
+
+{% else %}
+    <div class="form-group">
+        <label class="control-label col-md-3" for="{{ form.name }}"> {{ form.label }} </label>
+        <div class="col-md-7">
+            {{ form }}
+            <span class="text-danger help-block">
+                {{ form.errors|striptags }}
+            </span>
+        </div>
+    </div>
+
+{% endif %}

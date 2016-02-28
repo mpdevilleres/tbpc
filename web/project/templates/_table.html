@@ -1,0 +1,43 @@
+{% extends "_base.html" %}
+{% load static %}
+{% block page_plugin_style %}
+{% endblock page_plugin_style %}
+
+
+{% block page_style %}
+
+<link href="{% static 'theme/global/plugins/datatables/datatables.min.css' %}" rel="stylesheet" type="text/css" />
+<link href="{% static 'theme/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.css' %}" rel="stylesheet" type="text/css" />
+
+{% endblock page_style %}
+
+
+{% block custom_style %}
+{% endblock custom_style %}
+
+
+{% block page_plugins %}
+
+<script src="{% static 'theme/global/scripts/datatable.js' %}" type="text/javascript"></script>
+<script src="{% static 'theme/global/plugins/datatables/datatables.js' %}" type="text/javascript"></script>
+<script src="{% static 'theme/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js' %}" type="text/javascript"></script>
+
+{% endblock page_plugins %}
+
+
+{% block page_scripts %}
+    {% block table_scripts %}
+    {% endblock %}
+{% endblock %}
+
+
+{% block page_init_features %}
+{% endblock %}
+
+
+{% block content %}
+
+    {% block table_content %}
+    {% endblock table_content %}
+
+{% endblock %}

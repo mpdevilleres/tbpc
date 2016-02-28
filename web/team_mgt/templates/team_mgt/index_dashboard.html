@@ -1,0 +1,146 @@
+{% extends "_base.html" %}
+{% load custom_tags %}
+{% block content %}
+<div class="row ">
+    <div class="col-md-6 col-sm-6">
+        <div class="portlet box  purple-wisteria tasks-widget">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-check"></i>Internal Task Tracking
+                </div>
+                <div class="actions">
+                    <div class="btn-group">
+                        <a class="btn btn-default btn-sm" href="{% url 'team_mgt:add_edit_team_task' %}">
+                        Add
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="task-content">
+                    <div class="scroller" style="height: 420px;" data-always-visible="1" data-rail-visible1="1">
+                        <!-- START TASK LIST -->
+                        <ul class="task-list">
+                        {% for item in i_task_data %}
+                            <li>
+                                <div class="task-checkbox">
+                                </div>
+                                <div class="task-title">
+                                    <span class="label label-sm label-info">{{ item.username }}</span>
+                                    <i class="fa fa-minus"></i>
+
+                                    <span class="task-title-sp">
+                                    {{ item.description|truncatewords:10 }}
+                                    </span>
+                                    <span class="label label-sm label-success">{{ item.short_hand }}</span>
+                                    <span class="label label-sm label-warning">{{ item.date_expected|date:"d-m-Y" }}</span>
+                                    {% if item.notify == 1 %}
+                                        <span class="label label-sm label-danger">prioritize</span>
+                                    {% endif %}
+
+                                </div>
+                                <div class="task-config">
+                                    <div class="task-config-btn btn-group">
+                                        <a class="btn btn-xs default" href="#" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
+                                        <i class="fa fa-cog"></i><i class="fa fa-angle-down"></i>
+                                        </a>
+                                        <ul class="dropdown-menu pull-right">
+                                            <li>
+                                                <a href="{% url 'team_mgt:add_edit_team_task' %}{{ item.id }}">
+                                                <i class="fa fa-pencil"></i> Edit </a>
+                                            </li>
+                                            <li>
+                                                <a href="{% url 'team_mgt:timeline' %}{{ item.id }}">
+                                                <i class="fa fa-pencil"></i> Timeline </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                        <!-- END START TASK LIST -->
+                    </div>
+                </div>
+                <div class="task-footer">
+                    <div class="btn-arrow-link pull-left">
+                    {{ i_counter|return_item:0 }} pending out of
+                    {{ i_counter|return_item:1 }} total
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-sm-6">
+        <div class="portlet box  yellow-gold tasks-widget">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-check"></i>VRM Task Tracking
+                </div>
+                <div class="actions">
+                    <div class="btn-group">
+                        <a class="btn btn-default btn-sm" href="{% url 'team_mgt:add_edit_team_task' %}">
+                        Add
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="task-content">
+                    <div class="scroller" style="height: 420px;" data-always-visible="1" data-rail-visible1="1">
+                        <!-- START TASK LIST -->
+                        <ul class="task-list">
+                        {% for item in v_task_data %}
+                            <li>
+                                <div class="task-checkbox">
+                                </div>
+                                <div class="task-title">
+                                    <span class="label label-sm label-info">{{ item.username }}</span>
+                                    <i class="fa fa-minus"></i>
+
+                                    <span class="task-title-sp">
+                                    {{ item.description|truncatewords:10 }}
+                                    </span>
+                                    <span class="label label-sm label-success">{{ item.short_hand }}</span>
+                                    <span class="label label-sm label-warning">{{ item.date_expected|date:"d-m-Y" }}</span>
+                                    {% if item.notify == 1 %}
+                                        <span class="label label-sm label-danger">prioritize</span>
+                                    {% endif %}
+
+                                </div>
+                                <div class="task-config">
+                                    <div class="task-config-btn btn-group">
+                                        <a class="btn btn-xs default" href="#" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
+                                        <i class="fa fa-cog"></i><i class="fa fa-angle-down"></i>
+                                        </a>
+                                        <ul class="dropdown-menu pull-right">
+                                            <li>
+                                                <a href="{% url 'team_mgt:add_edit_team_task' %}{{ item.id }}">
+                                                <i class="fa fa-pencil"></i> Edit </a>
+                                            </li>
+                                            <li>
+                                                <a href="{% url 'team_mgt:timeline' %}{{ item.id }}">
+                                                <i class="fa fa-pencil"></i> Timeline </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                        <!-- END START TASK LIST -->
+                    </div>
+                </div>
+                <div class="task-footer">
+                    <div class="btn-arrow-link pull-left">
+                    {{ v_counter|return_item:0 }} pending out of
+                    {{ v_counter|return_item:1 }} total
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock content %}

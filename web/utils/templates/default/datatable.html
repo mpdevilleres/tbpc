@@ -1,0 +1,161 @@
+{% extends "_table.html" %}
+
+<!-- BEGIN PAGE LEVEL SCRIPTS -->
+{% block table_scripts %}
+<script>
+$('#dataset_table tfoot tr#filterrow th').each( function () {
+    //var title = $('#dataset_table thead th').eq( $(this).index() ).text();
+    $(this).html( '<input type="text" placeholder="" size="" style="width:100%"/>' );
+} );
+
+// DataTable
+var table = $('#dataset_table').DataTable(
+        {
+            "processing": true,
+            "serverSide": true,
+            "ajax": "{{ data_table_url }}",
+//            "columnDefs": [
+//                { "width": "5%", "targets": -1 }
+//            ],
+            "columnDefs": [{
+                "targets": -1,
+//                "createdCell": function (td, cellData, rowData, row, col) {
+//                        $(td).html('<a href="'+'{# url_for("{}".format(invoices_summary_func)) #}/'+ cellData + '" ' +
+//                                'class="btn default btn-xs red-stripe">' + 'View Invoices' + '</a>')
+//                }
+            }],
+            // Internationalisation. For more info refer to http://datatables.net/manual/i18n
+            "language": {
+                "aria": {
+                    "sortAscending": ": activate to sort column ascending",
+                    "sortDescending": ": activate to sort column descending"
+                },
+                "emptyTable": "No data available in table",
+                "info": "Showing _START_ to _END_ of _TOTAL_ entries",
+                "infoEmpty": "No entries found",
+                "infoFiltered": "(filtered1 from _MAX_ total entries)",
+                "lengthMenu": "_MENU_ entries",
+                "search": "Search:",
+                "zeroRecords": "No matching records found"
+            },
+
+            // Or you can use remote translation file
+            //"language": {
+            //   url: '//cdn.datatables.net/plug-ins/3cfcc339e89/i18n/Portuguese.json'
+            //},
+
+
+            buttons: [
+                {
+                    text: ' Advance Filter',
+                    className: 'btn purple btn-outline fa fa-filter hidden-sm hidden-xs',
+                    action: function ( e, dt, node, config ) {
+                        //dt.ajax.reload();
+                        //alert('Custom Button');
+                        $("#dataset_table tfoot tr#filterrow").toggle('show');
+                    }
+                },
+                { extend: 'print', className: 'btn dark btn-outline hidden-sm hidden-xs' },
+                { extend: 'copy', className: 'btn red btn-outline hidden-sm hidden-xs' },
+                { extend: 'pdf', className: 'btn green btn-outline hidden-sm hidden-xs' },
+//                { extend: 'excel', className: 'btn yellow btn-outline hidden-sm hidden-xs' },
+                { extend: 'csv', className: 'btn purple btn-outline hidden-sm hidden-xs' },
+                { extend: 'colvis', className: 'btn dark btn-outline hidden-sm hidden-xs', text: 'Columns'}
+            ],
+
+            // setup responsive extension: http://datatables.net/extensions/responsive/
+            responsive: true,
+
+//            "order": [
+//                [0, 'asc']
+//            ],
+
+            "lengthMenu": [
+                [5, 10, 15, 20, -1],
+                [5, 10, 15, 20, "All"] // change per page values here
+            ],
+            // set the initial value
+            "pageLength": 10,
+
+            "dom": "<'row' <'col-md-12'B>><'row'<'col-md-6 col-sm-12'l><'col-md-6 col-sm-12'f>r><'table-scrollable't><'row'<'col-md-5 col-sm-12'i><'col-md-7 col-sm-12'p>>", // horizobtal scrollable datatable
+
+            // Uncomment below line("dom" parameter) to fix the dropdown overflow issue in the datatable cells. The default datatable layout
+            // setup uses scrollable div(table-scrollable) with overflow:auto to enable vertical scroll(see: assets/global/plugins/datatables/plugins/bootstrap/dataTables.bootstrap.js).
+            // So when dropdowns used the scrollable div should be removed.
+            //"dom": "<'row' <'col-md-12'T>><'row'<'col-md-6 col-sm-12'l><'col-md-6 col-sm-12'f>r>t<'row'<'col-md-5 col-sm-12'i><'col-md-7 col-sm-12'p>>",
+        }
+
+);
+
+// Apply the filter
+$("#dataset_table tfoot input").on( 'keyup change', function () {
+    table
+        .column( $(this).parent().index()+':visible' )
+        .search( this.value )
+        .draw();
+} );
+
+</script>
+{% endblock table_scripts%}
+
+{% block page_init_features %}
+{% endblock page_init_features%}
+
+{% block table_content %}
+
+<div class="row">
+    <div class="col-md-12">
+        <!-- BEGIN EXAMPLE TABLE PORTLET-->
+        <div class="portlet box green">
+            <div class="portlet-title">
+                <div class="caption">
+                   {{ table_title }} Table
+                </div>
+            </div>
+            <div class="portlet-body">
+                    <div class="table-toolbar">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="btn-group">
+                                    <a href="{{ add_record_link }}">
+                                    <button id="toggle-advance-filter" class="btn sbold green"> Add New
+                                        <i class="fa fa-plus"></i>
+                                    </button>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <table class="table table-striped table-bordered table-hover" id="dataset_table">
+                <thead>
+                    <tr>
+                        {% for i in columns %}
+                          <th>
+                                {{ i }}
+                          </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tfoot style="display: table-row-group;">
+                    <tr id="filterrow" hidden>
+                        {% for i in columns %}
+                          <th>
+                                {{ i }}
+                          </th>
+                        {% endfor %}
+                    </tr>
+
+                </tfoot>
+                </table>
+            </div>
+        </div>
+        <!-- END EXAMPLE TABLE PORTLET-->
+    </div>
+</div>
+<!-- END PAGE CONTENT-->
+<!-- END CONTENT -->
+{% endblock table_content %}
+<!-- END CONTAINER -->
+
+<!-- BEGIN JAVASCRIPTS(Load javascripts at bottom, this will reduce page load time) -->
+<!-- BEGIN CORE PLUGINS -->

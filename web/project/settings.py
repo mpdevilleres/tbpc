@@ -31,8 +31,9 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     # Additional apps below
+    'contract_mgt.apps.ContractMgtConfig',
     'main.apps.MainConfig',
-    'polls.apps.PollsConfig',
+    'team_mgt.apps.TeamMgtConfig',
     'user_mgt.apps.UserMgtConfig',
     'utils.apps.UtilsConfig',
 
@@ -45,6 +46,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE_CLASSES = [
+    'utils.middleware.ThreadLocalMiddleware',
+
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -120,6 +123,8 @@ LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
 
+DATE_INPUT_FORMATS = ('%d-%m-%Y','%Y-%m-%d')
+
 USE_I18N = True
 
 USE_L10N = True
@@ -145,3 +150,5 @@ STATIC_URL = '/static/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
+
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
