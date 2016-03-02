@@ -31,3 +31,8 @@ def return_list(l, i):
         return l[i]
     except:
         return None
+
+@register.filter('is_signed_in')
+def is_signed_in(user):
+    attendance = user.attendance_set.order_by('-pk').first()
+    return attendance.is_signed_in()

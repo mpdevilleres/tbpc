@@ -3,7 +3,7 @@ import datetime as dt
 def _get(val, attr, default=None):
     try:
         return getattr(val, attr)
-    except AttributeError:
+    except:
         return default
 
 def summarize_team_task(pk=None):

@@ -1,4 +1,5 @@
 {% load static %}
+{% load custom_tags %}
 <!-- BEGIN HEADER -->
 <div class="page-header navbar navbar-fixed-top">
 	<!-- BEGIN HEADER INNER -->
@@ -20,17 +21,50 @@
 		<!-- END RESPONSIVE MENU TOGGLER -->
 		<!-- BEGIN TOP NAVIGATION MENU -->
 		<div class="top-menu">
+		{% if user.is_authenticated %}
+
 			<ul class="nav navbar-nav pull-right">
+				<!-- BEGIN TODO DROPDOWN -->
+				<!-- DOC: Apply "dropdown-dark" class after below "dropdown-extended" to change the dropdown styte -->
+				<li class="dropdown dropdown-extended dropdown-tasks" id="header_task_bar">
+					<a data-target="#static" data-toggle="modal" class="dropdown-toggle">
+						<i class="icon-clock"></i>
+
+						{% if request.user|is_signed_in == True %}
+							<span class="badge badge-success"> Signed In </span>
+						{% else %}
+							<span class="badge badge-danger"> Signed Out </span>
+						{% endif %}
+					</a>
+					<div id="static" class="modal fade" tabindex="-1" data-backdrop="static" data-keyboard="false">
+						<div class="modal-body">
+                            {% if request.user|is_signed_in == False %}
+                                <p> Would you like to Sign-In for Today? </p>
+                            {% else %}
+                                <p> You are about to Sign-Out for Today, would you like to proceed</p>
+                            {% endif %}
+
+						</div>
+						<div class="modal-footer">
+							<button type="button" data-dismiss="modal" class="btn btn-outline dark">Cancel</button>
+                            {% if request.user|is_signed_in == False %}
+							    <a href="{% url 'user_mgt:sign_in' %}" class="btn green">Yes</a>
+                            {% else %}
+							    <a href="{% url 'user_mgt:sign_out' %}" class="btn green">Yes</a>
+                            {% endif %}
+						</div>
+					</div>
+					<ul class="dropdown-menu extended tasks">
+
+					</ul>
+				</li>
+				<!-- END TODO DROPDOWN -->
 				<!-- BEGIN USER LOGIN DROPDOWN -->
 				<!-- DOC: Apply "dropdown-dark" class after below "dropdown-extended" to change the dropdown styte -->
 				<li class="dropdown dropdown-user">
 					<a href="#" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
 					<span class="username username-hide-on-mobile">
-                    {% if user.is_authenticated %}
                         {{ user.first_name  }} {{ user.last_name }}</span>
-					{% else %}
-                        Anonymous User (Access Denied)
-                    {% endif %}
 					<i class="fa fa-angle-down"></i>
 					</a>
 					<ul class="dropdown-menu dropdown-menu-default">
@@ -46,6 +80,9 @@
 				</li>
 				<!-- END USER LOGIN DROPDOWN -->
 			</ul>
+
+		{% endif %}
+
 		</div>
 		<!-- END TOP NAVIGATION MENU -->
 	</div>

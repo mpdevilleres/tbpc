@@ -5,7 +5,7 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 
 from utils.forms import populate_obj
-from utils.dashboard_summarizer import summarize_team_task
+from utils.dashboard_summarizer import summarize_team_task, _get
 import pandas as pd
 from contract_mgt.models import Contractor
 from .forms import TeamTaskForm, TeamTaskHistoryForm
@@ -161,11 +161,10 @@ def index_dashboard(request):
             counter[i] = (num_active,num_total)
 
     context = {
-       'i_task_data': list_grouped['Internal'], #i_task,
-       'v_task_data': list_grouped['Vendor Relationship'], #v_task,
-       'i_counter': counter['Internal'], #counter
-       'v_counter': counter['Vendor Relationship'] #counter
-
+       'i_task_data': _get(val=list_grouped, attr='Internal', default=[]), #i_task,
+       'v_task_data': _get(val=list_grouped, attr='Vendor Relationship', default=[]), #v_task,
+       'i_counter': _get(val=counter, attr='Internal', default=0), #counter
+       'v_counter': _get(val=counter, attr='Vendor Relationship', default=0) #counter
     }
     return render(request,
                   "team_mgt/index_dashboard.html",
