@@ -1,0 +1,94 @@
+<script>
+$('#dataset_table tfoot tr#filterrow th').each( function () {
+    //var title = $('#dataset_table thead th').eq( $(this).index() ).text();
+    $(this).html( '<input type="text" placeholder="" size="" style="width:100%"/>' );
+} );
+
+// DataTable
+var table = $('#dataset_table').DataTable(
+        {
+            "processing": true,
+            "serverSide": true,
+            "ajax": "{{ data_table_url }}",
+//            "columnDefs": [
+//                { "width": "5%", "targets": -1 }
+//            ],
+            "columnDefs": [{
+                "targets": -1,
+//                "createdCell": function (td, cellData, rowData, row, col) {
+//                        $(td).html('<a href="'+'{# url_for("{}".format(invoices_summary_func)) #}/'+ cellData + '" ' +
+//                                'class="btn default btn-xs red-stripe">' + 'View Invoices' + '</a>')
+//                }
+            }],
+            // Internationalisation. For more info refer to http://datatables.net/manual/i18n
+            "language": {
+                "aria": {
+                    "sortAscending": ": activate to sort column ascending",
+                    "sortDescending": ": activate to sort column descending"
+                },
+                "emptyTable": "No data available in table",
+                "info": "Showing _START_ to _END_ of _TOTAL_ entries",
+                "infoEmpty": "No entries found",
+                "infoFiltered": "(filtered1 from _MAX_ total entries)",
+                "lengthMenu": "_MENU_ entries",
+                "search": "Search:",
+                "zeroRecords": "No matching records found"
+            },
+
+            // Or you can use remote translation file
+            //"language": {
+            //   url: '//cdn.datatables.net/plug-ins/3cfcc339e89/i18n/Portuguese.json'
+            //},
+
+
+            buttons: [
+                {
+                    text: ' Advance Filter',
+                    className: 'btn purple btn-outline fa fa-filter hidden-sm hidden-xs',
+                    action: function ( e, dt, node, config ) {
+                        //dt.ajax.reload();
+                        //alert('Custom Button');
+                        $("#dataset_table tfoot tr#filterrow").toggle('show');
+                    }
+                },
+                { extend: 'print', className: 'btn dark btn-outline hidden-sm hidden-xs' },
+                { extend: 'copy', className: 'btn red btn-outline hidden-sm hidden-xs' },
+                { extend: 'pdf', className: 'btn green btn-outline hidden-sm hidden-xs' },
+//                { extend: 'excel', className: 'btn yellow btn-outline hidden-sm hidden-xs' },
+                { extend: 'csv', className: 'btn purple btn-outline hidden-sm hidden-xs' },
+                { extend: 'colvis', className: 'btn dark btn-outline hidden-sm hidden-xs', text: 'Columns'}
+            ],
+
+            // setup responsive extension: http://datatables.net/extensions/responsive/
+            responsive: true,
+
+//            "order": [
+//                [0, 'asc']
+//            ],
+
+            "lengthMenu": [
+                [5, 10, 15, 20, -1],
+                [5, 10, 15, 20, "All"] // change per page values here
+            ],
+            // set the initial value
+            "pageLength": 10,
+
+            "dom": "<'row' <'col-md-12'B>><'row'<'col-md-6 col-sm-12'l><'col-md-6 col-sm-12'f>r><'table-scrollable't><'row'<'col-md-5 col-sm-12'i><'col-md-7 col-sm-12'p>>", // horizobtal scrollable datatable
+
+            // Uncomment below line("dom" parameter) to fix the dropdown overflow issue in the datatable cells. The default datatable layout
+            // setup uses scrollable div(table-scrollable) with overflow:auto to enable vertical scroll(see: assets/global/plugins/datatables/plugins/bootstrap/dataTables.bootstrap.js).
+            // So when dropdowns used the scrollable div should be removed.
+            //"dom": "<'row' <'col-md-12'T>><'row'<'col-md-6 col-sm-12'l><'col-md-6 col-sm-12'f>r>t<'row'<'col-md-5 col-sm-12'i><'col-md-7 col-sm-12'p>>",
+        }
+
+);
+
+// Apply the filter
+$("#dataset_table tfoot input").on( 'keyup change', function () {
+    table
+        .column( $(this).parent().index()+':visible' )
+        .search( this.value )
+        .draw();
+} );
+
+</script>

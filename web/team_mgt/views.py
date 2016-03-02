@@ -5,13 +5,15 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 
 from utils.forms import populate_obj
+from utils.dashboard_summarizer import summarize_team_task
 import pandas as pd
 from contract_mgt.models import Contractor
 from .forms import TeamTaskForm, TeamTaskHistoryForm
-from .tables_ajax import TeamTaskJson
+from .tables_ajax import TeamTaskJson, TeamTaskSummaryJson
 
 # Create your views here.
 from .models import TeamTask, TeamTaskHistory
+from utils.tools import group_sort_to_list
 
 
 def add_edit_team_task(request, pk=None):
@@ -37,7 +39,7 @@ def add_edit_team_task(request, pk=None):
                 user = User.objects.get(pk=int(element))
                 user_list.append(user)
             record.user = user_list
-
+            summarize_team_task(pk=record.id)
             messages.info(request, "Successfully Updated the Database")
 
             return redirect('team_mgt:table_team_task')
@@ -61,6 +63,9 @@ def add_team_task_history(request, pk=None):
             #record.save()
             team_task.teamtaskhistory_set.create(**cleaned_data)
 
+            team_task.status = cleaned_data['status']
+            team_task.save()
+            summarize_team_task(pk=team_task.id)
             messages.info(request, "Successfully Updated the Database")
 
             return redirect(reverse('team_mgt:timeline') + pk)
@@ -82,8 +87,11 @@ def edit_team_task_history(request, pk=None):
         if form.is_valid():
             cleaned_data = form.clean()
             populate_obj(cleaned_data,record)
+            record.save()
+            summarize_team_task(pk=record.team_task_id)
+
             messages.info(request, "Successfully Updated the Database")
-            return redirect(reverse('team_mgt:timeline') + pk)
+            return redirect(reverse('team_mgt:timeline') + '%s' % record.team_task_id)
 
     context = {
         'forms' : form,
@@ -99,6 +107,7 @@ def table_team_task(request, pk=None):
         data_table_url = reverse('team_mgt:table_team_task_json')
     else:
         data_table_url = reverse('team_mgt:table_team_task_json') + pk
+
     context = {
         'table_title': 'Team Task',
         'columns': getattr(TeamTaskJson,'column_names'),
@@ -120,8 +129,8 @@ def index_dashboard(request):
 
     models involve User, Contractor, TeamTask
     """
-    list_grouped = [[], []]
-    counter = [(0, 0),(0, 0)]
+    list_grouped = {}
+    counter = {}
 
     team_task = TeamTask.objects.filter(user__pk=request.user.id)
     df_team_task = pd.DataFrame.from_records(team_task.values())
@@ -140,15 +149,15 @@ def index_dashboard(request):
                                                                  # active
             rset = gp.get_group(i)
             num_total = len(rset)
-            num_active = len(rset[rset['status']!=2])
-            list_grouped[i-1] = rset[rset['status']!=2].to_dict('record')
-            counter[i-1] = (num_active,num_total)
+            num_active = len(rset[rset['status']!='Closed'])
+            list_grouped[i] = rset[rset['status']!='Closed'].to_dict('record')
+            counter[i] = (num_active,num_total)
 
     context = {
-       'i_task_data': list_grouped[0], #i_task,
-       'v_task_data': list_grouped[1], #v_task,
-       'i_counter': counter[0], #counter
-       'v_counter': counter[1] #counter
+       'i_task_data': list_grouped['Internal'], #i_task,
+       'v_task_data': list_grouped['Vendor Relationship'], #v_task,
+       'i_counter': counter['Internal'], #counter
+       'v_counter': counter['Vendor Relationship'] #counter
 
     }
     return render(request,
@@ -156,19 +165,60 @@ def index_dashboard(request):
                   context)
 
 def summary_dashboard(request):
-    pass
+    how = 'left'    # default merging how
+
+    team_task = TeamTask.objects.all()
+    df_team_task = pd.DataFrame.from_records(team_task.values())
+
+    contractor = Contractor.objects.all()
+    df_contractor = pd.DataFrame.from_records(contractor.values())
+
+    df_team_task_open = df_team_task[df_team_task['status']!='Close']      # filter by status open
+    mg = pd.merge(df_team_task_open, df_contractor, left_on='contractor_id', right_on='id', how=how)
+
+    group_by_severity = df_team_task_open.groupby('severity')
+    group_by_category = df_team_task_open.groupby('category')
+    group_by_classification = df_team_task_open.groupby('classification')
+    group_by_contractor = mg.groupby('name')
+
+#    if pk is None:
+    data_table_url = reverse('team_mgt:table_team_task_summary_json')
+#    else:
+#        data_table_url = reverse('team_mgt:table_team_task_json') + pk
+
+    context = {
+        'table_title': 'Team Task',
+        'columns': getattr(TeamTaskSummaryJson,'column_names'),
+        'data_table_url': data_table_url,
+        'open': len(df_team_task[df_team_task['status']!='Close']),
+        'closed': len(df_team_task[df_team_task['status']=='Close']),
+
+        'by_contractor': ('Contractor', group_sort_to_list(group_by_contractor)),
+        'by_severity': ('Severity', group_sort_to_list(group_by_severity)),
+        'by_category': ('Category', group_sort_to_list(group_by_category)),
+        'by_classification': ('Classification', group_sort_to_list(group_by_classification)),
+    }
+
+
+    return render(request, "team_mgt/summary_dashboard.html", context)
 
 # MISC VIEWS
 def notify(request, pk=None):
     pass
+
 def timeline(request, pk=None):
 
     team_task = get_object_or_404(TeamTask, pk=pk)
     history = TeamTaskHistory.objects.filter(team_task__pk=pk)
+    try:
+        earliest = history.earliest('id')
+    except:
+        earliest = None
+
     context = {
         'record': team_task,
         'history': history,
-        'last_history': history.earliest('id'),
+        'last_history': earliest,
         'team_task_edit_link': reverse('team_mgt:add_edit_team_task'),
         'add_team_task_history_link': reverse('team_mgt:add_team_task_history')
     }

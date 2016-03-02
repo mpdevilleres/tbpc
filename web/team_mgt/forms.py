@@ -63,8 +63,8 @@ class TeamTaskHistoryForm(uforms.EnhancedForm):
     action_taken = uforms.EnhancedTextField()
     next_action = uforms.EnhancedTextField()
     remarks = uforms.EnhancedTextField()
-    user_id = uforms.EnhancedChoiceField(label='Contractor:')
+    user_id = uforms.EnhancedChoiceField(label='Username:')
     status = uforms.EnhancedChoiceField(choices=choices_status)
-    date_expected = uforms.EnhancedDateField(label='Task Close Date')
-    date_action = uforms.EnhancedDateField(label='Task Close Date')
+    date_expected = uforms.EnhancedDateField(label='Task Expected Date')
+    date_action = uforms.EnhancedDateField(label='Task Action Date')
 

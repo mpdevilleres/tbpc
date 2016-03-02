@@ -1,0 +1,22 @@
+{% load custom_tags %}
+<div class="portlet light ">
+    <div class="portlet-title">
+        <div class="caption" data-toggle="collapse" data-target=".todo-project-list-content">
+            <span class="caption-subject font-green-sharp bold uppercase">{{ data|return_item:0 }} </span>
+        </div>
+    </div>
+    <div class="portlet-body todo-project-list-content">
+        <div class="todo-project-list">
+            <ul class="nav nav-stacked">
+                {% for element in data|return_item:1 %}
+                <li>
+                    <a href="#{# url_for('dashboard.report_view_team_task') #}{#data[0]#}{#element[2]#}">
+                    {{ element|return_item:0 }}
+                        <span class="badge badge-danger"> {{ element|return_item:1 }} </span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>

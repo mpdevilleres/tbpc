@@ -3,7 +3,7 @@ from django.conf.urls import url
 from . import views
 
 from django.contrib.auth.decorators import login_required
-from team_mgt.tables_ajax import TeamTaskJson
+from team_mgt.tables_ajax import TeamTaskJson, TeamTaskSummaryJson
 
 app_name = "team_mgt"
 
@@ -30,9 +30,13 @@ urlpatterns = [
 
      # Datatables Ajax Link
 
-     url(r'^contact/data/$',
+     url(r'^team-task/data/$',
          login_required(TeamTaskJson.as_view()),
          name='table_team_task_json'),
+     url(r'^contact/data/$',
+         login_required(TeamTaskSummaryJson.as_view()),
+         name='table_team_task_summary_json'),
+
      # url(r'^contact/data/(?P<pk>[0-9]+)/$',
      #     login_required(ContractorContactJson.as_view())),
      #
