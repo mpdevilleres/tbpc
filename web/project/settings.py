@@ -19,7 +19,8 @@ PROJECT_DIR = os.path.join(BASE_DIR, 'project')
 SECRET_KEY = os.environ['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ['DEBUG']
+
+DEBUG = True if os.environ['DEBUG'] == 'True' else False
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.9/howto/deployment/checklist/
@@ -68,7 +69,7 @@ TEMPLATES = [
         ],
         'APP_DIRS': True,
         'OPTIONS': {
-            'debug': os.environ['TEMPLATE_DEBUG'],
+            'debug': True if os.environ['TEMPLATE_DEBUG'] == 'True' else False,
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',

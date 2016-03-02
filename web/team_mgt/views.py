@@ -15,7 +15,7 @@ from .tables_ajax import TeamTaskJson, TeamTaskSummaryJson
 from .models import TeamTask, TeamTaskHistory
 from utils.tools import group_sort_to_list
 
-
+@login_required
 def add_edit_team_task(request, pk=None):
     _form = TeamTaskForm
     _model = TeamTask
@@ -50,6 +50,7 @@ def add_edit_team_task(request, pk=None):
     }
     return render(request, 'default/add_form.html', context)
 
+@login_required
 def add_team_task_history(request, pk=None):
     _form = TeamTaskHistoryForm
 
@@ -76,6 +77,7 @@ def add_team_task_history(request, pk=None):
     }
     return render(request, 'default/add_form.html', context)
 
+@login_required
 def edit_team_task_history(request, pk=None):
     _form = TeamTaskHistoryForm
 
@@ -99,8 +101,11 @@ def edit_team_task_history(request, pk=None):
     }
     return render(request, 'default/add_form.html', context)
 
+@login_required
 def add_edit_document(request, pk=None):
     pass
+
+@login_required
 def table_team_task(request, pk=None):
 
     if pk is None:
@@ -116,10 +121,12 @@ def table_team_task(request, pk=None):
     }
     return render(request, 'default/datatable.html', context)
 
+@login_required
 def table_document(request):
     pass
 
 # DASHBOARDS
+@login_required
 def index_dashboard(request):
 
     """
@@ -164,6 +171,7 @@ def index_dashboard(request):
                   "team_mgt/index_dashboard.html",
                   context)
 
+@login_required
 def summary_dashboard(request):
     how = 'left'    # default merging how
 
@@ -203,9 +211,11 @@ def summary_dashboard(request):
     return render(request, "team_mgt/summary_dashboard.html", context)
 
 # MISC VIEWS
+@login_required
 def notify(request, pk=None):
     pass
 
+@login_required
 def timeline(request, pk=None):
 
     team_task = get_object_or_404(TeamTask, pk=pk)
@@ -224,5 +234,6 @@ def timeline(request, pk=None):
     }
     return render(request, 'team_mgt/timeline.html', context)
 
+@login_required
 def get_reference_no(request):
     pass
