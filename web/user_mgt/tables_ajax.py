@@ -19,8 +19,7 @@ class AttendanceJson(BaseDatatableView):
 
 
     # define the columns that will be returned
-    columns = ['date_day', 'date_time', 'in_or_out', 'offset', 'reason_for_excess', 'accepted',
-               'reason_for_rejection']
+    columns = ['date_day', 'date_time', 'in_or_out']
 
     column_names = [x for x in capitalize(columns)]
     column_names[0] = 'Date'
