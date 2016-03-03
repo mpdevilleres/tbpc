@@ -13,13 +13,12 @@ var table = $('#dataset_table').DataTable(
 //            "columnDefs": [
 //                { "width": "5%", "targets": -1 }
 //            ],
-            "columnDefs": [{
-                "targets": -1,
-//                "createdCell": function (td, cellData, rowData, row, col) {
-//                        $(td).html('<a href="'+'{# url_for("{}".format(invoices_summary_func)) #}/'+ cellData + '" ' +
-//                                'class="btn default btn-xs red-stripe">' + 'View Invoices' + '</a>')
-//                }
-            }],
+            "columnDefs": [
+                    {
+                        "targets": {% if hidden_columns != None %}{{ hidden_columns }}{% else %}[]{% endif %},
+                        "visible": false
+                    },
+            ],
             // Internationalisation. For more info refer to http://datatables.net/manual/i18n
             "language": {
                 "aria": {

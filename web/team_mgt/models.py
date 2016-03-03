@@ -34,7 +34,7 @@ class TeamTask(ManytoManyMixin, TimeStampedBaseModel):
         return (self.id, self.team_task_no)
 
     @property
-    def user_names(self):
+    def user__username(self):
         return '; '.join([i.username for i in self.user.all()])
 
 

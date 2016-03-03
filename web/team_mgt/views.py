@@ -116,6 +116,7 @@ def table_team_task(request, pk=None):
     context = {
         'table_title': 'Team Task',
         'columns': getattr(TeamTaskJson,'column_names'),
+        'hidden_columns': getattr(TeamTaskJson,'hidden_columns'),
         'data_table_url': data_table_url,
         'add_record_link': reverse('team_mgt:add_edit_team_task'),
     }

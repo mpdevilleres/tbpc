@@ -25,16 +25,25 @@ class TeamTaskJson(BaseDatatableView):
 
 
     # define the columns that will be returned
-    columns = ['contractor.name', 'contract_no', 'description', 'severity', 'status', 'id']
+    columns = ['contractor.name', 'contract_no', 'description', 'severity', 'status', 'user__username', 'id']
+
+    # Hide Columns
+    hidden_columns = [ i for i, x in enumerate(columns) if x in
+                       []
+                       ]
 
     column_names = [x for x in capitalize(columns)]
     column_names[0] = 'Contractor'
+    column_names[-2] = 'Person/s in charge'
     column_names[-1] = 'Option'
     # define column names that will be used in sorting
     # order is important and should be same as order of columns
     # displayed by datatables. For non sortable columns use empty
     # value like ''
     order_columns = columns
+
+    # define hidden columns
+
 
     # set max limit of records returned, this is used to protect our site if someone tries to attack our site
     # and make it return huge amount of data
@@ -52,6 +61,24 @@ class TeamTaskJson(BaseDatatableView):
         else:
             return super(TeamTaskJson, self).render_column(row, column)
 
+    def filter_queryset(self, qs):
+        """ If search['value'] is provided then filter all searchable columns using istartswith
+        """
+        if not self.pre_camel_case_notation:
+            # get global search value
+            search = self.request.GET.get('search[value]', None)
+            col_data = self.extract_datatables_column_data()
+            q = Q()
+            for col_no, col in enumerate(col_data):
+                # apply global search to all searchable columns
+                if search and col['searchable']:
+                    q |= Q(**{'{0}__contains'.format(self.columns[col_no].replace('.', '__')): search})
+
+                # column specific filter
+                if col['search.value']:
+                    qs = qs.filter(**{'{0}__contains'.format(self.columns[col_no].replace('.', '__')): col['search.value']})
+            qs = qs.filter(q)
+        return qs
 
 class TeamTaskSummaryJson(BaseDatatableView):
     # The model we're going to show
