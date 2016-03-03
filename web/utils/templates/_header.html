@@ -38,19 +38,20 @@
 					</a>
 					<div id="static" class="modal fade" tabindex="-1" data-backdrop="static" data-keyboard="false">
 						<div class="modal-body">
-                            {% if request.user|is_signed_in == False %}
-                                <p> Would you like to Sign-In for Today? </p>
-                            {% else %}
+                            {% if request.user|is_signed_in == True %}
                                 <p> You are about to Sign-Out for Today, would you like to proceed</p>
+                            {% else %}
+                                <p> Would you like to Sign-In for Today? </p>
+
                             {% endif %}
 
 						</div>
 						<div class="modal-footer">
 							<button type="button" data-dismiss="modal" class="btn btn-outline dark">Cancel</button>
-                            {% if request.user|is_signed_in == False %}
-							    <a href="{% url 'user_mgt:sign_in' %}" class="btn green">Yes</a>
-                            {% else %}
+                            {% if request.user|is_signed_in == True %}
 							    <a href="{% url 'user_mgt:sign_out' %}" class="btn green">Yes</a>
+                            {% else %}
+							    <a href="{% url 'user_mgt:sign_in' %}" class="btn green">Yes</a>
                             {% endif %}
 						</div>
 					</div>

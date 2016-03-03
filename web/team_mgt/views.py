@@ -136,8 +136,14 @@ def index_dashboard(request):
 
     models involve User, Contractor, TeamTask
     """
-    list_grouped = {}
-    counter = {}
+    list_grouped = {
+        'Internal': [],
+        'Vendor Relationship': []
+    }
+    counter = {
+        'Internal': 0,
+        'Vendor Relationship': 0
+    }
 
     team_task = TeamTask.objects.filter(user__pk=request.user.id)
     df_team_task = pd.DataFrame.from_records(team_task.values())
@@ -161,10 +167,10 @@ def index_dashboard(request):
             counter[i] = (num_active,num_total)
 
     context = {
-       'i_task_data': _get(val=list_grouped, attr='Internal', default=[]), #i_task,
-       'v_task_data': _get(val=list_grouped, attr='Vendor Relationship', default=[]), #v_task,
-       'i_counter': _get(val=counter, attr='Internal', default=0), #counter
-       'v_counter': _get(val=counter, attr='Vendor Relationship', default=0) #counter
+       'i_task_data': list_grouped['Internal'], #i_task,
+       'v_task_data': list_grouped['Vendor Relationship'], #v_task,
+       'i_counter': counter['Internal'], #counter
+       'v_counter': counter['Vendor Relationship'] #counter
     }
     return render(request,
                   "team_mgt/index_dashboard.html",
