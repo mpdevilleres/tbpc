@@ -73,3 +73,11 @@ class ChangePasswordForm(forms.Form):
 #             # Only add the 'value' attribute if a value is non-empty.
 #             final_attrs['value'] = force_text(self._format_value(value))
 #         return format_html('<input{} />', flatatt(final_attrs))
+class ReasonForm(forms.Form):
+    form_order = [
+        ['reason_for_excess'],
+    ]
+    reason_for_excess = forms.CharField(label= "Reason:", widget=forms.Textarea(attrs={'class': 'form-control placeholder-no-fix',
+                                                             'autocomplete': 'off',
+                                                             'placeholder': 'Reason'
+                                                             }))

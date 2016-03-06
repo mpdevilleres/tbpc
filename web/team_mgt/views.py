@@ -5,7 +5,7 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 
 from utils.forms import populate_obj
-from utils.dashboard_summarizer import summarize_team_task, _get
+from utils.summarizer import summarize_team_task, _get
 import pandas as pd
 from contract_mgt.models import Contractor
 from .forms import TeamTaskForm, TeamTaskHistoryForm

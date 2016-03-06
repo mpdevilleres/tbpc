@@ -5,12 +5,16 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.db.models import Q
-from django.shortcuts import render, redirect
+from django.http import Http404
+from django.shortcuts import render, redirect, get_object_or_404
 
-from .forms import LoginForm, ChangePasswordForm
+from .forms import LoginForm, ChangePasswordForm, ReasonForm
 # Create your views here.
-from user_mgt.models import Attendance
-from user_mgt.tables_ajax import AttendanceJson
+from user_mgt.models import Attendance, AttendanceSummary
+from user_mgt.tables_ajax import AttendanceJson, AttendanceSummaryJson
+#from utils.summarizer import summarize_attendance
+from utils.forms import populate_obj
+from utils.summarizer import summarize_attendance
 
 
 def _login(request):
@@ -59,6 +63,35 @@ def _change_password(request):
     return render(request, 'user_mgt/change_password.html', context=context)
 
 @login_required
+def table_attendance(request):
+
+    data_table_url = reverse('user_mgt:table_attendance_json') + '%s' % request.user.id
+
+    context = {
+        'table_title': 'Attendance',
+        'columns': getattr(AttendanceJson,'column_names'),
+        'data_table_url': data_table_url,
+#        'add_record_link': reverse('team_mgt:add_edit_team_task'),
+    }
+    return render(request, 'default/datatable.html', context)
+
+@login_required
+def table_attendance_summary(request):
+    if request.user.id not in [1]:
+        raise Http404("option must be valid")
+
+    data_table_url = reverse('user_mgt:table_attendance_summary_json') + '%s' % request.user.id
+
+    context = {
+        'table_title': 'Attendance',
+        'columns': getattr(AttendanceSummaryJson,'column_names'),
+        'data_table_url': data_table_url,
+#        'add_record_link': reverse('team_mgt:add_edit_team_task'),
+    }
+    return render(request, 'default/datatable.html', context)
+
+# For attendance Logic
+@login_required
 def sign_in(request):
     today = dt.datetime.utcnow()
     attendance = Attendance.objects.filter(Q(user__pk=request.user.id) & Q(date_day=today.date()))\
@@ -74,6 +107,9 @@ def sign_in(request):
         attendance.accepted = '-'
         attendance.reason_for_rejection = '-'
         attendance.save()
+
+        summarize_attendance(date=today.date(), user_pk=request.user.id)
+
         messages.info(request, "Time-in Successful")
         return redirect('team_mgt:index_dashboard')
 
@@ -102,6 +138,9 @@ def sign_out(request):
         attendance.accepted = '-'
         attendance.reason_for_rejection = '-'
         attendance.save()
+
+        summarize_attendance(date=today.date(), user_pk=request.user.id)
+
         messages.info(request, "Time-out Successful")
         return redirect('team_mgt:index_dashboard')
 
@@ -109,14 +148,42 @@ def sign_out(request):
     return redirect('team_mgt:index_dashboard')
 
 @login_required
-def table_attendance(request):
+def add_edit_attendance_reason(request, pk=None):
+    _form = ReasonForm
+    _model = Attendance
+    if pk is None:
+        record = _model()
+        form = _form(request.POST or None)
+    else:
+        record = get_object_or_404(_model, pk=pk)
+        form = _form(initial=record.__dict__)
 
-    data_table_url = reverse('user_mgt:table_attendance_json') + '%s' % request.user.id
+    if request.method == 'POST':
+        form = _form(request.POST)
+        if form.is_valid():
+            cleaned_data = form.clean()
+            populate_obj(cleaned_data, record)
+            record.save()
+
+            summarize_attendance(date=record.date_day, user_pk=request.user.id)
+
+            messages.info(request, "Successfully Updated the Database")
+
+            return redirect('user_mgt:table_attendance')
 
     context = {
-        'table_title': 'Attendance',
-        'columns': getattr(AttendanceJson,'column_names'),
-        'data_table_url': data_table_url,
-#        'add_record_link': reverse('team_mgt:add_edit_team_task'),
+        'forms' : form,
+        'form_title': 'Attendance'
     }
-    return render(request, 'default/datatable.html', context)
+    return render(request, 'default/add_form.html', context)
+
+@login_required
+def attendance_acceptance(request, pk=None, option=None):
+    if option is None or pk is None or request.user.id not in [1]:
+        raise Http404("option must be valid")
+
+    else:
+        summary = AttendanceSummary.objects.filter(Q(pk=pk)).first()
+        summary.accepted = 'Yes' if int(option) == 1 else 'No'
+        summary.save()
+        return redirect('user_mgt:table_attendance_summary')
