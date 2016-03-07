@@ -23,10 +23,14 @@ urlpatterns = [
      url(r'^team-task/timeline/$', views.timeline, name='timeline'),
      url(r'^team-task/timeline/(?P<pk>[0-9]+)/$', views.timeline),
 
+    # Attachment
+     url(r'^team-task/attachments/upload$', views.file_attach, name='attachment'),
+     url(r'^team-task/attachments/get/$', views.file_get, name='get_attachment'),
+     url(r'^team-task/attachments/get/(?P<pk>[0-9]+)/$', views.file_get),
+
      # Dashboards
      url(r'^team-task/dashboard/$', views.index_dashboard, name='index_dashboard'),
      url(r'^team-task/summary/$', views.summary_dashboard, name='summary_dashboard'),
-
 
      # Datatables Ajax Link
 

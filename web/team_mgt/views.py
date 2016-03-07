@@ -1,18 +1,26 @@
+# -*- coding: utf-8 -*-
+import mimetypes
+import os
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
+from django.http import Http404, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
+from django.utils.encoding import smart_str
+from project import settings
+
+from wsgiref.util import FileWrapper
 
 from utils.forms import populate_obj
 from utils.dashboard_summarizer import summarize_team_task, _get
 import pandas as pd
 from contract_mgt.models import Contractor
-from .forms import TeamTaskForm, TeamTaskHistoryForm
+from .forms import TeamTaskForm, TeamTaskHistoryAddForm, TeamTaskAttachmentForm, TeamTaskHistoryEditForm
 from .tables_ajax import TeamTaskJson, TeamTaskSummaryJson
 
 # Create your views here.
-from .models import TeamTask, TeamTaskHistory
+from .models import TeamTask, TeamTaskHistory, TeamTaskAttachment
 from utils.tools import group_sort_to_list
 
 @login_required
@@ -52,20 +60,26 @@ def add_edit_team_task(request, pk=None):
 
 @login_required
 def add_team_task_history(request, pk=None):
-    _form = TeamTaskHistoryForm
+    _form = TeamTaskHistoryAddForm
 
     team_task = get_object_or_404(TeamTask, pk=pk)
     form = _form(request.POST or None)
 
     if request.method == 'POST':
-        form = _form(request.POST)
+        form = _form(request.POST, request.FILES)
         if form.is_valid():
             cleaned_data = form.clean()
-            #record.save()
-            team_task.teamtaskhistory_set.create(**cleaned_data)
+            cleaned_data.pop('file')
 
+            team_task.teamtaskhistory_set.create(**cleaned_data)
             team_task.status = cleaned_data['status']
             team_task.save()
+
+            history = TeamTaskHistory.objects.filter(team_task__pk=pk).first()
+            for file in request.FILES.getlist('file'):
+                history.teamtaskattachment_set.create(file=file,
+                                                  filename=file.name)
+
             summarize_team_task(pk=team_task.id)
             messages.info(request, "Successfully Updated the Database")
 
@@ -79,7 +93,7 @@ def add_team_task_history(request, pk=None):
 
 @login_required
 def edit_team_task_history(request, pk=None):
-    _form = TeamTaskHistoryForm
+    _form = TeamTaskHistoryEditForm
 
     record = get_object_or_404(TeamTaskHistory, pk=pk)
     form = _form(initial=record.__dict__)
@@ -100,10 +114,6 @@ def edit_team_task_history(request, pk=None):
         'form_title': 'Team Task'
     }
     return render(request, 'default/add_form.html', context)
-
-@login_required
-def add_edit_document(request, pk=None):
-    pass
 
 @login_required
 def table_team_task(request, pk=None):
@@ -243,3 +253,49 @@ def timeline(request, pk=None):
 @login_required
 def get_reference_no(request):
     pass
+
+@login_required
+def file_attach(request, pk=None):
+    '''
+    Please consider using dropzone saving files via ajax(this function) and posting the others data in post views
+    Server Side Processing for a typical Dropzonejs form
+
+    :param request:
+    :param pk:
+    :return:
+    '''
+    if pk is None:
+        raise Http404()
+
+    if request.method == 'POST':
+        team_task = TeamTask.objects.filter(pk=pk).first()
+        form = TeamTaskAttachmentForm(request.POST, request.FILES)
+        if form.is_valid():
+            file = TeamTaskAttachment(file=request.FILES['file'], team_task=team_task)
+            file.filename = 'Working'
+            file.save()
+
+    else:
+        form = TeamTaskAttachmentForm()
+
+    context = {
+        'forms' : form,
+        'form_title': 'Attachment'
+    }
+    return render(request, 'default/upload_form.html', context)
+
+@login_required
+def file_get(request, pk):
+    if pk is None:
+        raise Http404()
+
+    full_path = TeamTaskAttachment.objects.filter(pk=pk).first().file.path
+    path, filename = os.path.split(full_path)
+
+    file_wrapper = FileWrapper( open(full_path, 'rb'))
+    content_type = mimetypes.guess_type(full_path)[0]
+    response = HttpResponse(file_wrapper, content_type=content_type)
+    response['Content-Length'] = os.path.getsize(full_path)
+    response['Content-Disposition'] = "attachment; filename=%s" % smart_str(filename)
+    response['X-Sendfile']= smart_str(os.path.join(settings.MEDIA_ROOT, path, filename))
+    return response

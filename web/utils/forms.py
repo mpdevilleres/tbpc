@@ -69,6 +69,14 @@ class EnhancedDateField(forms.DateField):
                    })
         super(EnhancedDateField, self).__init__(*args, **kwargs)
 
+class EnhancedFileField(forms.FileField):
+    def __init__(self, placeholder='', *args, **kwargs):
+        self.widget = forms.ClearableFileInput(
+            attrs={'multiple': True,
+                   'placeholder': '%s' % placeholder,
+                   'onChange': "makeFileList();"})
+        super(EnhancedFileField, self).__init__(*args, **kwargs)
+
 def populate_obj(cleaned_data, obj):
     """
     Populates `obj.<name>` with the field's data.

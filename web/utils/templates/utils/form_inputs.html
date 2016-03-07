@@ -4,7 +4,7 @@
 {% if form|fieldtype == 'EnhancedDateField' %}
     <div class="form-group">
         <label class="control-label col-md-3" for="{{ form.name }}"> {{ form.label }} </label>
-        <div class="col-md-8">
+        <div class="col-md-7">
             <div class="input-group input-large date date-picker" data-date-format="yyyy-mm-dd">
                 <span class="input-group-btn">
                     <button class="btn default date-set" type="button"><i class="fa fa-calendar"></i></button>
@@ -13,6 +13,40 @@
             </div>
             <span class="text-danger help-block">
                 {{ form.errors|striptags }}
+            </span>
+        </div>
+    </div>
+
+{% elif form|fieldtype == 'EnhancedFileField' %}
+    <div class="form-group">
+        <label class="control-label col-md-3" for="{{ form.name }}"> {{ form.label }} </label>
+        <div class="col-md-7">
+            {{ form }}
+            <div id="files" class="files"></div>
+            <span class="text-danger help-block">
+                {{ form.errors|striptags }}
+            </span>
+            <span class="text-info help-block">
+	            <ul class="list-unstyled" id="fileList"><li></li></ul>
+                <script type="text/javascript">
+                    function makeFileList() {
+                        var input = document.getElementById("id_{{ form.name }}");
+                        var ul = document.getElementById("fileList");
+                        while (ul.hasChildNodes()) {
+                            ul.removeChild(ul.firstChild);
+                        }
+                        for (var i = 0; i < input.files.length; i++) {
+                            var li = document.createElement("li");
+                            li.innerHTML = input.files[i].name;
+                            ul.appendChild(li);
+                        }
+                        if(!ul.hasChildNodes()) {
+                            var li = document.createElement("li");
+                            li.innerHTML = 'No Files Selected';
+                            ul.appendChild(li);
+                        }
+                    }
+                </script>
             </span>
         </div>
     </div>

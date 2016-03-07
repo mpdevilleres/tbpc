@@ -45,9 +45,9 @@
         <ul class="timeline">
         {% for element in history %}
             {% if element.id == last_history.id %}
-                <li class="timeline-purple timeline-noline">
+                <li class="timeline-grey timeline-noline">
             {% else %}
-                <li class="timeline-purple">
+                <li class="timeline-grey">
             {% endif %}
 
 
@@ -69,13 +69,18 @@
                         {{ element.remarks }}
                     </div>
                     <div class="timeline-footer">
-                        <a href="{# url_for_or_none('team_mgt.add_document') #}/{# element.document_id #}" class="nav-link">
-                        {# element.document_ref_no #}
-                        </a>
-                        |
                         <a href="{% url 'team_mgt:edit_team_task_history' %}{{ element.id }}" class="nav-link">
                             Edit <i class="fa fa-edit"></i>
                         </a>
+                        |
+                        {% for file in element.teamtaskattachment_set.all  %}
+
+                        <a class="badge badge-info" href="{% url 'team_mgt:get_attachment' %}{{ file.id }}" class="nav-link">
+                            {{ file.filename }}
+                        </a>
+
+                        {% endfor %}
+
                     </div>
                 </div>
             </li>

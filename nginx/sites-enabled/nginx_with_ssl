@@ -32,7 +32,16 @@ server {
                expires 72h;
         }
     }
+
+    location /attachments/ {
+        internal;
+        root /web/media/attachments/;
+    }
+
     location / {
+        proxy_set_header X-Sendfile-Type X-Accel-Redirect;
+        proxy_set_header X-Accel-Mapping /web/media/attachments/=/attachments/;
+
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header Host $http_host;
         proxy_redirect off;

@@ -1,0 +1,72 @@
+{% extends '_add_form.html' %}
+
+{% block add_form_script %}
+<script>
+var FormDropzone = function () {
+
+
+    return {
+        //main function to initiate the module
+          // The configuration we've talked about above
+
+        init: function () {
+            Dropzone.options.myDropzone = {
+
+                autoProcessQueue: false,
+                uploadMultiple: true,
+                parallelUploads: 100,
+                maxFiles: 100,
+                dictDefaultMessage: "",
+
+                init: function() {
+
+                    var myDropzone = this;
+
+                    this.element.querySelector("button[type=submit]").addEventListener("click", function(e) {
+                      // Make sure that the form isn't actually being sent.
+                      e.preventDefault();
+                      e.stopPropagation();
+                      myDropzone.processQueue();
+                    });
+
+                    this.on("addedfile", function(file) {
+                        // Create the remove button
+                        var removeButton = Dropzone.createElement("<a href='javascript:;'' class='btn red btn-sm btn-block'>Remove</a>");
+
+                        // Capture the Dropzone instance as closure.
+                        var _this = this;
+
+                        // Listen to the click event
+                        removeButton.addEventListener("click", function(e) {
+                          // Make sure the button click doesn't submit the form:
+                          e.preventDefault();
+                          e.stopPropagation();
+
+                          // Remove the file preview.
+                          _this.removeFile(file);
+                          // If you want to the delete the file on the server as well,
+                          // you can do the AJAX request here.
+                        });
+
+                        // Add the button to the file preview element.
+                        file.previewElement.appendChild(removeButton);
+                    });
+                }
+            }
+        }
+    };
+}();
+
+jQuery(document).ready(function() {
+   FormDropzone.init();
+});
+</script>
+{% endblock add_form_script %}
+
+{% block page_form %}
+        <form action="{% url 'team_mgt:attachment' %}" class="dropzone dropzone-file-area" id="my-dropzone" style="width: 500px; margin-top: 50px;">
+            {% csrf_token %}
+            <h3 class="sbold">Drop files here or click to upload</h3>
+            <p> Only PDF, MSG Files are allowed </p>
+        </form>
+{% endblock page_form %}

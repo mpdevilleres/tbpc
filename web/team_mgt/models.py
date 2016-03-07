@@ -1,3 +1,4 @@
+import os
 from django.contrib.auth.models import User
 from django.db import models
 from contract_mgt.models import Contractor
@@ -59,3 +60,10 @@ class TeamTaskSummaryDashboard(TimeStampedBaseModel):
     action_taken = models.TextField(blank=True)
     date_action = models.DateTimeField(blank=True, null=True)
     status = models.CharField(max_length=100)
+
+class TeamTaskAttachment(TimeStampedBaseModel):
+
+    team_task_history = models.ForeignKey(TeamTaskHistory, on_delete=models.CASCADE)
+
+    file = models.FileField(upload_to='attachments/%Y/%m/%d')
+    filename = models.CharField(max_length=255, null=True)

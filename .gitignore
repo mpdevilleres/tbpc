@@ -16,3 +16,4 @@ migrations
 /web/static
 /web/project/static/theme
 /db_backup
+/web/media

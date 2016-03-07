@@ -1,0 +1,72 @@
+{% extends '_add_form.html' %}
+{% load custom_tags %}
+
+{% block add_form_script %}
+<script>
+var FormDropzone = function () {
+
+
+    return {
+        //main function to initiate the module
+          // The configuration we've talked about above
+
+        init: function () {
+Dropzone.options.myAwesomeDropzone = { // The camelized version of the ID of the form element
+
+  // The configuration we've talked about above
+  url: "{% url 'team_mgt:add_team_task_history' %}{{ team_task_pk }}/",
+  autoProcessQueue: false,
+  uploadMultiple: true,
+  parallelUploads: 100,
+  maxFiles: 100,
+
+  // The setting up of the dropzone
+  init: function() {
+    var myDropzone = this;
+
+    // First change the button to actually tell Dropzone to process the queue.
+    this.element.querySelector("button[type=submit]").addEventListener("click", function(e) {
+      // Make sure that the form isn't actually being sent.
+      e.preventDefault();
+      e.stopPropagation();
+      myDropzone.processQueue();
+    });
+
+    // Listen to the sendingmultiple event. In this case, it's the sendingmultiple event instead
+    // of the sending event because uploadMultiple is set to true.
+    this.on("sendingmultiple", function() {
+      // Gets triggered when the form is actually being sent.
+      // Hide the success button or the complete form.
+    });
+    this.on("successmultiple", function(files, response) {
+      // Gets triggered when the files have successfully been sent.
+      // Redirect user or notify of success.
+    });
+    this.on("errormultiple", function(files, response) {
+      // Gets triggered when there was an error sending the files.
+      // Maybe show form again, and notify user of error
+    });
+  }
+
+}
+        }
+    };
+}();
+
+jQuery(document).ready(function() {
+   FormDropzone.init();
+});
+</script>
+
+{% endblock add_form_script %}
+
+
+{% block page_form %}
+<form method="post" enctype="multipart/form-data" id="my-awesome-dropzone" class="dropzone">
+{% csrf_token %}
+  <div class="dropzone-previews"></div> <!-- this is were the previews should be shown. -->
+
+  <button type="submit">Submit data and files!</button>
+</form>
+
+{% endblock page_form %}

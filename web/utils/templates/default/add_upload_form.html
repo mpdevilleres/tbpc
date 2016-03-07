@@ -1,0 +1,126 @@
+{% extends '_add_form.html' %}
+{% load custom_tags %}
+
+{% block add_form_script %}
+<script>
+var FormDropzone = function () {
+
+
+    return {
+        //main function to initiate the module
+          // The configuration we've talked about above
+
+
+    init: function () {
+       Dropzone.options.myDropzone = {
+            url: "{% url 'team_mgt:add_team_task_history' %}{{ team_task_pk }}/",
+            autoProcessQueue: false,
+            uploadMultiple: true,
+            parallelUploads: 100,
+            maxFiles: 100,
+            acceptedFiles: "image/*",
+
+            init: function () {
+
+                var submitButton = document.querySelector("#submit-all");
+                var wrapperThis = this;
+
+                submitButton.addEventListener("click", function () {
+                    wrapperThis.processQueue();
+                });
+
+                this.on("addedfile", function (file) {
+
+                    // Create the remove button
+                    var removeButton = Dropzone.createElement("<button class='btn btn-lg dark'>Remove File</button>");
+
+                    // Listen to the click event
+                    removeButton.addEventListener("click", function (e) {
+                        // Make sure the button click doesn't submit the form:
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        // Remove the file preview.
+                        wrapperThis.removeFile(file);
+                        // If you want to the delete the file on the server as well,
+                        // you can do the AJAX request here.
+                    });
+
+                    // Add the button to the file preview element.
+                    file.previewElement.appendChild(removeButton);
+                });
+
+                this.on('sendingmultiple', function (data, xhr, formData) {
+                    formData.append("Username", $("#Username").val());
+                });
+            }
+        };
+    }
+    };
+}();
+
+jQuery(document).ready(function() {
+   FormDropzone.init();
+});
+</script>
+{% endblock add_form_script %}
+
+{% block page_form %}
+    <div class="portlet box green">
+        <div class="portlet-title">
+            <div class="caption">
+                {{ form_title }} Details
+            </div>
+            <div class="tools">
+                <a href="javascript:;" class="collapse">
+                </a>
+
+            </div>
+        </div>
+        <div class="portlet-body form">
+            <!-- BEGIN FORM-->
+    <form class="form-horizontal" enctype="multipart/form-data" method="POST">
+        {% csrf_token %}
+        <div class="form-body">
+                    <h3 class="form-section">
+                        Record Form
+                    </h3>
+                    {% for row in forms.form_order %}
+                        <div class="row">
+                            {% for element in row %}
+                                {% if element == "hr" %}
+                                    <hr class="style3"/>
+                                {% elif element == "blank" %}
+                                    <div class="col-md-6">
+                                    </div>
+                                {% else %}
+                                    <div class="col-md-6">
+                                    {% include 'utils/form_inputs.html' with form=forms|return_item:element %}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+
+                    {% endfor %}
+                </div>
+        <div class="dropzone" id="my-dropzone" name="mainFileUploader">
+            <div class="fallback">
+                <input name="file" type="file" multiple />
+            </div>
+        </div>
+        <div class="form-actions">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="row">
+                                <div class="col-md-offset-3 col-md-9">
+                                    <button id="submit-all" type="submit" class="btn green">Submit</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    </form>
+            <!-- END FORM-->
+        </div>
+    </div>
+{% endblock page_form %}
