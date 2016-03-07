@@ -9,7 +9,7 @@ dump
 .env
 .idea
 
-migrations
+migrations/
 /nginx/ssl
 /nginx/logs
 /web/py_pkg
