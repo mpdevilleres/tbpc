@@ -13,7 +13,7 @@ from project import settings
 from wsgiref.util import FileWrapper
 
 from utils.forms import populate_obj
-from utils.dashboard_summarizer import summarize_team_task, _get
+from utils.summarizer import summarize_team_task, _get
 import pandas as pd
 from contract_mgt.models import Contractor
 from .forms import TeamTaskForm, TeamTaskHistoryAddForm, TeamTaskAttachmentForm, TeamTaskHistoryEditForm

@@ -38,3 +38,14 @@ class Attendance(TimeStampedBaseModel):
         if self.date_day==dt.datetime.utcnow().date() and self.in_or_out=='in':
             return True
         return False
+
+class AttendanceSummary(TimeStampedBaseModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, default=1)
+
+    date_day = models.DateField(blank=True, null=True)
+    date_time_in = models.TimeField(blank=True, null=True)
+    date_time_out = models.TimeField(blank=True, null=True)
+    total_hours = models.FloatField(blank=True, null=True)
+    reason_for_excess = models.TextField(blank=True)
+    accepted = models.CharField(max_length=100)
+    reason_for_rejection = models.TextField(blank=True)
