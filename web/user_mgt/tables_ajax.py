@@ -103,7 +103,7 @@ class AttendanceSummaryJson(BaseDatatableView):
         elif column in ['date_time_in', 'date_time_out']:
             # timedelta of 4 because users are in UAE and server uses utc
             time = dt.datetime.combine(dt.date.today(), getattr(row,column))  + dt.timedelta(hours=4)
-            return time.strftime('%H:%m')
+            return time.strftime('%H:%M')
         elif column == 'total_hours':
             return int(row.total_hours)
         else:
