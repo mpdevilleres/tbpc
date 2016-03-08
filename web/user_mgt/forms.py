@@ -20,19 +20,19 @@ class LoginForm(forms.Form):
 
 class ChangePasswordForm(forms.Form):
 
-    password = forms.CharField(label= "Password:", widget=forms.PasswordInput(attrs={'class': 'form-control placeholder-no-fix',
+    password = forms.CharField(label= "Current Password:", widget=forms.PasswordInput(attrs={'class': 'form-control placeholder-no-fix',
                                                              'autocomplete': 'off',
-                                                             'placeholder': 'Password'
+                                                             'placeholder': 'Current Password'
                                                              }))
 
-    old_password = forms.CharField(label= "Old Password:", widget=forms.PasswordInput(attrs={'class': 'form-control placeholder-no-fix',
-                                                             'autocomplete': 'off',
-                                                             'placeholder': 'Old Password'
-                                                             }))
-
-    new_password = forms.CharField(label= "New Password:", widget=forms.PasswordInput(attrs={'class': 'form-control placeholder-no-fix',
+    old_password = forms.CharField(label= "New Password:", widget=forms.PasswordInput(attrs={'class': 'form-control placeholder-no-fix',
                                                              'autocomplete': 'off',
                                                              'placeholder': 'New Password'
+                                                             }))
+
+    new_password = forms.CharField(label= "Confirm Password:", widget=forms.PasswordInput(attrs={'class': 'form-control placeholder-no-fix',
+                                                             'autocomplete': 'off',
+                                                             'placeholder': 'Confirm Password'
                                                              }))
     def __init__(self, request, *args, **kwargs):
         self.current_user = kwargs.pop('user')
