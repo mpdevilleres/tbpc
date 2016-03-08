@@ -22,7 +22,9 @@ from .tables_ajax import TeamTaskJson, TeamTaskSummaryJson
 # Create your views here.
 from .models import TeamTask, TeamTaskHistory, TeamTaskAttachment
 from utils.tools import group_sort_to_list
+from utils.views import team_login_required
 
+@team_login_required
 @login_required
 def add_edit_team_task(request, pk=None):
     _form = TeamTaskForm
@@ -58,6 +60,7 @@ def add_edit_team_task(request, pk=None):
     }
     return render(request, 'default/add_form.html', context)
 
+@team_login_required
 @login_required
 def add_team_task_history(request, pk=None):
     _form = TeamTaskHistoryAddForm
@@ -91,6 +94,7 @@ def add_team_task_history(request, pk=None):
     }
     return render(request, 'default/add_form.html', context)
 
+@team_login_required
 @login_required
 def edit_team_task_history(request, pk=None):
     _form = TeamTaskHistoryEditForm
@@ -115,6 +119,7 @@ def edit_team_task_history(request, pk=None):
     }
     return render(request, 'default/add_form.html', context)
 
+@team_login_required
 @login_required
 def table_team_task(request, pk=None):
 
@@ -132,11 +137,13 @@ def table_team_task(request, pk=None):
     }
     return render(request, 'default/datatable.html', context)
 
+@team_login_required
 @login_required
 def table_document(request):
     pass
 
 # DASHBOARDS
+@team_login_required
 @login_required
 def index_dashboard(request):
 
@@ -187,6 +194,7 @@ def index_dashboard(request):
                   "team_mgt/index_dashboard.html",
                   context)
 
+@team_login_required
 @login_required
 def summary_dashboard(request):
     how = 'left'    # default merging how
@@ -227,10 +235,12 @@ def summary_dashboard(request):
     return render(request, "team_mgt/summary_dashboard.html", context)
 
 # MISC VIEWS
+@team_login_required
 @login_required
 def notify(request, pk=None):
     pass
 
+@team_login_required
 @login_required
 def timeline(request, pk=None):
 
@@ -250,10 +260,12 @@ def timeline(request, pk=None):
     }
     return render(request, 'team_mgt/timeline.html', context)
 
+@team_login_required
 @login_required
 def get_reference_no(request):
     pass
 
+@team_login_required
 @login_required
 def file_attach(request, pk=None):
     '''
@@ -284,6 +296,7 @@ def file_attach(request, pk=None):
     }
     return render(request, 'default/upload_form.html', context)
 
+@team_login_required
 @login_required
 def file_get(request, pk):
     if pk is None:

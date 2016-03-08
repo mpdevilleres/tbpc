@@ -21,6 +21,9 @@ class Employee(TimeStampedBaseModel):
     def choice_alias(self):
         return (self.user.id, self.user.first_name + " " + self.user.last_name)
 
+    @property
+    def is_employee(self):
+        return not self.section
 
 class Attendance(TimeStampedBaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
