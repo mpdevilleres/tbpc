@@ -4,7 +4,7 @@ from django import forms
 import datetime as dt
 from project import settings
 
-
+# Forms
 class EnhancedForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
@@ -26,6 +26,8 @@ class EnhancedForm(forms.Form):
                 sorted_choices = sorted(choices_value, key=lambda x: x[1])
                 setattr(self.fields[k],'choices', sorted_choices)
 
+
+# Fields
 class EnhancedCharField(forms.CharField):
     def __init__(self, placeholder='', *args, **kwargs):
         self.widget = forms.TextInput(
@@ -34,15 +36,6 @@ class EnhancedCharField(forms.CharField):
                    })
         super(EnhancedCharField, self).__init__(*args, **kwargs)
 
-class EnhancedTextField(forms.CharField):
-    def __init__(self, placeholder='', *args, **kwargs):
-        self.widget = forms.Textarea(
-            attrs={'class': 'form-control',
-                   'rows': 3,
-                   'placeholder': '%s' % placeholder
-                   })
-        super(EnhancedTextField, self).__init__(*args, **kwargs)
-
 class EnhancedChoiceField(forms.ChoiceField):
     def __init__(self, placeholder='', *args, **kwargs):
         self.widget = forms.Select(
@@ -50,15 +43,6 @@ class EnhancedChoiceField(forms.ChoiceField):
                    'placeholder': '%s' % placeholder
                    })
         super(EnhancedChoiceField, self).__init__(*args, **kwargs)
-
-class EnhancedMultipleChoiceField(forms.MultipleChoiceField):
-    def __init__(self, placeholder='', *args, **kwargs):
-        self.widget = forms.SelectMultiple(
-            attrs={'class': 'multi-select',
-                   'multiple': True,
-                   'placeholder': '%s' % placeholder
-                   })
-        super(EnhancedMultipleChoiceField, self).__init__(*args, **kwargs)
 
 class EnhancedDateField(forms.DateField):
     def __init__(self, *args, **kwargs):
@@ -69,6 +53,16 @@ class EnhancedDateField(forms.DateField):
                    })
         super(EnhancedDateField, self).__init__(*args, **kwargs)
 
+class EnhancedDecimalField(forms.DecimalField):
+    def __init__(self, placeholder='', *args, **kwargs):
+        self.max_digits=20
+        self.decimal_places=2
+        self.widget = forms.NumberInput(
+            attrs={'class': 'form-control',
+                   'placeholder': '%s' % placeholder
+                   })
+        super(EnhancedDecimalField, self).__init__(*args, **kwargs)
+
 class EnhancedFileField(forms.FileField):
     def __init__(self, placeholder='', *args, **kwargs):
         self.widget = forms.ClearableFileInput(
@@ -77,6 +71,26 @@ class EnhancedFileField(forms.FileField):
                    'onChange': "makeFileList();"})
         super(EnhancedFileField, self).__init__(*args, **kwargs)
 
+class EnhancedMultipleChoiceField(forms.MultipleChoiceField):
+    def __init__(self, placeholder='', *args, **kwargs):
+        self.widget = forms.SelectMultiple(
+            attrs={'class': 'multi-select',
+                   'multiple': True,
+                   'placeholder': '%s' % placeholder
+                   })
+        super(EnhancedMultipleChoiceField, self).__init__(*args, **kwargs)
+
+class EnhancedTextField(forms.CharField):
+    def __init__(self, placeholder='', *args, **kwargs):
+        self.widget = forms.Textarea(
+            attrs={'class': 'form-control',
+                   'rows': 3,
+                   'placeholder': '%s' % placeholder
+                   })
+        super(EnhancedTextField, self).__init__(*args, **kwargs)
+
+
+# MISC /TOOLS
 def populate_obj(cleaned_data, obj):
     """
     Populates `obj.<name>` with the field's data.

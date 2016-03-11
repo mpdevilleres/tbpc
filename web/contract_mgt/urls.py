@@ -19,7 +19,6 @@ urlpatterns = [
      url(r'^contact/(?P<pk>[0-9]+)/$', views.add_edit_contact),
 
      # Datatables Ajax Link
-
      url(r'^contact/data/$',
          login_required(ContractorContactJson.as_view()),
          name='table_contact_json'),

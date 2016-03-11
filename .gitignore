@@ -3,7 +3,6 @@ venv
 temp
 tmp
 __pycahe__
-dump
 
 *.pyc
 .env
@@ -12,6 +11,8 @@ dump
 migrations/
 /nginx/ssl
 /nginx/logs
+
+/web/dump
 /web/py_pkg
 /web/static
 /web/project/static/theme

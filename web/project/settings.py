@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'main.apps.MainConfig',
     'team_mgt.apps.TeamMgtConfig',
     'user_mgt.apps.UserMgtConfig',
+    'budget_mgt.apps.BudgetMgtConfig',
     'utils.apps.UtilsConfig',
 
     'django.contrib.admin',

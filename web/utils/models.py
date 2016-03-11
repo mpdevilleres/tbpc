@@ -25,7 +25,7 @@ class TimeStampedBaseModel(models.Model):
         self.modified = timezone.now()
         self.modified_by = user_value()
 
-        return super(TimeStampedBaseModel, self).save(*args, **kwargs)
+        super(TimeStampedBaseModel, self).save(*args, **kwargs)
 
     class Meta:
        abstract = True
