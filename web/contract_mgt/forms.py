@@ -1,4 +1,3 @@
-from collections import OrderedDict
 from django import forms
 import utils.forms as uforms
 

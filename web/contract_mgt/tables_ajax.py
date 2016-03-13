@@ -1,9 +1,12 @@
 from django.core.urlresolvers import reverse
+from django.utils.decorators import method_decorator
 from django_datatables_view.base_datatable_view import BaseDatatableView
 from contract_mgt.models import ContractorContact, Contractor
+from utils.decorators import team_decorators
 from utils.tools import capitalize
 
 
+@method_decorator(team_decorators, name='dispatch')
 class ContractorContactJson(BaseDatatableView):
     # The model we're going to show
     model = ContractorContact
@@ -47,6 +50,7 @@ class ContractorContactJson(BaseDatatableView):
             return super(ContractorContactJson, self).render_column(row, column)
 
 
+@method_decorator(team_decorators, name='dispatch')
 class ContractorJson(BaseDatatableView):
     # The model we're going to show
     model = Contractor
