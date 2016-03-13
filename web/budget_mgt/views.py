@@ -5,9 +5,11 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect, render
+
+from utils.summarizer import summarize_invoice
 from .forms import InvoiceForm, TaskForm
 from .models import Invoice, Task
-from .tables_ajax import TaskJson
+from .tables_ajax import TaskJson, InvoiceJson
 
 from utils.forms import populate_obj
 from django.views.generic import View
@@ -17,21 +19,37 @@ from django.views.generic import View
 class AddEditInvoiceView(View):
     model = Invoice
     form_class = InvoiceForm
-
-    initial = {'key': 'value'}
     template_name = 'default/add_form.html'
+    success_redirect_link = 'budget_mgt:table_invoice'
 
     def get(self, request, *args, **kwargs):
+        pk = kwargs.pop('pk', None)
+        if pk is None:
+            forms = self.form_class()
 
-        form = self.form_class(initial=self.initial)
-        return render(request, self.template_name, {'forms': form})
+        else:
+            record = get_object_or_404(self.model, pk=pk)
+            forms = self.form_class(initial=record.__dict__)
+
+        return render(request, self.template_name, {'forms': forms})
 
     def post(self, request, *args, **kwargs):
+        pk = kwargs.pop('pk', None)
+        if pk is None:
+            record = self.model()
+        else:
+            record = get_object_or_404(self.model, pk=pk)
+
         form = self.form_class(request.POST)
+
         if form.is_valid():
-            pass
-            # <process form cleaned data>
-            #return HttpResponseRedirect('/success/')
+            cleaned_data = form.clean()
+            populate_obj(cleaned_data, record)
+            record.save()
+            summarize_invoice(task_pk=record.task_id)
+
+            messages.success(request, "Successfully Updated the Database")
+            return redirect(self.success_redirect_link)
 
         return render(request, self.template_name, {'forms': form})
 
@@ -39,7 +57,7 @@ class AddEditTaskView(View):
     model = Task
     form_class = TaskForm
     template_name = 'default/add_form.html'
-    success_redirect_link = redirect('budget_mgt:table_task')
+    success_redirect_link = 'budget_mgt:table_task'
 
     def get(self, request, *args, **kwargs):
         pk = kwargs.pop('pk', None)
@@ -67,7 +85,7 @@ class AddEditTaskView(View):
             record.save()
 
             messages.success(request, "Successfully Updated the Database")
-            return self.success_redirect_link
+            return redirect(self.success_redirect_link)
 
         return render(request, self.template_name, {'forms': form})
 
@@ -77,10 +95,8 @@ class TableTaskView(View):
     add_record_link = reverse_lazy('budget_mgt:add_edit_task')
     columns = getattr(TaskJson,'column_names')
     data_table_url = reverse_lazy('budget_mgt:table_task_json')
-    form_class = TaskForm
-    model = Task
     template_name = 'default/datatable.html'
-    table_title = 'Tasks'
+    table_title = 'Expenditure Tasks'
 
     def get(self, request, *args, **kwargs):
 
@@ -98,12 +114,10 @@ class TableTaskView(View):
 
 class TableInvoiceView(View):
     add_record_link = reverse_lazy('budget_mgt:add_edit_invoice')
-    columns = getattr(TaskJson,'column_names')
+    columns = getattr(InvoiceJson,'column_names')
     data_table_url = reverse_lazy('budget_mgt:table_invoice_json')
-    form_class = TaskForm
-    model = Task
     template_name = 'default/datatable.html'
-    table_title = 'Tasks'
+    table_title = 'Invoices'
 
     def get(self, request, *args, **kwargs):
 
@@ -118,3 +132,5 @@ class TableInvoiceView(View):
             'add_record_link': self.add_record_link,
         }
         return render(request, self.template_name, context)
+
+

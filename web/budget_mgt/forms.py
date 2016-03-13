@@ -3,38 +3,58 @@ from user_mgt.models import Employee
 
 import utils.forms as uforms
 
-from .models import Contractor
+from contract_mgt.models import Contractor
+from .models import Task
 
 
 class InvoiceForm(uforms.EnhancedForm):
     model_choices = {
-        'user': Employee.objects.filter(section=False),
-        'contractor_id': Contractor.objects.all()
+        # 'user': Employee.objects.filter(section=False),
+        'contractor_id': Contractor.objects.all(),
+        'task_id': Task.objects.all()
+
     }
 
     form_order = [
-        ['contractor_id', 'user'],
-        ['contract_no', 'classification'],
+        ['contractor_id', 'blank',
+         'proj_no', 'task_id'],
+        ['invoice_date', 'invoice_cert_date'],
+        ['received_date', 'sent_finance_date'],
+        ['signed_date', 'rfs_date'],
+        ['start_date', 'end_date'],
         ['hr'],
-        ['end_user','remarks'],
-        ['description',  'status'],
-        ['severity', 'category'],
+        ['region', 'blank'],
+        ['invoice_no', 'contract_no'],
+        ['cost_center', 'expense_code'],
         ['hr'],
-        ['date_expected', 'date_team_task'],
-        ['blank', 'date_close'],
+        ['revenue_amount', 'invoice_amount'],
+        ['opex_amount', 'capex_amount'],
+        ['description', 'remarks']
     ]
 
-    contractor_id = uforms.EnhancedChoiceField(label='Contractor:')
+    contractor_id = uforms.EnhancedChoiceField(label='Contractor Name')
+    task_id = uforms.EnhancedChoiceField(label='Task No')
 
-    description = uforms.EnhancedTextField()
+    region = uforms.EnhancedCharField()
+    invoice_no = uforms.EnhancedCharField()
     contract_no = uforms.EnhancedCharField()
-    end_user = uforms.EnhancedCharField()
+    revenue_amount = uforms.EnhancedDecimalField()
+    opex_amount = uforms.EnhancedDecimalField()
+    capex_amount = uforms.EnhancedDecimalField()
+    invoice_amount = uforms.EnhancedDecimalField()
+    invoice_date = uforms.EnhancedDateField()
+    invoice_cert_date = uforms.EnhancedDateField()
+    received_date = uforms.EnhancedDateField()
+    signed_date = uforms.EnhancedDateField()
+    start_date = uforms.EnhancedDateField()
+    end_date = uforms.EnhancedDateField()
+    rfs_date = uforms.EnhancedDateField()
+    sent_finance_date = uforms.EnhancedDateField()
+    cost_center = uforms.EnhancedCharField()
+    expense_code = uforms.EnhancedCharField()
     remarks = uforms.EnhancedTextField()
-    date_expected = uforms.EnhancedDateField(label='Expected Date')
-    date_team_task = uforms.EnhancedDateField(label='Task Start Date')
-    date_close = uforms.EnhancedDateField(label='Task Close Date')
-
-    user = uforms.EnhancedMultipleChoiceField(label="Person/s In Charge")
+    description = uforms.EnhancedTextField()
+    proj_no = uforms.EnhancedCharField()
 
 class TaskForm(uforms.EnhancedForm):
     model_choices = {

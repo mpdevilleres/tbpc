@@ -13,3 +13,7 @@ ADD py_pkg /web/py_pkg
 #RUN pip install --upgrade pip
 #RUN pip install --no-index --find-links="/web/py_pkg" numpy
 RUN pip install --no-index --find-links="/web/py_pkg" -r /web/requirements.txt
+
+#RUN echo deb http://packages.linuxmint.com debian import >> /etc/apt/sources.list
+#RUN apt-get update
+#RUN apt-get --yes --force-yes install firefox

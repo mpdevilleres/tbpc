@@ -15,6 +15,11 @@ class Task(TimeStampedBaseModel):
     remarks = models.TextField(blank=True)
     category = models.CharField(max_length=100)
     status = models.CharField(max_length=100)
+    overrun = models.BooleanField(default=True)
+
+    @property
+    def choice_alias(self):
+        return (self.id, self.task_no)
 
 
 class Invoice(TimeStampedBaseModel):
