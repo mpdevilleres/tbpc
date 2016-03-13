@@ -8,7 +8,10 @@ from .forms import ContractorForm, ContractorContactForm
 from .tables_ajax import ContractorContactJson, ContractorJson
 
 # Create your views here.
+from utils.views import team_login_required
 
+
+@team_login_required
 @login_required
 def add_edit_contractor(request, pk=None):
     _form = ContractorForm
@@ -36,6 +39,7 @@ def add_edit_contractor(request, pk=None):
     }
     return render(request, 'default/add_form.html', context)
 
+@team_login_required
 @login_required
 def add_edit_contact(request, pk=None):
     _form = ContractorContactForm
@@ -64,6 +68,7 @@ def add_edit_contact(request, pk=None):
     }
     return render(request, 'default/add_form.html', context)
 
+@team_login_required
 @login_required
 def table_contact(request, pk=None):
 
@@ -79,6 +84,7 @@ def table_contact(request, pk=None):
     }
     return render(request, 'default/datatable.html', context)
 
+@team_login_required
 @login_required
 def table_contractor(request):
 

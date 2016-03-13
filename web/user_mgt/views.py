@@ -15,6 +15,7 @@ from user_mgt.tables_ajax import AttendanceJson, AttendanceSummaryJson
 #from utils.summarizer import summarize_attendance
 from utils.forms import populate_obj
 from utils.summarizer import summarize_attendance
+from utils.views import team_login_required
 
 
 def _login(request):
@@ -62,6 +63,7 @@ def _change_password(request):
     }
     return render(request, 'user_mgt/change_password.html', context=context)
 
+@team_login_required
 @login_required
 def table_attendance(request):
 
@@ -75,6 +77,7 @@ def table_attendance(request):
     }
     return render(request, 'default/datatable.html', context)
 
+@team_login_required
 @login_required
 def table_attendance_summary(request):
     if request.user.id not in [1]:
@@ -91,6 +94,7 @@ def table_attendance_summary(request):
     return render(request, 'default/datatable.html', context)
 
 # For attendance Logic
+@team_login_required
 @login_required
 def sign_in(request):
     today = dt.datetime.utcnow()
@@ -116,6 +120,7 @@ def sign_in(request):
     messages.info(request, "Time-in Failed, Already Signed IN")
     return redirect('team_mgt:index_dashboard')
 
+@team_login_required
 @login_required
 def sign_out(request):
     today = dt.datetime.utcnow()
@@ -147,6 +152,7 @@ def sign_out(request):
     messages.info(request, "Time-out Failed, You are already timed out or not time-in")
     return redirect('team_mgt:index_dashboard')
 
+@team_login_required
 @login_required
 def add_edit_attendance_reason(request, pk=None):
     _form = ReasonForm
@@ -177,6 +183,7 @@ def add_edit_attendance_reason(request, pk=None):
     }
     return render(request, 'default/add_form.html', context)
 
+@team_login_required
 @login_required
 def attendance_acceptance(request, pk=None, option=None):
     if option is None or pk is None or request.user.id not in [1]:
