@@ -1,12 +1,13 @@
 from django.core.urlresolvers import reverse
+from django.utils.decorators import method_decorator
 from django_datatables_view.base_datatable_view import BaseDatatableView
-from team_mgt.models import TeamTask, TeamTaskHistory, TeamTaskSummaryDashboard
+from team_mgt.models import TeamTask, TeamTaskSummaryDashboard
+from utils.decorators import team_decorators
 from utils.tools import capitalize
 
 from django.db.models import Q
 
-from .choices import *
-
+@method_decorator(team_decorators, name='dispatch')
 class TeamTaskJson(BaseDatatableView):
     # The model we're going to show
     model = TeamTask
@@ -80,6 +81,8 @@ class TeamTaskJson(BaseDatatableView):
             qs = qs.filter(q)
         return qs
 
+
+@method_decorator(team_decorators, name='dispatch')
 class TeamTaskSummaryJson(BaseDatatableView):
     # The model we're going to show
     model = TeamTaskSummaryDashboard

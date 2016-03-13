@@ -1,9 +1,11 @@
 from django.core.urlresolvers import reverse
+from django.utils.decorators import method_decorator
 from django_datatables_view.base_datatable_view import BaseDatatableView
-from user_mgt.models import Attendance, AttendanceSummary
-from utils.tools import capitalize
+from user_mgt.models import AttendanceSummary
+from utils.decorators import team_decorators
 import datetime as dt
 
+@method_decorator(team_decorators, name='dispatch')
 class AttendanceJson(BaseDatatableView):
     # The model we're going to show
     model = Attendance
@@ -58,7 +60,7 @@ from django_datatables_view.base_datatable_view import BaseDatatableView
 from user_mgt.models import Attendance
 from utils.tools import capitalize
 
-
+@method_decorator(team_decorators, name='dispatch')
 class AttendanceSummaryJson(BaseDatatableView):
     # The model we're going to show
     model = AttendanceSummary
