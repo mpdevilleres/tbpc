@@ -7,11 +7,12 @@ from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
 
+from budget_mgt.forms import InvoiceForm, TaskForm
 from contract_mgt.models import Contractor
 from utils.summarizer import summarize_invoice
 from utils.tools import capitalize
-from utils.decorators import team_decorators, login_required
-from .forms import InvoiceForm, TaskForm
+from utils.decorators import team_decorators
+
 from .models import Invoice, Task
 from .tables_ajax import TaskJson, InvoiceJson
 
@@ -186,40 +187,3 @@ class TableInvoiceView(View):
             'add_record_link': self.add_record_link,
         }
         return render(request, self.template_name, context)
-
-
-#
-# def invoices_summary(record_id):
-#
-#     record = Task.query.filter(Task.id==record_id).first()
-#     (data, total) = table_invoices_summary_(record_id)
-#
-#     _field_arrangement = [
-#         'id',
-#         'contractor_name',
-#         'invoice_no',
-#         'contract_no',
-#         'region',
-#         'invoice_cert_date',
-#         'amount',
-#     ]
-#     _field_dictionary = key_label(_field_arrangement)
-#
-#     _template = 'budget_mgt/invoices_summary.html'
-#
-#     meta = {'task_no': record.task_no,
-#             'commitment_value': record.commitment_value,
-#             'actual_total': total,
-#             'overrun': True if total > record.commitment_value else False
-#             }
-#
-#     return render_template(_template,
-#                             data=data,
-#                             columns=_field_dictionary,
-#                             keys=_field_arrangement,
-#                             meta = meta
-# #                           add_link_func=_add_link_func_name,
-# #                           timeline_link_func=_timeline_link_func_name,
-# #                           table_title = _table_title
-#                            )
-#

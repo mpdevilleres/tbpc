@@ -1,11 +1,16 @@
 from django.core.urlresolvers import reverse
+from django.db.models import Q
+from django.utils.decorators import method_decorator
+
 from django_datatables_view.base_datatable_view import BaseDatatableView
+
+from utils.decorators import team_decorators
 from utils.tools import capitalize
 
 from .models import Task, Invoice
 
-from django.db.models import Q
 
+@method_decorator(team_decorators, name='dispatch')
 class TaskJson(BaseDatatableView):
     # The model we're going to show
     model = Task
@@ -86,7 +91,7 @@ class TaskJson(BaseDatatableView):
             qs = qs.filter(q)
         return qs
 
-
+@method_decorator(team_decorators, name='dispatch')
 class InvoiceJson(BaseDatatableView):
     # The model we're going to show
     model = Invoice

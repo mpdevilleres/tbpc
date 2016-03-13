@@ -1,9 +1,7 @@
-from django import forms
-from user_mgt.models import Employee
+from contract_mgt.models import Contractor
 
 import utils.forms as uforms
 
-from contract_mgt.models import Contractor
 from .models import Task
 
 

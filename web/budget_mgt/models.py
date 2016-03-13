@@ -1,8 +1,8 @@
-from django.db import models
+from contract_mgt.models import Contractor
 
 from decimal import Decimal
+from django.db import models
 
-from contract_mgt.models import Contractor
 from utils.models import TimeStampedBaseModel
 
 
