@@ -8,7 +8,7 @@ from .forms import ContractorForm, ContractorContactForm
 from .tables_ajax import ContractorContactJson, ContractorJson
 
 # Create your views here.
-from utils.views import team_login_required
+from utils.decorators import team_login_required
 
 
 @team_login_required

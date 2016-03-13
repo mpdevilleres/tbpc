@@ -25,6 +25,10 @@ def return_item(l, i):
     except:
         return None
 
+@register.filter('getattr')
+def get_attr(obj, val):
+    return getattr(obj, val)
+
 @register.filter('return_list')
 def return_list(l, i):
     try:

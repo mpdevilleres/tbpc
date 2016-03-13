@@ -22,7 +22,7 @@ from .tables_ajax import TeamTaskJson, TeamTaskSummaryJson
 # Create your views here.
 from .models import TeamTask, TeamTaskHistory, TeamTaskAttachment
 from utils.tools import group_sort_to_list
-from utils.views import team_login_required
+from utils.decorators import team_login_required
 
 @team_login_required
 @login_required

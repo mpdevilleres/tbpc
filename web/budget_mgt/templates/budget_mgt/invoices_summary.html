@@ -1,0 +1,73 @@
+{% extends '_base.html' %}
+{% load static %}
+{% load custom_tags %}
+{% block page_style %}
+    <link rel="stylesheet" type="text/css" href="{% static 'theme/pages/css/invoice.min.css' %}"/>
+{% endblock page_style %}
+
+{% block content %}
+<div class="invoice">
+    <div class="row invoice-logo">
+        <div class="col-xs-6 pull-right">
+            <p> {{ task_no }}
+            </p>
+        </div>
+    </div>
+    <hr/>
+
+    <div class="row">
+        <div class="col-xs-12">
+            <table class="table table-striped table-hover">
+            <thead>
+
+                <tr>
+                    {% for i in columns %}
+                      <th>
+                            {{ i }}
+                      </th>
+                    {% endfor %}
+
+                </tr>
+            </thead>
+            <tbody>
+            {% for element in data %}
+            <tr class="odd gradeX">
+                {% for i in keys %}
+                    <td>
+                        {{ element|return_item:i }}
+                    </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+            </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-8 invoice-block pull-right">
+            <ul class="list-unstyled amounts">
+                <li>
+                    <h3><strong>Commitment Value: </strong> {{ commitment_value }}</h3>
+                </li>
+                <li>
+                    <h3><strong>Grand Total:</strong> {{ actual_total }} </h3>
+                </li>
+                <li>
+                    <strong>Overrun:</strong>
+                        {% if overrun == True %}
+                            <span class="label label-danger"> {{ overrun }}</span>
+                        {% else %}
+                            <span class="label label-success"> {{ overrun }}</span>
+                        {% endif %}
+                </li>
+
+            </ul>
+            <br/>
+            <a class="btn btn-lg blue hidden-print margin-bottom-5" onclick="javascript:window.print();"> Print
+                <i class="fa fa-print"></i>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+

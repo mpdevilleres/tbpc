@@ -15,7 +15,7 @@ from user_mgt.tables_ajax import AttendanceJson, AttendanceSummaryJson
 #from utils.summarizer import summarize_attendance
 from utils.forms import populate_obj
 from utils.summarizer import summarize_attendance
-from utils.views import team_login_required
+from utils.decorators import team_login_required
 
 
 def _login(request):
