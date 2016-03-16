@@ -1,0 +1,39 @@
+{% extends "_base.html" %}
+{% load custom_tags %}
+{% block page_style %}
+{% endblock page_style %}
+
+{% block page_plugins %}
+{% endblock page_plugins %}
+
+{% block page_scripts %}
+{% endblock page_scripts %}
+
+{% block content %}
+<!-- BEGIN ROW -->
+<h3 class="page-title">
+    {% if section_name == None %}
+    {% else %}
+    {{ section_name }}
+    {%endif%}
+</h3>
+<br/>
+    {% for id, name in data %}
+        <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+            <a class="more" href="{{ url }}{{ id }}">
+                <div class="dashboard-stat blue">
+                    <div class="visual">
+                        <i class="fa fa-comments"></i>
+                    </div>
+                    <div class="details">
+                        <div class="number">
+                            <span>{{ name }}</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    {% endfor %}
+<!-- END ROW -->
+
+{% endblock content %}

@@ -1,0 +1,191 @@
+{% extends "base/_add-form-wizard.html" %}
+{% block page_form %}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet box green" id="form_wizard_1">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class=" icon-layers font-white"></i>
+                    <span class="caption-subject font-white  uppercase"> Form Wizard -
+                        <span class="step-title"> Step 1 of 3 </span>
+                    </span>
+                </div>
+            </div>
+            <div class="portlet-body form">
+                <form class="form-horizontal" method="POST" enctype="multipart/form-data" id="submit_form">
+                    <div class="form-wizard">
+                        {{ form.hidden_tag() }}
+                        <div class="form-body">
+                            <ul class="nav nav-pills nav-justified steps">
+                                <li>
+                                    <a href="#tab1" data-toggle="tab" class="step">
+                                        <span class="number"> 1 </span>
+                                        <span class="desc">
+                                            <i class="fa fa-check"></i> Capital Expenditure Score</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#tab2" data-toggle="tab" class="step">
+                                        <span class="number"> 2 </span>
+                                        <span class="desc">
+                                            <i class="fa fa-check"></i> Operational Expenditure Score</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#tab3" data-toggle="tab" class="step active">
+                                        <span class="number"> 3 </span>
+                                        <span class="desc">
+                                            <i class="fa fa-check"></i> Initiative Score </span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#tab4" data-toggle="tab" class="step">
+                                        <span class="number"> 4 </span>
+                                        <span class="desc">
+                                            <i class="fa fa-check"></i> Confirm </span>
+                                    </a>
+                                </li>
+                            </ul>
+                            <div id="bar" class="progress progress-striped" role="progressbar">
+                                <div class="progress-bar progress-bar-success"> </div>
+                            </div>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="tab1">
+                                    <h3 class="block">Provide CAPEX Scores</h3>
+                                        {% for i in form_seq_capex %}
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <div class="form-group">
+                                                        <div class="control-label col-md-4">
+                                                            {{form[i].name|serial_scorecard}}
+                                                        </div>
+                                                        {{ form[i].label(class="control-label col-md-2") }}
+                                                        <div class="col-md-1">
+                                                            {{ form[i](class="form-control", placeholder=form[i].description) }}
+                                                            <span class="text-danger help-block">
+                                                                {{ form[i].errors[0] }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                </div>
+                                <div class="tab-pane" id="tab2">
+                                    <h3 class="block">Provide OPEX Scores</h3>
+                                        {% for i in form_seq_opex %}
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <div class="form-group">
+                                                        <div class="control-label col-md-4">
+                                                            {{form[i].name|serial_scorecard}}
+                                                        </div>
+                                                        {{ form[i].label(class="control-label col-md-2") }}
+                                                        <div class="col-md-1">
+                                                            {{ form[i](class="form-control", placeholder=form[i].description) }}
+                                                            <span class="text-danger help-block">
+                                                                {{ form[i].errors[0] }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                </div>
+                                <div class="tab-pane" id="tab3">
+                                    <h3 class="block">Provide Initiative Scores</h3>
+                                        {% for i in form_seq_initiative %}
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <div class="form-group">
+                                                        <div class="control-label col-md-4">
+                                                            {{form[i].name|serial_scorecard}}
+                                                        </div>
+                                                        {{ form[i].label(class="control-label col-md-2") }}
+                                                        <div class="col-md-1">
+                                                            {{ form[i](class="form-control", placeholder=form[i].description) }}
+                                                            <span class="text-danger help-block">
+                                                                {{ form[i].errors[0] }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                </div>
+                                <div class="tab-pane" id="tab4">
+                                    <h3 class="block">Confirm Details</h3>
+                                    <h4 class="form-section">Capital Expenditure Score</h4>
+                                        {% for i in form_seq_capex %}
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <div class="form-group">
+                                                        <div class="control-label col-md-4">
+                                                            {{form[i].name|serial_scorecard}}
+                                                        </div>
+                                                        {{ form[i].label(class="control-label col-md-2") }}
+                                                        <div class="col-md-1">
+                                                            <p class="form-control-static font-red" data-display="{{form[i].name}}"> </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    <h4 class="form-section">Operational Expenditure Score</h4>
+                                        {% for i in form_seq_opex %}
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <div class="form-group">
+                                                        <div class="control-label col-md-4">
+                                                            {{form[i].name|serial_scorecard}}
+                                                        </div>
+                                                        {{ form[i].label(class="control-label col-md-2") }}
+                                                        <div class="col-md-1">
+                                                            <p class="form-control-static font-red" data-display="{{form[i].name}}"> </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    <h4 class="form-section">Initiative Score</h4>
+                                        {% for i in form_seq_initiative %}
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <div class="form-group">
+                                                        <div class="control-label col-md-4">
+                                                            {{form[i].name|serial_scorecard}}
+                                                        </div>
+                                                        {{ form[i].label(class="control-label col-md-2") }}
+                                                        <div class="col-md-1">
+                                                            <p class="form-control-static font-red" data-display="{{form[i].name}}"> </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <div class="row">
+                                <div class="col-md-offset-3 col-md-9">
+                                    <a href="javascript:;" class="btn default button-previous">
+                                        <i class="fa fa-angle-left"></i> Back </a>
+                                    <a href="javascript:;" class="btn btn-outline green button-next"> Continue
+                                        <i class="fa fa-angle-right"></i>
+                                    </a>
+                                    <button href="javascript:;" class="btn green button-submit"> Submit
+                                        <i class="fa fa-check"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock page_form %}

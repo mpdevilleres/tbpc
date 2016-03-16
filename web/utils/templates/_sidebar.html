@@ -161,10 +161,10 @@
                         </a>
                         <ul class="sub-menu">
                             <li class="nav-item ">
-                                <a href="#" class="nav-link "> Add Record </a>
+                                <a href="{% url 'section_kpi_mgt:add_specification' %}" class="nav-link "> Add Record </a>
                             </li>
                             <li class="nav-item ">
-                                <a href="#" class="nav-link "> View Records </a>
+                                <a href="{% url 'section_kpi_mgt:table_specification' %}" class="nav-link "> View Records </a>
                             </li>
                         </ul>
                     </li>
@@ -175,7 +175,7 @@
                         </a>
                         <ul class="sub-menu">
                             <li class="nav-item ">
-                                <a href="#" class="nav-link "> Add/View Record </a>
+                                <a href="{% url 'section_kpi_mgt:select_add_kpi' %}" class="nav-link "> Add/View Record </a>
                             </li>
                         </ul>
                     </li>
@@ -201,6 +201,11 @@
                     <li class="nav-item  ">
                         <a href="{% url 'team_mgt:summary_dashboard' %}" class="nav-link ">
                             <span class="title">Team Task Report</span>
+                        </a>
+                    </li>
+                    <li class="nav-item  ">
+                        <a href="{% url 'section_kpi_mgt:dashboard_kpi_overall' %}" class="nav-link ">
+                            <span class="title">Section KPI Report</span>
                         </a>
                     </li>
                 </ul>

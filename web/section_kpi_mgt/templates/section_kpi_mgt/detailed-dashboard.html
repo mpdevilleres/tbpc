@@ -1,0 +1,371 @@
+{% extends "_base_no_sidebar.html" %}
+{% load static %}
+{% load custom_tags %}
+{% block page_plugin_style %}
+<link href="{% static 'theme/global/plugins/font-awesome/css/font-awesome.min.css' %}" rel="stylesheet" type="text/css" />
+<link href="{% static 'theme/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css' %}" rel="stylesheet" type="text/css" />
+<link href="{% static 'theme/global/plugins/select2/css/select2.min.css' %}" rel="stylesheet" type="text/css" />
+<link href="{% static 'theme/global/plugins/select2/css/select2-bootstrap.min.css' %}" rel="stylesheet" type="text/css" />
+{% endblock %}
+
+{% block page_style %}
+<link href="{% static 'theme/global/plugins/datatables/datatables.min.css' %}" rel="stylesheet" type="text/css" />
+<link href="{% static 'theme/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.css' %}" rel="stylesheet" type="text/css" />
+<link href="{% static 'theme/apps/css/todo-2.min.css' %}" rel="stylesheet" type="text/css" />
+{% endblock %}
+
+{% block page_plugins %}
+<script src="{% static 'theme/global/plugins/moment.min.js' %}"></script>
+<script src="{% static 'theme/global/plugins/bootstrap-daterangepicker/daterangepicker.min.js' %}"></script>
+<script src="{% static 'theme/global/plugins/morris/morris.min.js' %}"></script>
+<script src="{% static 'theme/global/plugins/morris/raphael-min.js' %}"></script>
+<script src="{% static 'theme/global/plugins/counterup/jquery.waypoints.min.js' %}"></script>
+<script src="{% static 'theme/global/plugins/counterup/jquery.counterup.min.js' %}"></script>
+<script src="{% static 'theme/global/plugins/amcharts/amcharts/amcharts.js' %}"></script>
+<script src="{% static 'theme/global/plugins/amcharts/amcharts/serial.js' %}"></script>
+<script src="{% static 'theme/global/plugins/amcharts/amcharts/pie.js' %}"></script>
+<script src="{% static 'theme/global/plugins/amcharts/amcharts/radar.js' %}"></script>
+<script src="{% static 'theme/global/plugins/amcharts/amcharts/themes/light.js' %}"></script>
+<script src="{% static 'theme/global/plugins/amcharts/amcharts/themes/patterns.js' %}"></script>
+<script src="{% static 'theme/global/plugins/amcharts/amcharts/themes/chalk.js' %}"></script>
+<script src="{% static 'theme/global/plugins/amcharts/ammap/ammap.js' %}"></script>
+<script src="{% static 'theme/global/plugins/amcharts/ammap/maps/js/worldLow.js' %}"></script>
+<script src="{% static 'theme/global/plugins/amcharts/amstockcharts/amstock.js' %}"></script>
+<script src="{% static 'theme/global/plugins/fullcalendar/fullcalendar.min.js' %}"></script>
+<script src="{% static 'theme/global/plugins/flot/jquery.flot.min.js' %}"></script>
+<script src="{% static 'theme/global/plugins/flot/jquery.flot.resize.min.js' %}"></script>
+<script src="{% static 'theme/global/plugins/flot/jquery.flot.categories.min.js' %}"></script>
+<script src="{% static 'theme/global/plugins/jquery-easypiechart/jquery.easypiechart.min.js' %}"></script>
+<script src="{% static 'theme/global/plugins/jquery.sparkline.min.js' %}"></script>
+<script src="{% static 'theme/global/plugins/jqvmap/jqvmap/jquery.vmap.js' %}"></script>
+<script src="{% static 'theme/global/plugins/jqvmap/jqvmap/maps/jquery.vmap.russia.js' %}"></script>
+<script src="{% static 'theme/global/plugins/jqvmap/jqvmap/maps/jquery.vmap.world.js' %}"></script>
+<script src="{% static 'theme/global/plugins/jqvmap/jqvmap/maps/jquery.vmap.opex.js' %}"></script>
+<script src="{% static 'theme/global/plugins/jqvmap/jqvmap/maps/jquery.vmap.germany.js' %}"></script>
+<script src="{% static 'theme/global/plugins/jqvmap/jqvmap/maps/jquery.vmap.usa.js' %}"></script>
+<script src="{% static 'theme/global/plugins/jqvmap/jqvmap/data/jquery.vmap.sampledata.js' %}"></script>
+
+{% endblock %}
+
+
+{% block page_scripts %}
+<script>
+var Dashboard = function() {
+
+    return {
+
+        initAmChart1: function() {
+            if (typeof(AmCharts) === 'undefined' || $('#dashboard_amchart_1').size() === 0) {
+                return;
+            }
+
+            var dataChart ={{data|return_item:'capex'|safe}};
+            var chart = AmCharts.makeChart("dashboard_amchart_1", {
+                "type": "serial",
+                 "theme": "light",
+                "categoryField": "class",
+                "rotate": false,
+                "startDuration": 1,
+                "categoryAxis": {
+                    "gridPosition": "start",
+                    "position": "left"
+                },
+                "legend": {
+                    "horizontalGap": 10,
+                    "useGraphSettings": true,
+                    "markerSize": 10
+                },
+                "trendLines": [],
+                "graphs": [
+                    {
+                        "balloonText": "Target:[[value]]",
+                        "fillAlphas": 0.8,
+                        "id": "AmGraph-1",
+                        "labelText": "[[value]]",
+                        "lineAlpha": 0.2,
+                        "title": "Target",
+                        "type": "column",
+                        "valueField": "target"
+                    },
+                    {
+                        "balloonText": "Actual:[[value]]",
+                        "fillAlphas": 0.8,
+                        "id": "AmGraph-2",
+                        "lineAlpha": 0.2,
+                        "labelText": "[[value]]",
+                        "title": "Actual",
+                        "type": "column",
+                        "valueField": "actual"
+                    }
+                ],
+                "guides": [],
+                "valueAxes": [
+                    {
+                        "id": "ValueAxis-1",
+                        "position": "top",
+                        "axisAlpha": 0
+                    }
+                ],
+                "allLabels": [],
+                "balloon": {},
+                "titles": [],
+                "dataProvider": dataChart,
+                "export": {
+                    "enabled": true
+                },
+                "numberFormatter": {
+                    "precision": 2,
+                    "decimalSeparator": ".",
+                    "thousandsSeparator": ","
+                }
+            });
+        },
+
+        initAmChart2: function() {
+            if (typeof(AmCharts) === 'undefined' || $('#dashboard_amchart_2').size() === 0) {
+                return;
+            }
+
+            var dataChart ={{data|return_item:'opex'|safe}};
+            var chart = AmCharts.makeChart("dashboard_amchart_2", {
+                "type": "serial",
+                 "theme": "light",
+                "categoryField": "class",
+                "rotate": false,
+                "startDuration": 1,
+                "categoryAxis": {
+                    "gridPosition": "start",
+                    "position": "left"
+                },
+                "legend": {
+                    "horizontalGap": 10,
+                    "useGraphSettings": true,
+                    "markerSize": 10
+                },
+                "trendLines": [],
+                "graphs": [
+                    {
+                        "balloonText": "Target:[[value]]",
+                        "fillAlphas": 0.8,
+                        "id": "AmGraph-1",
+                        "labelText": "[[value]]",
+                        "lineAlpha": 0.2,
+                        "title": "Target",
+                        "type": "column",
+                        "valueField": "target"
+                    },
+                    {
+                        "balloonText": "Actual:[[value]]",
+                        "fillAlphas": 0.8,
+                        "id": "AmGraph-2",
+                        "lineAlpha": 0.2,
+                        "labelText": "[[value]]",
+                        "title": "Actual",
+                        "type": "column",
+                        "valueField": "actual"
+                    }
+                ],
+                "guides": [],
+                "valueAxes": [
+                    {
+                        "id": "ValueAxis-1",
+                        "position": "top",
+                        "axisAlpha": 0
+                    }
+                ],
+                "allLabels": [],
+                "balloon": {},
+                "titles": [],
+                "dataProvider": dataChart,
+                "export": {
+                    "enabled": true
+                },
+                "numberFormatter": {
+                    "precision": 2,
+                    "decimalSeparator": ".",
+                    "thousandsSeparator": ","
+                }
+
+            });
+        },
+
+
+        initAmChart3: function() {
+            if (typeof(AmCharts) === 'undefined' || $('#dashboard_amchart_2').size() === 0) {
+                return;
+            }
+
+            var dataChart ={{ data|return_item:'initiatives' | safe }};
+            var chart = AmCharts.makeChart("dashboard_amchart_3", {
+                "type": "serial",
+                 "theme": "light",
+                "categoryField": "class",
+                "rotate": false,
+                "startDuration": 1,
+                "categoryAxis": {
+                    "gridPosition": "start",
+                    "position": "left"
+                },
+                "legend": {
+                    "horizontalGap": 10,
+                    "useGraphSettings": true,
+                    "markerSize": 10
+                },
+                "trendLines": [],
+                "graphs": [
+                    {
+                        "balloonText": "Target:[[value]]",
+                        "fillAlphas": 0.8,
+                        "id": "AmGraph-1",
+                        "labelText": "[[value]]",
+                        "lineAlpha": 0.2,
+                        "title": "Target",
+                        "type": "column",
+                        "valueField": "target"
+                    },
+                    {
+                        "balloonText": "Actual:[[value]]",
+                        "fillAlphas": 0.8,
+                        "id": "AmGraph-2",
+                        "lineAlpha": 0.2,
+                        "labelText": "[[value]]",
+                        "title": "Actual",
+                        "type": "column",
+                        "valueField": "actual"
+                    }
+                ],
+                "guides": [],
+                "valueAxes": [
+                    {
+                        "id": "ValueAxis-1",
+                        "position": "top",
+                        "axisAlpha": 0
+                    }
+                ],
+                "allLabels": [],
+                "balloon": {},
+                "titles": [],
+                "dataProvider": dataChart,
+                "export": {
+                    "enabled": true
+                },
+                "numberFormatter": {
+                    "precision": 2,
+                    "decimalSeparator": ".",
+                    "thousandsSeparator": ","
+                }
+
+            });
+        },
+
+        init: function() {
+            this.initAmChart1();
+            this.initAmChart2();
+            this.initAmChart3();
+
+        }
+    };
+
+}();
+
+if (App.isAngularJsApp() === false) {
+    jQuery(document).ready(function() {
+        Dashboard.init(); // init metronic core componets
+    });
+}
+</script>
+{% endblock page_scripts %}
+
+{% block content %}
+<!-- BEGIN ROW -->
+<div class="row">
+    <div class="col-md-12 col-sm-12">
+        <div class="portlet box  purple-wisteria tasks-widget">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-check"></i>CAPEX
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="task-content">
+                    <div class="row">
+                        <div class="col-md-12 col-sm-12">
+                            <div class="portlet light bordered">
+                                <div class="portlet-title">
+                                    <div class="caption font-green">
+                                        <span class="caption-subject bold uppercase">General Stats</span>
+                                    </div>
+                                </div>
+                                <div class="portlet-body">
+                                    <div id="dashboard_amchart_1" class="CSSAnimationChart"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12 col-sm-12">
+        <div class="portlet box  purple-wisteria tasks-widget">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-check"></i>OPEX
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="task-content">
+                    <div class="row">
+                        <div class="col-md-12 col-sm-12">
+                            <div class="portlet light bordered">
+                                <div class="portlet-title">
+                                    <div class="caption font-green">
+                                        <span class="caption-subject bold uppercase">General Stats</span>
+                                    </div>
+                                </div>
+                                <div class="portlet-body">
+                                    <div id="dashboard_amchart_2" class="CSSAnimationChart"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12 col-sm-12">
+        <div class="portlet box  purple-wisteria tasks-widget">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-check"></i>INITIATIVE
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="task-content">
+                    <div class="row">
+                        <div class="col-md-12 col-sm-12">
+                            <div class="portlet light bordered">
+                                <div class="portlet-title">
+                                    <div class="caption font-green">
+                                        <span class="caption-subject bold uppercase">General Stats</span>
+                                    </div>
+                                </div>
+                                <div class="portlet-body">
+                                    <div id="dashboard_amchart_3" class="CSSAnimationChart"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- END ROW -->
+{% endblock %}
+

@@ -40,3 +40,7 @@ def return_list(l, i):
 def is_signed_in(user):
     attendance = user.attendance_set.order_by('-pk').first()
     return attendance.is_signed_in()
+
+@register.filter('is_employee')
+def is_employee(user):
+    return user.employee.is_employee

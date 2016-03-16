@@ -1,5 +1,7 @@
 from collections import OrderedDict
 from itertools import chain
+
+import os
 from django import forms
 import datetime as dt
 from project import settings
@@ -65,11 +67,24 @@ class EnhancedDecimalField(forms.DecimalField):
 
 class EnhancedFileField(forms.FileField):
     def __init__(self, placeholder='', *args, **kwargs):
+        ext_whitelist = kwargs.pop("ext_whitelist", ['.pdf'])
+        self.ext_whitelist = [i.lower() for i in ext_whitelist]
+
         self.widget = forms.ClearableFileInput(
             attrs={'multiple': True,
                    'placeholder': '%s' % placeholder,
                    'onChange': "makeFileList();"})
         super(EnhancedFileField, self).__init__(*args, **kwargs)
+
+    def clean(self, *args, **kwargs):
+        data = super(EnhancedFileField, self).clean(*args, **kwargs)
+        if data:
+            filename = data.name
+            ext = os.path.splitext(filename)[1]
+            ext = ext.lower()
+            if ext not in self.ext_whitelist:
+                raise forms.ValidationError("Filetype not allowed! Filetypes allowed: " + ', '.join(self.ext_whitelist))
+        return data
 
 class EnhancedMultipleChoiceField(forms.MultipleChoiceField):
     def __init__(self, placeholder='', *args, **kwargs):

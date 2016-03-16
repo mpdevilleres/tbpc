@@ -19,9 +19,11 @@ from django.contrib import admin
 urlpatterns = [
 #    url(r'^polls/', include('polls.urls')),
     url(r'^', include('main.urls')),
-    url(r'^budget_mgt/', include('budget_mgt.urls')),
-    url(r'^contract_mgt/', include('contract_mgt.urls')),
-    url(r'^user_mgt/', include('user_mgt.urls')),
-    url(r'^team_mgt/', include('team_mgt.urls')),
+    url(r'^budget-mgt/', include('budget_mgt.urls')),
+    url(r'^contract-mgt/', include('contract_mgt.urls')),
+    url(r'^user-mgt/', include('user_mgt.urls')),
+    url(r'^team-mgt/', include('team_mgt.urls')),
+    url(r'^section-kpi-mgt/', include('section_kpi_mgt.urls')),
+
     url(r'^admin/', admin.site.urls),
 ]

@@ -1,0 +1,238 @@
+{% extends "_base.html" %}
+{% load static %}
+{% block page_plugin_style %}
+<link rel="stylesheet" type="text/css" href="{% static 'theme/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'theme/global/plugins/select2/css/select2.min.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'theme/global/plugins/select2/css/select2-bootstrap.min.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'theme/global/plugins/amcharts/amcharts/plugins/export/export.css' %}"/>
+{% endblock %}
+
+{% block page_style %}
+<link href="{% static 'theme/global/plugins/datatables/datatables.min.css' %}" rel="stylesheet" type="text/css" />
+<link href="{% static 'theme/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.css' %}" rel="stylesheet" type="text/css" />
+<link rel="stylesheet" type="text/css" href="{% static 'theme/apps/css/todo-2.min.css' %}"/>
+{% endblock %}
+
+{% block page_plugins %}
+<script src="{% static 'theme/global/plugins/moment.min.js' %}"></script>
+<script src="{% static 'theme/global/plugins/bootstrap-daterangepicker/daterangepicker.min.js' %}"></script>
+<script src="{% static 'theme/global/plugins/morris/morris.min.js' %}"></script>
+<script src="{% static 'theme/global/plugins/morris/raphael-min.js' %}"></script>
+<script src="{% static 'theme/global/plugins/counterup/jquery.waypoints.min.js' %}"></script>
+<script src="{% static 'theme/global/plugins/counterup/jquery.counterup.min.js' %}"></script>
+<script src="{% static 'theme/global/plugins/amcharts/amcharts/amcharts.js' %}"></script>
+<script src="{% static 'theme/global/plugins/amcharts/amcharts/serial.js' %}"></script>
+<script src="{% static 'theme/global/plugins/amcharts/amcharts/pie.js' %}"></script>
+<script src="{% static 'theme/global/plugins/amcharts/amcharts/radar.js' %}"></script>
+<script src="{% static 'theme/global/plugins/amcharts/amcharts/themes/light.js' %}"></script>
+<script src="{% static 'theme/global/plugins/amcharts/amcharts/themes/patterns.js' %}"></script>
+<script src="{% static 'theme/global/plugins/amcharts/amcharts/themes/chalk.js' %}"></script>
+<script src="{% static 'theme/global/plugins/amcharts/amcharts/plugins/export/export.min.js' %}"></script>
+<script src="{% static 'theme/global/plugins/amcharts/ammap/ammap.js' %}"></script>
+<script src="{% static 'theme/global/plugins/amcharts/ammap/maps/js/worldLow.js' %}"></script>
+<script src="{% static 'theme/global/plugins/amcharts/amstockcharts/amstock.js' %}"></script>
+<script src="{% static 'theme/global/plugins/fullcalendar/fullcalendar.min.js' %}"></script>
+<script src="{% static 'theme/global/plugins/flot/jquery.flot.min.js' %}"></script>
+<script src="{% static 'theme/global/plugins/flot/jquery.flot.resize.min.js' %}"></script>
+<script src="{% static 'theme/global/plugins/flot/jquery.flot.categories.min.js' %}"></script>
+<script src="{% static 'theme/global/plugins/jquery-easypiechart/jquery.easypiechart.min.js' %}"></script>
+<script src="{% static 'theme/global/plugins/jquery.sparkline.min.js' %}"></script>
+<script src="{% static 'theme/global/plugins/jqvmap/jqvmap/jquery.vmap.js' %}"></script>
+<script src="{% static 'theme/global/plugins/jqvmap/jqvmap/maps/jquery.vmap.russia.js' %}"></script>
+<script src="{% static 'theme/global/plugins/jqvmap/jqvmap/maps/jquery.vmap.world.js' %}"></script>
+<script src="{% static 'theme/global/plugins/jqvmap/jqvmap/maps/jquery.vmap.europe.js' %}"></script>
+<script src="{% static 'theme/global/plugins/jqvmap/jqvmap/maps/jquery.vmap.germany.js' %}"></script>
+<script src="{% static 'theme/global/plugins/jqvmap/jqvmap/maps/jquery.vmap.usa.js' %}"></script>
+<script src="{% static 'theme/global/plugins/jqvmap/jqvmap/data/jquery.vmap.sampledata.js' %}"></script>
+
+{% endblock %}
+
+
+{% block page_scripts %}
+<script>
+var Dashboard = function() {
+
+    return {
+
+        initAmChart1: function() {
+            if (typeof(AmCharts) === 'undefined' || $('#dashboard_amchart_1').size() === 0) {
+                return;
+            }
+
+            var chartData = {{ data|safe }};
+
+            var chart = AmCharts.makeChart("dashboard_amchart_1", {
+                "type": "serial",
+                "theme": "dark",
+                "legend": {
+                    "horizontalGap": 10,
+                    "useGraphSettings": true,
+                    "markerSize": 10
+                },
+                "dataProvider": chartData,
+
+                "valueAxes": [{
+                    "stackType": "regular",
+                    "axisAlpha": 0.3,
+                    "gridAlpha": 0,
+                    "position": "left",
+                    "inside": false,
+                    'maximum': 100,
+                    //'labelFrequency': 10,
+                    'gridCount' : 10
+                }],
+                "graphs": [{
+                    "balloonText": "<b>[[title]]</b><br><span style='font-size:14px'>[[category]]: <b>[[value]]</b></span>",
+                    "fillAlphas": 0.8,
+                    "labelText": "[[value]]",
+                    "lineAlpha": 0.3,
+                    "title": "Capex",
+                    "type": "column",
+                    "color": "#000000",
+                    "valueField": "capex"
+                }, {
+                    "balloonText": "<b>[[title]]</b><br><span style='font-size:14px'>[[category]]: <b>[[value]]</b></span>",
+                    "fillAlphas": 0.8,
+                    "labelText": "[[value]]",
+                    "lineAlpha": 0.3,
+                    "title": "Opex",
+                    "type": "column",
+                    "color": "#000000",
+                    "valueField": "opex"
+                }, {
+                    "balloonText": "<b>[[title]]</b><br><span style='font-size:14px'>[[category]]: <b>[[value]]</b></span>",
+                    "fillAlphas": 0.8,
+                    "labelText": "[[value]]",
+                    "lineAlpha": 0.3,
+                    "title": "Initiatives",
+                    "type": "column",
+                    "color": "#000000",
+                    "valueField": "initiatives"
+                }],
+                "categoryField": "section",
+                "categoryAxis": {
+                    "gridPosition": "start",
+                    "axisAlpha": 0,
+                    "gridAlpha": 0,
+                    "position": "left"
+                },
+                "export": {
+                    "enabled": true
+                 },
+                "numberFormatter": {
+                    "precision": 2,
+                    "decimalSeparator": ".",
+                    "thousandsSeparator": ","
+                }
+
+            });
+        },
+
+        initAmChart2: function() {
+            if (typeof(AmCharts) === 'undefined' || $('#dashboard_amchart_2').size() === 0) {
+                return;
+            }
+
+            var chartData = {{all_month|safe}};
+
+            var chart = AmCharts.makeChart("dashboard_amchart_2", {
+                "type": "serial",
+                "theme": "dark",
+                "legend": {
+                    "horizontalGap": 10,
+                    "useGraphSettings": true,
+                    "markerSize": 10
+                },
+                "dataProvider": chartData,
+
+                "valueAxes": [{
+                    "stackType": "regular",
+                    "axisAlpha": 0.3,
+                    "gridAlpha": 0,
+                    "position": "left",
+                    "inside": false,
+                    'maximum': 100,
+                    //'labelFrequency': 10,
+                    'gridCount' : 10
+                }],
+                "graphs": [{
+                    "balloonText": "<b>[[title]]</b><br><span style='font-size:14px'>[[category]]: <b>[[value]]</b></span>",
+                    "fillAlphas": 0.8,
+                    "labelText": "[[value]]",
+                    "lineAlpha": 0.3,
+                    "title": "Overall KPI",
+                    "type": "column",
+                    "color": "#000000",
+                    "valueField": "weighted_score"
+                }],
+                "categoryField": "date-grouping",
+                "categoryAxis": {
+                    "gridPosition": "start",
+                    "axisAlpha": 0,
+                    "gridAlpha": 0,
+                    "position": "left"
+                },
+                "export": {
+                    "enabled": true
+                 },
+                "numberFormatter": {
+                    "precision": 2,
+                    "decimalSeparator": ".",
+                    "thousandsSeparator": ","
+                }
+
+            });
+        },
+
+        init: function() {
+            this.initAmChart1();
+            this.initAmChart2();
+        }
+    };
+
+}();
+
+if (App.isAngularJsApp() === false) {
+    jQuery(document).ready(function() {
+        Dashboard.init(); // init metronic core componets
+    });
+}
+</script>
+{% endblock page_scripts %}
+
+{% block content %}
+<!-- BEGIN ROW -->
+
+<div class="row">
+    <div class="col-md-12 col-sm-12">
+        <div class="portlet light bordered">
+            <div class="portlet-title">
+                <div class="caption font-green">
+                    <span class="caption-subject bold uppercase">Overall KPI</span>
+                    <span class="caption-helper">current month</span>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div id="dashboard_amchart_1" class="CSSAnimationChart"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12 col-sm-12">
+        <div class="portlet light bordered">
+            <div class="portlet-title">
+                <div class="caption font-green">
+                    <span class="caption-subject bold uppercase">Overall KPI</span>
+                    <span class="caption-helper">whole engineering</span>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div id="dashboard_amchart_2" class="CSSAnimationChart"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- END ROW -->
+{% endblock %}
+

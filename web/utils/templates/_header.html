@@ -26,39 +26,45 @@
 			<ul class="nav navbar-nav pull-right">
 				<!-- BEGIN TODO DROPDOWN -->
 				<!-- DOC: Apply "dropdown-dark" class after below "dropdown-extended" to change the dropdown styte -->
-				<li class="dropdown dropdown-extended dropdown-tasks" id="header_task_bar">
-					<a data-target="#static" data-toggle="modal" class="dropdown-toggle">
-						<i class="icon-clock"></i>
+                {% if request.user|is_employee == True %}
 
-						{% if request.user|is_signed_in == True %}
-							<span class="badge badge-success"> Signed In </span>
-						{% else %}
-							<span class="badge badge-danger"> Signed Out </span>
-						{% endif %}
-					</a>
-					<div id="static" class="modal fade" tabindex="-1" data-backdrop="static" data-keyboard="false">
-						<div class="modal-body">
+                    <li class="dropdown dropdown-extended dropdown-tasks" id="header_task_bar">
+                        <a data-target="#static" data-toggle="modal" class="dropdown-toggle">
+                            <i class="icon-clock"></i>
+
                             {% if request.user|is_signed_in == True %}
-                                <p> You are about to Sign-Out for Today, would you like to proceed</p>
+                                <span class="badge badge-success"> Signed In </span>
                             {% else %}
-                                <p> Would you like to Sign-In for Today? </p>
-
+                                <span class="badge badge-danger"> Signed Out </span>
                             {% endif %}
 
-						</div>
-						<div class="modal-footer">
-							<button type="button" data-dismiss="modal" class="btn btn-outline dark">Cancel</button>
-                            {% if request.user|is_signed_in == True %}
-							    <a href="{% url 'user_mgt:sign_out' %}" class="btn green">Yes</a>
-                            {% else %}
-							    <a href="{% url 'user_mgt:sign_in' %}" class="btn green">Yes</a>
-                            {% endif %}
-						</div>
-					</div>
-					<ul class="dropdown-menu extended tasks">
+                        </a>
+                        <div id="static" class="modal fade" tabindex="-1" data-backdrop="static" data-keyboard="false">
+                            <div class="modal-body">
+                                {% if request.user|is_signed_in == True %}
+                                    <p> You are about to Sign-Out for Today, would you like to proceed</p>
+                                {% else %}
+                                    <p> Would you like to Sign-In for Today? </p>
 
-					</ul>
-				</li>
+                                {% endif %}
+
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" data-dismiss="modal" class="btn btn-outline dark">Cancel</button>
+                                {% if request.user|is_signed_in == True %}
+                                    <a href="{% url 'user_mgt:sign_out' %}" class="btn green">Yes</a>
+                                {% else %}
+                                    <a href="{% url 'user_mgt:sign_in' %}" class="btn green">Yes</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <ul class="dropdown-menu extended tasks">
+
+                        </ul>
+                    </li>
+
+                {% endif %}
+
 				<!-- END TODO DROPDOWN -->
 				<!-- BEGIN USER LOGIN DROPDOWN -->
 				<!-- DOC: Apply "dropdown-dark" class after below "dropdown-extended" to change the dropdown styte -->

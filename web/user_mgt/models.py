@@ -25,6 +25,10 @@ class Employee(TimeStampedBaseModel):
     def is_employee(self):
         return not self.section
 
+    @property
+    def is_section(self):
+        return self.section
+
 class Attendance(TimeStampedBaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 

@@ -1,0 +1,67 @@
+{% extends "_add-form.html" %}
+
+{% block page_form %}
+    <div class="portlet box green">
+        <div class="portlet-title">
+            <div class="caption">
+                {{ form_title }} Details
+            </div>
+            <div class="tools">
+                <a href="javascript:;" class="collapse">
+                </a>
+
+            </div>
+        </div>
+        <div class="portlet-body form">
+            <!-- BEGIN FORM-->
+            <form class="form-horizontal" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-body">
+                    <h3 class="form-section">
+                        Record Form
+                    </h3>
+
+                    {% for row in form_seq %}
+                        {% if row == 'hr' %}
+                            <hr class="style3"/>
+                        {% else %}
+
+                            <div class="row">
+                                {% for i in row %}
+                                    <div class="col-md-6">
+                                        {% if i == "_blank" %}
+                                        {% elif form[i].type == "DateField" %}
+                                            {{ mi.date_readonly_input(form[i]) }}
+                                        {% elif form[i].type == "SelectField" %}
+                                            {{ mi.select_input(form[i]) }}
+                                        {% elif form[i].type == "SelectMultipleField" %}
+                                            {{ mi.select_multi_input(form[i]) }}
+                                        {% else %}
+                                            {{ mi.general_input(form[i]) }}
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <div class="form-actions">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="row">
+                                <div class="col-md-offset-3 col-md-9">
+                                    <button type="submit" class="btn green">Submit</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <!-- END FORM-->
+        </div>
+    </div>
+{% endblock %}
+

@@ -4,4 +4,6 @@ from django.shortcuts import redirect
 
 @login_required
 def index(request):
-    return redirect('team_mgt:index_dashboard')
+    if request.user.employee.is_employee:
+        return redirect('team_mgt:index_dashboard')
+    return redirect('section_kpi_mgt:dashboard_kpi')
