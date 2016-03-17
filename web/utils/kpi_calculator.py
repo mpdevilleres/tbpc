@@ -43,6 +43,7 @@ class KpiCalculator(object):
             _weightage_category = dict()
             _weightage_class = dict()
             _target = dict()
+            _actual = dict()
             df = xl.parse(section)
             df_spec = df[['serial_no','Key Objectives','Weightage','Target Monthly','Points','Criteria']]
             df_overall = df[['Focus Area', 'Overall Weightage']]
@@ -73,6 +74,7 @@ class KpiCalculator(object):
                 _classes_description[group_name] = data.get_value(data.index[0],'Key Objectives')
                 _weightage_class[group_name] = data.get_value(data.index[0],'Weightage')
                 _target[group_name] = data.get_value(data.index[0],'Target Monthly')
+                _actual[group_name] = data.get_value(data.index[0],'Actual')
 
                 # Get Weightage per Category
                 df_overall = df_overall.dropna()
@@ -88,6 +90,7 @@ class KpiCalculator(object):
                 '_weightage_category' : _weightage_category,
                 '_weightage_class' : _weightage_class,
                 '_target' : _target,
+                '_actual': _actual,
                 '_categories' : self._categories
                 }
 
@@ -109,6 +112,10 @@ class KpiCalculator(object):
         OUTPUT
         '''
         eq_scores = {}
+
+        if self._raw_score is None:
+            self._raw_score = {}
+
         for key, raw in self._raw_score.items():
             #eq_scores[key] = 0
 
