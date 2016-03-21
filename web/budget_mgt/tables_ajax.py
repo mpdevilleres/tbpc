@@ -56,13 +56,21 @@ class TaskJson(BaseDatatableView):
         # We want to render user as a custom column
         if column == 'id':
             return '<a href="{0}{2}" class="btn default btn-xs red-stripe">Edit</a>' \
-                   '<a href="{0}{2}" class="btn default btn-xs green-stripe">View Invoices</a>' \
+                   '<a href="{1}{2}" class="btn default btn-xs green-stripe">View Invoices</a>' \
                 .format(
                     reverse('budget_mgt:add_edit_task'),
-                    '',
+                    reverse('budget_mgt:invoice_summary'),
                     row.id
             )
-        if column == 'overrun':
+        elif column == 'commitment_value':
+            val = getattr(row, column)
+            return '{:,.2f}'.format(val)
+
+        elif column == 'expenditure_actual':
+            val = getattr(row, column)
+            return '{:,.2f}'.format(val)
+
+        elif column == 'overrun':
             return '<span class="label label-{}"> {} </span>'.\
                 format(
                     'danger' if row.overrun else 'success',
@@ -111,7 +119,7 @@ class InvoiceJson(BaseDatatableView):
 
     # define the columns that will be returned
     columns = ['contractor.name', 'task.task_no', 'invoice_no', 'invoice_amount',
-               'remarks', 'id']
+               'invoiceworkflow__process', 'id']
 
     # Hide Columns
     hidden_columns = [ i for i, x in enumerate(columns) if x in
@@ -121,6 +129,7 @@ class InvoiceJson(BaseDatatableView):
     column_names = [x for x in capitalize(columns)]
     column_names[0] = 'Contractor Name'
     column_names[1] = 'Task Number'
+    column_names[-2] = 'Current Process'
     column_names[-1] = 'Option'
     # define column names that will be used in sorting
     # order is important and should be same as order of columns
@@ -138,11 +147,22 @@ class InvoiceJson(BaseDatatableView):
     def render_column(self, row, column):
         # We want to render user as a custom column
         if column == 'id':
-            return '<a href="{0}{1}" class="btn default btn-xs red-stripe">Edit</a>' \
+            return '<a href="{0}{2}" class="btn default btn-xs red-stripe">Edit</a>' \
+                   '<a href="{1}{2}" class="btn default btn-xs green-stripe">Logs</a>' \
                 .format(
                     reverse('budget_mgt:add_edit_invoice'),
+                    reverse('budget_mgt:invoice_history'),
                     row.id
             )
+        elif column == 'invoiceworkflow__process':
+            return ''
+
+        elif column == 'process_remarks':
+            return ''
+
+        elif column == 'invoice_amount':
+            val = getattr(row, column)
+            return '{:,.2f}'.format(val)
 
         else:
             return super(InvoiceJson, self).render_column(row, column)

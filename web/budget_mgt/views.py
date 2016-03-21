@@ -2,8 +2,9 @@
 
 # Create your views here.
 from django.contrib import messages
-from django.core.urlresolvers import reverse_lazy
+from django.core.urlresolvers import reverse_lazy, reverse
 from django.db.models import Sum
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
 
@@ -13,7 +14,7 @@ from utils.summarizer import summarize_invoice
 from utils.tools import capitalize
 from utils.decorators import team_decorators
 
-from .models import Invoice, Task
+from .models import Invoice, Task, InvoiceChangeLog
 from .tables_ajax import TaskJson, InvoiceJson
 
 from utils.forms import populate_obj
@@ -140,6 +141,38 @@ class InvoiceSummaryView(View):
             'commitment_value': task.commitment_value,
             'actual_total': actual_total,
             'overrun': overrun
+        }
+        return render(request, self.template_name, context)
+
+@method_decorator(team_decorators, name='dispatch')
+class InvoiceChangeLogView(View):
+    model = Invoice
+    template_name = 'budget_mgt/invoices_history.html'
+
+    def get(self, request, *args, **kwargs):
+        pk = kwargs.pop('pk', None)
+        invoice = self.model.objects.filter(pk=pk).first()
+
+        if invoice is None:
+            raise Http404()
+
+        history = invoice.invoicechangelog_set.order_by('pk')
+
+        if len(history) == 0:
+            update_by = None
+            last_id = None
+        else:
+            update_by = history.first().modified_by
+            last_id = invoice.invoicechangelog_set.order_by('-pk').first().pk
+        context = {
+            'invoice_no': invoice.invoice_no,
+            'task_no': invoice.task.task_no,
+            'contractor': invoice.contractor.name,
+            'update_by': update_by,
+            'history': history,
+            'pk': pk,
+            'last_id': last_id,
+            'edit_link': reverse('budget_mgt:add_edit_invoice')
         }
         return render(request, self.template_name, context)
 

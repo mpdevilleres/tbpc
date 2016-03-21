@@ -17,3 +17,4 @@ simplegeneric==0.8.1
 six==1.10.0
 traitlets==4.1.0
 xlrd==0.9.4
+openpyxl==2.3.4

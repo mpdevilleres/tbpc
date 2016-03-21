@@ -17,7 +17,7 @@ var table = $('#dataset_table').DataTable(
                     {
                         "targets": {% if hidden_columns != None %}{{ hidden_columns }}{% else %}[]{% endif %},
                         "visible": false
-                    },
+                    }
             ],
             // Internationalisation. For more info refer to http://datatables.net/manual/i18n
             "language": {
@@ -32,6 +32,7 @@ var table = $('#dataset_table').DataTable(
                 "lengthMenu": "_MENU_ entries",
                 "search": "Search:",
                 "zeroRecords": "No matching records found"
+
             },
 
             // Or you can use remote translation file

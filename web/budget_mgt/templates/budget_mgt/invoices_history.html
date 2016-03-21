@@ -1,0 +1,80 @@
+{% extends "_base.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block page_style %}
+<link href="{% static 'theme/custom/css/timeline-old.css' %}" rel="stylesheet" type="text/css" />
+<link href="{% static 'theme/custom/css/timeline-fix-alignment.css' %}" rel="stylesheet" type="text/css" />
+{% endblock page_style %}
+
+
+{% block page_plugins %}
+{% endblock page_plugins %}
+
+
+{% block page_scripts %}
+{% endblock page_scripts %}
+
+
+{% block page_init_features %}
+{% endblock page_init_features %}
+
+
+{% block content %}
+<!-- BEGIN PAGE CONTENT-->
+
+    <div class="alert alert-warning">
+        <div>
+            <strong>Invoice Number: </strong> {{ invoice_no }}
+            <a href="{{ edit_link }}{{ pk }}" class="btn btn-icon-only green pull-right" title="Edit Task" >
+                <i class="fa fa-edit"></i>
+            </a>
+        </div>
+
+        <div>
+            <strong>Task Number: </strong> {{ task_no }}
+        </div>
+        <div>
+            <strong>Contractor: </strong> {{ contractor }}
+        </div>
+        <div>
+            <strong>Last Update by: </strong> {{ update_by }}
+        </div>
+    </div>
+
+<div class="row">
+    <div class="col-md-12">
+        <ul class="timeline">
+        {% for element in history %}
+            {% if element.id == last_id %}
+                <li class="timeline-grey timeline-noline">
+            {% else %}
+                <li class="timeline-grey">
+            {% endif %}
+                <div class="timeline-time">
+                    <span class="date">
+                    {{ element.modified|date }} </span>
+                    <span class="time">
+                    {{ element.modified_by }} </span>
+                    <span class="date">
+                    {{ element.next_action }} </span>
+                </div>
+                <div class="timeline-icon">
+                    <i class="fa fa-comments"></i>
+                </div>
+                <div class="timeline-body">
+
+                    <h2>{{ element.status }}</h2>
+                    <div class="timeline-content">
+                        {{ element.remarks }}
+                    </div>
+
+                </div>
+            </li>
+        {% endfor %}
+        </ul>
+    </div>
+</div>
+<!-- END PAGE CONTENT-->
+
+{% endblock %}

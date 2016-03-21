@@ -1,5 +1,6 @@
 {% extends '_base.html' %}
 {% load static %}
+{% load humanize %}
 {% load custom_tags %}
 {% block page_style %}
     <link rel="stylesheet" type="text/css" href="{% static 'theme/pages/css/invoice.min.css' %}"/>
@@ -34,7 +35,7 @@
             <tr class="odd gradeX">
                 {% for i in keys %}
                     <td>
-                        {{ element|return_item:i }}
+                        {{ element|return_item:i|safe }}
                     </td>
                 {% endfor %}
             </tr>
@@ -47,10 +48,10 @@
         <div class="col-xs-8 invoice-block pull-right">
             <ul class="list-unstyled amounts">
                 <li>
-                    <h3><strong>Commitment Value: </strong> {{ commitment_value }}</h3>
+                    <h3><strong>Commitment Value: </strong> {{ commitment_value|floatformat:2|intcomma }}</h3>
                 </li>
                 <li>
-                    <h3><strong>Grand Total:</strong> {{ actual_total }} </h3>
+                    <h3><strong>Grand Total:</strong> {{ actual_total|floatformat:2|intcomma }} </h3>
                 </li>
                 <li>
                     <strong>Overrun:</strong>

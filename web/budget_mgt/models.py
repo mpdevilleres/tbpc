@@ -5,6 +5,7 @@ from django.db import models
 
 from utils.models import TimeStampedBaseModel
 
+import datetime as dt
 
 # Create your models here.
 class Task(TimeStampedBaseModel):
@@ -23,6 +24,7 @@ class Task(TimeStampedBaseModel):
 
 
 class Invoice(TimeStampedBaseModel):
+
     contractor = models.ForeignKey(Contractor, on_delete=models.CASCADE)
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
 
@@ -46,7 +48,48 @@ class Invoice(TimeStampedBaseModel):
     reference = models.CharField(max_length=100)
     remarks = models.TextField(blank=True)
     description = models.TextField(blank=True)
-    accrual_mn_yr = models.CharField(max_length=100)
     proj_no = models.CharField(max_length=100)
+    status = models.CharField(max_length=100)
+    penalty = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
 
     invoice_ref = models.CharField(max_length=100) # checks uniqueness of invoice_no over the contractor
+
+    process_list = ['Verify Invoices','Overrun Check', 'Print Summary', 'To be Certified by SD/TBP&C',
+                        'To be Certified by SVP/MN', 'To be Certified by CTO', 'Sent to Finance']
+    def save(self, *args, **kwargs):
+        self.invoice_amount = self.revenue_amount + self.opex_amount + self.capex_amount
+        super(Invoice, self).save(*args, **kwargs)
+
+    @property
+    def invoiceworkflow__process(self):
+        try:
+            return self.invoiceworkflow_set.first().process
+        except:
+            return ''
+
+    @property
+    def invoiceworkflow__status(self):
+        try:
+            return self.invoiceworkflow_set.first().status
+        except:
+            return ''
+
+class InvoiceChangeLog(TimeStampedBaseModel):
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
+
+    field_name = models.CharField(max_length=100)
+    previous_value = models.CharField(max_length=100)
+    new_value = models.CharField(max_length=100)
+
+class InvoiceWorkflow(TimeStampedBaseModel):
+
+    class Meta:
+        ordering = ['-pk']
+
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
+
+    owner = models.CharField(max_length=100)
+    start_date = models.CharField(max_length=100)
+    end_date = models.CharField(max_length=100)
+    status = models.CharField(max_length=100)
+    process = models.CharField(max_length=100)

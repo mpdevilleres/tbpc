@@ -2,6 +2,7 @@ from collections import OrderedDict
 from itertools import chain
 
 import os
+from decimal import Decimal
 from django import forms
 import datetime as dt
 from project import settings
@@ -57,13 +58,17 @@ class EnhancedDateField(forms.DateField):
 
 class EnhancedDecimalField(forms.DecimalField):
     def __init__(self, placeholder='', *args, **kwargs):
-        self.max_digits=20
-        self.decimal_places=2
         self.widget = forms.NumberInput(
             attrs={'class': 'form-control',
                    'placeholder': '%s' % placeholder
                    })
-        super(EnhancedDecimalField, self).__init__(*args, **kwargs)
+        super(EnhancedDecimalField, self).__init__(initial=Decimal('0.00'),
+                                                   decimal_places=2,
+                                                   max_digits=20,
+                                                   *args, **kwargs)
+
+    class Meta:
+        default_initial_values = {"command":"make", "arguments":"test"}
 
 class EnhancedFileField(forms.FileField):
     def __init__(self, placeholder='', *args, **kwargs):

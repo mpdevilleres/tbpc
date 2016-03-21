@@ -1,0 +1,77 @@
+{% extends "_base.html" %}
+{% load static %}
+{% block page_plugin_style %}
+{% endblock %}
+
+{% block page_style %}
+<link href="{% static 'theme/global/plugins/datatables/datatables.min.css' %}" rel="stylesheet" type="text/css" />
+<link href="{% static 'theme/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.css' %}" rel="stylesheet" type="text/css" />
+<link href="{% static 'theme/apps/css/todo-2.min.css' %}" rel="stylesheet" type="text/css" />
+{% endblock %}
+
+{% block page_plugins %}
+<script src="{% static 'theme/global/scripts/datatable.js' %}" type="text/javascript"></script>
+<script src="{% static 'theme/global/plugins/datatables/datatables.min.js' %}" type="text/javascript"></script>
+<script src="{% static 'theme/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js' %}" type="text/javascript"></script>
+{% endblock %}
+
+
+{% block page_scripts %}
+    {% include "utils/datatable/datatable_scripts.html" %}
+{% endblock page_scripts %}
+
+{% block content %}
+<!-- BEGIN ROW -->
+<div class="row">
+    <div class="col-md-12">
+        <!-- BEGIN TODO SIDEBAR -->
+        <div class="todo-ui">
+            <div class="todo-sidebar">
+                <div class="portlet">
+                    <div class="col-md-12 " style="padding: 0px 0px 20px 0px;">
+                        <div class="dashboard-stat green-jungle">
+                            <div class="visual">
+                                <i class="fa fa-comments"></i>
+                            </div>
+                            <div class="details">
+                                <div class="number font-white">
+                                    <span>{{ closed }}</span>
+                                </div>
+                                <div class="desc"> Closed Task </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="portlet">
+                    <div class="col-md-12 " style="padding: 0px 0px 20px 0px;">
+                        <div class="dashboard-stat red-haze">
+                            <div class="visual">
+                                <i class="fa fa-gears"></i>
+                            </div>
+                            <div class="details">
+                                <div class="number font-white">
+                                    <span>{{ open }}</span>
+                                </div>
+                                <div class="desc"> Ongoing Task </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="clearfix"> </div>
+                {% include 'utils/summary_portlet.html' with data=by_classification %}
+                {% include 'utils/summary_portlet.html' with data=by_severity %}
+                {% include 'utils/summary_portlet.html' with data=by_category %}
+                {% include 'utils/summary_portlet.html' with data=by_contractor %}
+            </div>
+            <!-- END TODO SIDEBAR -->
+            <!-- BEGIN TODO CONTENT -->
+            <div class="todo-content">
+                {% include "utils/datatable/datatable_table.html" %}
+            </div>
+            <!-- END TODO CONTENT -->
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+<!-- END ROW -->
+{% endblock %}
