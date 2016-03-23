@@ -1,8 +1,8 @@
 import openpyxl
-from budget_mgt.models import Invoice
+import datetime as dt
 import pandas as pd
 
-class InvoiceReport(object):
+class InvoiceReportPrinter(object):
 
     template_path = r'/web/media/templates/invoice_cover.xlsx'
     output_row_pointer = 1
@@ -12,7 +12,8 @@ class InvoiceReport(object):
     column_dimensions = None
     row_dimensions = None
     total = {}
-    def __init__(self, template_path=None):
+    def __init__(self, template_path=None, records=None, reference=None):
+        #records is Invoice Instanse
         self.template = openpyxl.load_workbook(self.template_path if template_path is None else template_path)
         self.header_sheet = self.template.get_sheet_by_name('header')
         self.footer_sheet = self.template.get_sheet_by_name('footer')
@@ -20,6 +21,8 @@ class InvoiceReport(object):
         # make new workbook
         self.output_wb = openpyxl.Workbook()
         self.output_sheet = self.output_wb.create_sheet('report', index=0)
+        self.records = records
+        self.reference = reference
 
     def get_dimensions(self):
         self.column_dimensions = dict(**self.header_sheet.column_dimensions)
@@ -27,7 +30,7 @@ class InvoiceReport(object):
     def get_data(self):
         serial_no = 0
         # get data
-        for record in Invoice.objects.filter(pk__in=[1,2,3,4,5]).all():
+        for record in self.records:
             serial_no += 1
             self.data.append(
                     {'B': serial_no,
@@ -48,8 +51,8 @@ class InvoiceReport(object):
         self.total['I'] = str(df['I'].sum())
         self.total['J'] = str(df['J'].sum())
 
-        self.reference = 'Report-Reference-123313'
-        self.date = 'Report Date'
+
+        self.date = '{:%d-%b-%Y}'.format(dt.datetime.now())
 
     def make_header(self):
         # Add data to Header
@@ -153,14 +156,19 @@ class InvoiceReport(object):
             self.output_sheet.merge_cells(merge_coor)
 
     def run(self):
+        # try except KeyError will be produce if there's empty records
+        try:
+            self.get_data()
+            self.make_header()
+            self.make_body()
+            self.make_footer()
 
-        self.get_data()
-        self.make_header()
-        self.make_body()
-        self.make_footer()
+            # Copying Dimensions Column
+            for key, dimension in self.header_sheet.column_dimensions.items():
+                self.output_sheet.column_dimensions[key].width = dimension.width
 
-        # Copying Dimensions Column
-        for key, dimension in self.header_sheet.column_dimensions.items():
-            self.output_sheet.column_dimensions[key].width = dimension.width
-
-        self.output_wb.save('/web/media/templates/test1.xlsx')
+            self.full_path = '/web/media/templates/{:%Y-%m-%d-%H-%M-%S}.xlsx'.format(dt.datetime.now())
+            self.output_wb.save(self.full_path)
+            return True
+        except KeyError:
+            return False

@@ -3,13 +3,14 @@ from django.utils import timezone
 from utils.middleware import get_current_user
 
 # Create your models here.
-
+# UTILS FUNCS
 def user_value():
     try:
         return get_current_user().username
     except:
         return "System"
 
+# MODELS ABSTRACT
 class TimeStampedBaseModel(models.Model):
     created = models.DateTimeField(editable=False, default=timezone.now)
     created_by = models.CharField(max_length=100, editable=False, default='System')
@@ -30,6 +31,51 @@ class TimeStampedBaseModel(models.Model):
     class Meta:
        abstract = True
 
+class ProcessModel(TimeStampedBaseModel):
+
+    class Meta:
+        ordering = ['pk']
+        abstract = True
+
+    owner = models.CharField(max_length=100)
+    name = models.CharField(max_length=100)
+    remarks = models.TextField(blank=True)
+
+    @property
+    def owners(self):
+        return 'tests'
+
+class ChangeLogModel(TimeStampedBaseModel):
+    # MUST ADD TO MONITORED MODEL
+    #invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
+    class Meta:
+        ordering = ['pk']
+        abstract = True
+
+    field_name = models.CharField(max_length=100)
+    previous_value = models.CharField(max_length=100)
+    new_value = models.CharField(max_length=100)
+
+
+class WorkflowModel(TimeStampedBaseModel):
+
+    class Meta:
+        ordering = ['pk']
+        abstract = True
+
+    # MUST ADD TO MONITORED MODEL
+    #invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
+    #process = models.ForeignKey(ProcessModel, on_delete=models.CASCADE)
+
+    start_date = models.DateTimeField(blank=True, null=True)
+    end_date = models.DateTimeField(blank=True, null=True)
+    status = models.CharField(max_length=100)
+
+    def set_done(self):
+        self.status = "Done"
+        self.save()
+
+# MIXINS
 class ManytoManyMixin(models.Model):
     def get_initials(self):
         val_dict = self.__dict__

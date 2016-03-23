@@ -23,6 +23,15 @@ urlpatterns = [
      url(r'^task-invoice/$', views.InvoiceSummaryView.as_view(), name='summary_invoice'),
      url(r'^task-invoice/(?P<pk>[0-9]+)/$', views.InvoiceSummaryView.as_view()),
 
+     url(r'^invoice-workflow/$', views.TableWorkflowView.as_view(), name='invoice_workflow'),
+     url(r'^invoice-workflow/(?P<pk>[0-9]+)/$', views.TableWorkflowView.as_view()),
+
+     url(r'^invoice-workflow/close/$', views.EditWorkflowView.as_view(), name='invoice_workflow_close'),
+     url(r'^invoice-workflow/close/(?P<pk>[0-9]+)/$', views.EditWorkflowView.as_view()),
+
+     url(r'^invoice-summary/print/$', views.ForCertificationSummaryView.as_view(), name='invoice_print'),
+
+
      # Datatables Ajax Link
      url(r'^task/data/$',
          login_required(views.TaskJson.as_view()),

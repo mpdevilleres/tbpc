@@ -59,7 +59,7 @@ class TaskJson(BaseDatatableView):
                    '<a href="{1}{2}" class="btn default btn-xs green-stripe">View Invoices</a>' \
                 .format(
                     reverse('budget_mgt:add_edit_task'),
-                    reverse('budget_mgt:invoice_summary'),
+                    reverse('budget_mgt:summary_invoice'),
                     row.id
             )
         elif column == 'commitment_value':
@@ -105,21 +105,20 @@ class InvoiceJson(BaseDatatableView):
     model = Invoice
     def get_initial_queryset(self):
         # pk here is the Contractor ID
-        pk = self.kwargs.pop('pk',None)
+        filter = self.request.GET.get('filter',None)
 
         # return queryset used as base for futher sorting/filtering
         # these are simply objects displayed in datatable
         # You should not filter data returned here by any filter values entered by user. This is because
         # we need some base queryset to count total number of records.
-        if pk is None:
+        if filter == 'all':
             return self.model.objects.all()
 
-        return self.model.objects.filter(contractor__pk=pk)
-
+        return self.model.objects.filter(~Q(current_process='Completed')).all()
 
     # define the columns that will be returned
     columns = ['contractor.name', 'task.task_no', 'invoice_no', 'invoice_amount',
-               'invoiceworkflow__process', 'id']
+               'current_process', 'id']
 
     # Hide Columns
     hidden_columns = [ i for i, x in enumerate(columns) if x in
@@ -147,18 +146,23 @@ class InvoiceJson(BaseDatatableView):
     def render_column(self, row, column):
         # We want to render user as a custom column
         if column == 'id':
-            return '<a href="{0}{2}" class="btn default btn-xs red-stripe">Edit</a>' \
-                   '<a href="{1}{2}" class="btn default btn-xs green-stripe">Logs</a>' \
+
+#                   '<a href="{2}{0}" class="btn default btn-xs green-stripe">Logs</a>' \
+            return '<a href="{1}{0}" class="btn default btn-xs red-stripe">Edit</a>' \
+                   '<a href="{3}{0}" class="btn default btn-xs blue-stripe">Workflow</a>' \
                 .format(
+                    row.id,
                     reverse('budget_mgt:add_edit_invoice'),
                     reverse('budget_mgt:invoice_history'),
-                    row.id
+                    reverse('budget_mgt:invoice_workflow'),
             )
-        elif column == 'invoiceworkflow__process':
-            return ''
 
-        elif column == 'process_remarks':
-            return ''
+        elif column == 'task.task_no':
+            status = 'danger' if row.task.overrun is True else 'info'
+            icon = 'close' if row.task.overrun is True else 'check'
+            value = row.task.task_no
+            url = reverse('budget_mgt:summary_invoice') + '{}'.format(row.task_id)
+            return '<span class="label label-{2}"> <i class="icon-{1}"></i></span> <a href="{3}">{0}</a>'.format(value, icon, status, url)
 
         elif column == 'invoice_amount':
             val = getattr(row, column)

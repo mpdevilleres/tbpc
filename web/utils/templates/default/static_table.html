@@ -1,0 +1,65 @@
+{% extends "_table.html" %}
+{% load static %}
+{% load custom_tags %}
+{% block page_plugin_style %}
+{% endblock page_plugin_style %}
+
+{% block page_style %}
+{% endblock page_style %}
+
+{% block custom_style %}
+{% endblock custom_style %}
+
+{% block content %}
+<div class="col-md-8">
+<!-- BEGIN EXAMPLE TABLE PORTLET-->
+<div class="portlet box green">
+    <div class="portlet-title">
+        <div class="caption">
+           {{ table_title }} Table
+        </div>
+    </div>
+    <div class="portlet-body">
+        <div class="table-scrollable">
+            <table class="table table-striped table-hover" id="dataset_table">
+            <thead>
+                <tr>
+                    {% for i in column_names %}
+                      <th>
+                            {{ i }}
+                      </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+            {% for row in table_data %}
+                <tr>
+                    {% for i in columns %}
+                      <th>
+                            {% if i == 'id' %}
+                                <a href="{% url 'budget_mgt:invoice_workflow_close' %}{{ row|return_item:i }}" role="button" class="btn yellow" data-toggle="modal"> Close </a>
+                            {% elif i == 'status' and row|return_item:i == 'New' %}
+                                <span class="label label-danger"> {{ row|return_item:i }} </span>
+                            {% elif i == 'status' and row|return_item:i == 'Done' %}
+                                <span class="label label-default"> {{ row|return_item:i }} </span>
+                            {% else %}
+                                {{ row|return_item:i }}
+                            {% endif %}
+                      </th>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<!-- END EXAMPLE TABLE PORTLET-->
+</div>
+{% endblock %}
+
+{% block page_plugins %}
+{% endblock page_plugins %}
+
+{% block page_scripts %}
+{% endblock page_scripts %}
