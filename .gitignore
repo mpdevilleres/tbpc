@@ -19,3 +19,4 @@ migrations/
 /web/project/static/theme
 /db_backup
 /web/media
+/web/htmlcov
