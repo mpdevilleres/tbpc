@@ -217,13 +217,11 @@ class TableInvoiceView(View):
     table_title = 'Invoices'
 
     def get(self, request, *args, **kwargs):
-        # records = [
-        #             {"work__process": i.workflow__process,
-        #              "id": i.id}
-        #            for i in Invoice.objects.all()]
-        #
-        # df = pd.DataFrame.from_records(records)
         filter = request.GET.get('filter', None)
+
+        closed = Invoice.objects.filter(current_process='Completed').count()
+        ongoing = Invoice.objects.filter(~Q(current_process='Completed')).count()
+
         if filter is not None:
             self.data_table_url += '?{}={}'.format('filter', filter)
 
@@ -232,8 +230,8 @@ class TableInvoiceView(View):
             'columns': self.columns,
             'data_table_url': self.data_table_url,
             'add_record_link': self.add_record_link,
-            # 'ongoing': len(df[df["work__process"]!='Completed']),
-            # 'close': len(df[df["work__process"]=='Completed']),
+            'ongoing': ongoing,
+            'close': closed,
         }
         return render(request, self.template_name, context)
 
