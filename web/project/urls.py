@@ -24,6 +24,7 @@ urlpatterns = [
     url(r'^user-mgt/', include('user_mgt.urls')),
     url(r'^team-mgt/', include('team_mgt.urls')),
     url(r'^section-kpi-mgt/', include('section_kpi_mgt.urls')),
+    url(r'^test/', include('more_testing.urls')),
 
     url(r'^admin/', admin.site.urls),
 ]
