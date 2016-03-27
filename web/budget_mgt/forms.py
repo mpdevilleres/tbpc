@@ -1,4 +1,4 @@
-from contract_mgt.models import Contractor
+from contract_mgt.models import Contractor, Contract
 
 import utils.forms as uforms
 
@@ -9,8 +9,8 @@ class InvoiceForm(uforms.EnhancedForm):
     model_choices = {
         # 'user': Employee.objects.filter(section=False),
         'contractor_id': Contractor.objects.all(),
-        'task_id': Task.objects.filter().all()
-
+        'task_id': Task.objects.filter().all(),
+        'contract_id': Contract.objects.filter().all()
     }
 
     penalty_choices = [
@@ -33,21 +33,30 @@ class InvoiceForm(uforms.EnhancedForm):
         'NE'
     ]
 
+    invoice_type_choices = [
+        'Civil',
+        'Cable',
+        'Development',
+        'Service Provisioning'
+    ]
+
     form_order = [
-        ['contractor_id', 'status',
-         'proj_no', 'task_id'],
-        ['invoice_date', 'invoice_cert_date'],
-        ['received_date', 'sent_finance_date'],
-        ['signed_date', 'rfs_date'],
-        ['start_date', 'end_date'],
-        ['hr'],
-        ['region', 'contract_no'],
-        ['invoice_no', 'description'],
-        ['cost_center', 'expense_code'],
+
+        ['region','status'],
+        ['contractor_id', 'task_id'],
+        ['contract_id', 'proj_no'],
+        ['invoice_no','cost_center'],
+        ['description', 'expense_code'],
         ['hr'],
         ['revenue_amount', 'penalty'],
-        ['opex_amount', ],
-        ['capex_amount','remarks']
+        ['opex_amount', 'blank'],
+        ['capex_amount','remarks'],
+        ['hr'],
+        ['invoice_date', 'start_date'],
+        ['invoice_cert_date', 'end_date'],
+        ['received_date', 'rfs_date'],
+        ['hr'],
+        ['signed_date', 'sent_finance_date'],
     ]
 
     contractor_id = uforms.EnhancedChoiceField(label='Contractor Name')
@@ -55,7 +64,8 @@ class InvoiceForm(uforms.EnhancedForm):
 
     region = uforms.EnhancedChoiceField(choices=[(x,x) for x in region_choices])
     invoice_no = uforms.EnhancedCharField()
-    contract_no = uforms.EnhancedCharField()
+    invoice_type = uforms.EnhancedChoiceField(choices=[(x,x) for x in invoice_type_choices])
+    contract_id = uforms.EnhancedChoiceField(label='Contract No.')
     revenue_amount = uforms.EnhancedDecimalField()
     opex_amount = uforms.EnhancedDecimalField()
     capex_amount = uforms.EnhancedDecimalField()

@@ -1,6 +1,6 @@
 from django.db.models import Q
 
-from contract_mgt.models import Contractor
+from contract_mgt.models import Contractor, Contract
 
 from decimal import Decimal
 from django.db import models
@@ -26,11 +26,13 @@ class Task(TimeStampedBaseModel):
 
 class Invoice(TimeStampedBaseModel):
 
+    contract = models.ForeignKey(Contract, on_delete=models.CASCADE)
     contractor = models.ForeignKey(Contractor, on_delete=models.CASCADE)
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
 
     region = models.CharField(max_length=100)
     invoice_no = models.CharField(max_length=100)
+    invoice_type = models.CharField(max_length=100)
     contract_no = models.CharField(max_length=100)
     revenue_amount = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
     opex_amount = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))

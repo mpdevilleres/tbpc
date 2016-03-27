@@ -28,3 +28,11 @@ class ContractorContact(TimeStampedBaseModel):
 
     def __str__(self):
         return "%s %s" % (self.name, self.eadd)
+
+class Contract(TimeStampedBaseModel):
+    contract_no = models.CharField(max_length=100)
+    remarks = models.TextField()
+
+    @property
+    def choice_alias(self):
+        return self.id, self.contract_no

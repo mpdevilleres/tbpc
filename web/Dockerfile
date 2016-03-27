@@ -9,12 +9,12 @@ ADD py_pkg /web/py_pkg
 # By some unknown reason, pandas is requiring numpy to be installed not just being in the requirement.txt
 # to install, so installing via requirement.txt is not possible
 # pip install --download-cache="/pth/to/downloaded/files" package
-RUN pip install -r /web/requirements.txt
+# RUN pip install -r /web/requirements.txt
 #RUN pip install --upgrade pip
 #RUN pip install --no-index --find-links="/web/py_pkg" numpy
 #RUN pip install --download="/web/py_pkg" -r requirements.txt
 #RUN pip install --download="/web/py_pkg" openpyxl
-#RUN pip install --no-index --find-links="/web/py_pkg" -r /web/requirements.txt
+RUN pip install --no-index --find-links="/web/py_pkg" -r /web/requirements.txt
 
 #RUN echo deb http://packages.linuxmint.com debian import >> /etc/apt/sources.list
 #RUN apt-get update
