@@ -1,5 +1,5 @@
 from django.db.models import Q
-
+from django_fsm import FSMField, transition
 from contract_mgt.models import Contractor, Contract
 
 from decimal import Decimal
@@ -26,9 +26,13 @@ class Task(TimeStampedBaseModel):
 
 class Invoice(TimeStampedBaseModel):
 
+    flow = ['new', 'drafting', 'for signature', 'sent']
+
     contract = models.ForeignKey(Contract, on_delete=models.CASCADE)
     contractor = models.ForeignKey(Contractor, on_delete=models.CASCADE)
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
+
+    state = FSMField(default='new')
 
     region = models.CharField(max_length=100)
     invoice_no = models.CharField(max_length=100)
@@ -57,6 +61,10 @@ class Invoice(TimeStampedBaseModel):
     current_process = models.CharField(max_length=100)
     invoice_ref = models.CharField(max_length=100) # checks uniqueness of invoice_no over the contractor
 
+    @transition(field=state, source='new', target='drafting')
+    def draft(self):
+        pass
+
     def save(self, *args, **kwargs):
 
         # Get workflows of id is not exist or the invoice is new entry
@@ -71,7 +79,6 @@ class Invoice(TimeStampedBaseModel):
             """
             for i in workflows:
                 self.workflow_set.add(i, bulk=False)
-
 
     def initial_workflow(self):
         """

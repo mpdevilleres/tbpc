@@ -17,10 +17,10 @@ class InvoiceForm(uforms.EnhancedForm):
         'Yes',
         'No'
     ]
+
     status_choices = [
         'Under Process',
         'Sent for Certification',
-        'Under Verification',
         'Management Approval',
         'Sent to Finance',
         'Rejected'
@@ -46,7 +46,8 @@ class InvoiceForm(uforms.EnhancedForm):
         ['contractor_id', 'task_id'],
         ['contract_id', 'proj_no'],
         ['invoice_no','cost_center'],
-        ['description', 'expense_code'],
+        ['invoice_type', 'expense_code'],
+        ['description'],
         ['hr'],
         ['revenue_amount', 'penalty'],
         ['opex_amount', 'blank'],

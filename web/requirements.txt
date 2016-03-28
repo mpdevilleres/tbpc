@@ -33,3 +33,4 @@ waitress==0.8.10
 WebOb==1.6.0
 WebTest==2.0.20
 xlrd==0.9.4
+django-fsm==2.3.0
