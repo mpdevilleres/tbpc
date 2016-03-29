@@ -58,11 +58,11 @@ class InvoiceForm(uforms.EnhancedForm):
 
     contractor_id = uforms.EnhancedChoiceField(label='Contractor Name')
     task_id = uforms.EnhancedChoiceField(label='Task No')
+    contract_id = uforms.EnhancedChoiceField(label='Contract No.')
 
     region = uforms.EnhancedChoiceField(choices=[(x,x) for x in region_choices])
     invoice_no = uforms.EnhancedCharField()
     invoice_type = uforms.EnhancedChoiceField(choices=[(x,x) for x in invoice_type_choices])
-    contract_id = uforms.EnhancedChoiceField(label='Contract No.')
     revenue_amount = uforms.EnhancedDecimalField()
     opex_amount = uforms.EnhancedDecimalField()
     capex_amount = uforms.EnhancedDecimalField()

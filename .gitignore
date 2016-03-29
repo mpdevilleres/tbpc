@@ -14,6 +14,7 @@ migrations/
 /nginx/logs
 
 /web/dump
+/web/dump_new
 /web/py_pkg
 /web/static
 /web/project/static/theme

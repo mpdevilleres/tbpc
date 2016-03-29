@@ -26,7 +26,7 @@
 			<ul class="nav navbar-nav pull-right">
 				<!-- BEGIN TODO DROPDOWN -->
 				<!-- DOC: Apply "dropdown-dark" class after below "dropdown-extended" to change the dropdown styte -->
-                {% if request.user|is_employee == True %}
+                {% if request.user.is_staff == True %}
 
                     <li class="dropdown dropdown-extended dropdown-tasks" id="header_task_bar">
                         <a data-target="#static" data-toggle="modal" class="dropdown-toggle">

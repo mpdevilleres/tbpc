@@ -57,7 +57,6 @@ class Invoice(ConcurrentTransitionMixin, TimeStampedBaseModel):
     region = models.CharField(max_length=100)
     invoice_no = models.CharField(max_length=100)
     invoice_type = models.CharField(max_length=100)
-    contract_no = models.CharField(max_length=100)
     revenue_amount = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
     opex_amount = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
     capex_amount = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
