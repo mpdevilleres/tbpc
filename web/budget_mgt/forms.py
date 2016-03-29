@@ -7,7 +7,6 @@ from .models import Task
 
 class InvoiceForm(uforms.EnhancedForm):
     model_choices = {
-        # 'user': Employee.objects.filter(section=False),
         'contractor_id': Contractor.objects.all(),
         'task_id': Task.objects.filter().all(),
         'contract_id': Contract.objects.filter().all()
@@ -19,11 +18,8 @@ class InvoiceForm(uforms.EnhancedForm):
     ]
 
     status_choices = [
-        'Under Process',
-        'Sent for Certification',
-        'Management Approval',
-        'Sent to Finance',
-        'Rejected'
+        'Open',
+        'Close'
     ]
 
     region_choices = [

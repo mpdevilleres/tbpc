@@ -118,7 +118,7 @@ class InvoiceJson(BaseDatatableView):
 
     # define the columns that will be returned
     columns = ['contractor.name', 'task.task_no', 'invoice_no', 'invoice_amount',
-               'current_process', 'id']
+               'state', 'id']
 
     # Hide Columns
     hidden_columns = [ i for i, x in enumerate(columns) if x in

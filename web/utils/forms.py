@@ -1,11 +1,9 @@
-from collections import OrderedDict
 from itertools import chain
 
 import os
 from decimal import Decimal
 from django import forms
 import datetime as dt
-from project import settings
 
 # Forms
 class EnhancedForm(forms.Form):
@@ -54,7 +52,8 @@ class EnhancedDateField(forms.DateField):
             attrs={'class': 'form-control',
                    'readonly': True
                    })
-        super(EnhancedDateField, self).__init__(*args, **kwargs)
+        super(EnhancedDateField, self).__init__(initial=dt.datetime(1990,1,1),
+                                                *args, **kwargs)
 
 class EnhancedDecimalField(forms.DecimalField):
     def __init__(self, placeholder='', *args, **kwargs):

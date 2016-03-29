@@ -28,7 +28,7 @@ def _login(request):
         if user is not None:
             if user.is_active:
                 login(request, user)
-                request.session.set_expiry(0)
+                request.session.set_expiry(36000)
                 return redirect('main:index')
             else:
                 messages.warning(request, 'User is Inactive, Please Contact the Administrator')

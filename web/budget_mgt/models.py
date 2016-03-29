@@ -1,5 +1,6 @@
 from django.db.models import Q
-from django_fsm import FSMField, transition
+from django_fsm_log.decorators import fsm_log_by
+from django_fsm import FSMField, transition, ConcurrentTransitionMixin, FSMKeyField
 from contract_mgt.models import Contractor, Contract
 
 from decimal import Decimal
@@ -8,8 +9,18 @@ from django.db import models
 from utils.models import TimeStampedBaseModel, ProcessModel, WorkflowModel, ChangeLogModel
 
 import datetime as dt
+from utils.middleware import get_current_user
 
 # Create your models here.
+# UTILS FUNCS
+def user_value():
+    try:
+        return get_current_user().username
+    except:
+        return "System"
+
+# Create your models here.
+
 class Task(TimeStampedBaseModel):
     task_no = models.CharField(max_length=100)
     commitment_value = models.DecimalField(max_digits=20, decimal_places=2)
@@ -24,15 +35,24 @@ class Task(TimeStampedBaseModel):
     def choice_alias(self):
         return (self.id, self.task_no)
 
-class Invoice(TimeStampedBaseModel):
+class Process(ProcessModel):
+    """
+    Inherit Process Model to Implement Process Table for Invoices
+    """
+    pass
 
-    flow = ['new', 'drafting', 'for signature', 'sent']
+class Invoice(ConcurrentTransitionMixin, TimeStampedBaseModel):
+    class Transitions:
+            trans_1 = ['New', 'Verify Invoices', 'Overrun Check', 'Print Summary',
+                             'Under Certification', 'Sent to Finance', 'Completed']
+
+            trans_2 = ['*', 'Verify Invoices']
 
     contract = models.ForeignKey(Contract, on_delete=models.CASCADE)
     contractor = models.ForeignKey(Contractor, on_delete=models.CASCADE)
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
 
-    state = FSMField(default='new')
+    state = FSMKeyField(Process, default="New")
 
     region = models.CharField(max_length=100)
     invoice_no = models.CharField(max_length=100)
@@ -42,6 +62,7 @@ class Invoice(TimeStampedBaseModel):
     opex_amount = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
     capex_amount = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
     invoice_amount = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
+    penalty = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
     invoice_date = models.DateTimeField(blank=True, null=True)
     invoice_cert_date = models.DateTimeField(blank=True, null=True)
     received_date = models.DateTimeField(blank=True, null=True)
@@ -52,75 +73,73 @@ class Invoice(TimeStampedBaseModel):
     sent_finance_date = models.DateTimeField(blank=True, null=True)
     cost_center = models.CharField(max_length=100)
     expense_code = models.CharField(max_length=100)
-    reference = models.CharField(max_length=100)
     remarks = models.TextField(blank=True)
     description = models.TextField(blank=True)
     proj_no = models.CharField(max_length=100)
-    status = models.CharField(max_length=100)
-    penalty = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
+    status = models.CharField(max_length=100, default='Ongoing')
     current_process = models.CharField(max_length=100)
-    invoice_ref = models.CharField(max_length=100) # checks uniqueness of invoice_no over the contractor
+    invoice_ref = models.CharField(max_length=100, unique=True) # checks uniqueness of invoice_no over the contractor
 
-    @transition(field=state, source='new', target='drafting')
-    def draft(self):
+    def can_print(self):
+        """
+        Return True if Task is not Overrun
+        """
+        return not self.task.overrun
+
+    @fsm_log_by
+    @transition(field=state, source='*', target='New',
+                permission='budget_mgt.change_workflow')
+    def set_new(self, by=None):
+        pass
+
+    @fsm_log_by
+    @transition(field=state, source='New', target='Verify Invoices',
+                permission='budget_mgt.change_workflow')
+    def set_verify_invoices(self, by=None):
+        pass
+
+    @fsm_log_by
+    @transition(field=state, source='Verify Invoices', target='Overrun Check',
+                permission='budget_mgt.change_workflow')
+    def set_overrun_check(self, by=None):
+        pass
+
+    @fsm_log_by
+    @transition(field=state, source='Overrun Check', target='Print Summary',
+                permission='budget_mgt.change_workflow',
+                conditions=[can_print])
+    def set_print_summary(self, by=None):
+        pass
+
+    @fsm_log_by
+    @transition(field=state, source='Print Summary', target='Under Certification',
+                permission='budget_mgt.change_workflow')
+    def set_under_certification(self, by=None):
+        pass
+
+    @fsm_log_by
+    @transition(field=state, source='Under Certification', target='Sent to Finance',
+                permission='budget_mgt.change_workflow')
+    def set_sent_to_finance(self, by=None):
+        pass
+
+    @fsm_log_by
+    @transition(field=state, source='Sent to Finance', target='Completed',
+                permission='budget_mgt.change_workflow')
+    def set_completed(self, by=None):
         pass
 
     def save(self, *args, **kwargs):
-
-        # Get workflows of id is not exist or the invoice is new entry
-        workflows = self.initial_workflow() if not self.id else []
-
+        self.invoice_ref = self.contractor.name + ':' + self.invoice_no
         self.invoice_amount = self.revenue_amount + self.opex_amount + self.capex_amount
         super(Invoice, self).save(*args, **kwargs)
 
-        if len(workflows) != 0:
-            """
-            Add Workflows to the Invoice
-            """
-            for i in workflows:
-                self.workflow_set.add(i, bulk=False)
+class Workflow(WorkflowModel):
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
+    process = models.ForeignKey(Process, on_delete=models.CASCADE)
 
-    def initial_workflow(self):
-        """
-        Create a List of Workflow Objects, but not yet saved
-
-        """
-        workflow_list = []
-        for process in Process.objects.all():
-            workflow = Workflow(
-                start_date=dt.datetime.now(),
-                end_date=None,
-                status='New',
-                process=process
-            )
-            workflow_list.append(workflow)
-
-        return workflow_list
-
-    @property
-    def workflow__process__name(self):
-        try:
-            name = self.workflow_set.filter(status='New').first().process.name
-            return name
-        except:
-            return 'Completed' if self.workflow_set.all() !=0 else 'Not Exist'
-
-    @property
-    def workflow__status(self):
-        try:
-            return self.workflow_set.first().status
-        except:
-            return ''
-
-    def next_process(self):
-        obj = Workflow.objects.order_by('pk').filter(Q(invoice__pk=self.pk) &
-                                                           Q(status='New')).first()
-
-        self.current_process = obj.process.name
-        obj.status = "Done"
-
-        super(Invoice, self).save()
-        obj.save()
+class ChangeLog(ChangeLogModel):
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
 
 class Report(TimeStampedBaseModel):
     reference_no = models.CharField(max_length=100)
@@ -140,16 +159,3 @@ class Report(TimeStampedBaseModel):
 
         super(Report, self).save(*args, **kwargs)
 
-
-class Process(ProcessModel):
-    """
-    Inherit Process Model to Implement Process Table for Invoices
-    """
-    pass
-
-class Workflow(WorkflowModel):
-    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
-    process = models.ForeignKey(Process, on_delete=models.CASCADE)
-
-class ChangeLog(ChangeLogModel):
-    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)

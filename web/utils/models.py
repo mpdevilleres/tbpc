@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 from utils.middleware import get_current_user
@@ -34,16 +35,24 @@ class TimeStampedBaseModel(models.Model):
 class ProcessModel(TimeStampedBaseModel):
 
     class Meta:
-        ordering = ['pk']
+        ordering = ['order']
         abstract = True
 
+    id = models.CharField(primary_key=True, max_length=50)
+    name = models.CharField(max_length=255)
+    order = models.PositiveIntegerField()
+
     owner = models.CharField(max_length=100)
-    name = models.CharField(max_length=100)
     remarks = models.TextField(blank=True)
 
     @property
     def owners(self):
-        return 'tests'
+        ids = self.owner.split(';')[:-1]
+        users = User.objects.filter(pk__in=ids)
+        return '; '.join(users.values_list('username', flat=True))
+
+    def __str__(self):
+        return self.name
 
 class ChangeLogModel(TimeStampedBaseModel):
     # MUST ADD TO MONITORED MODEL

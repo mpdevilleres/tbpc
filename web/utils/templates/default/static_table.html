@@ -36,8 +36,8 @@
                 <tr>
                     {% for i in columns %}
                       <th>
-                            {% if i == 'id' %}
-                                <a href="{% url 'budget_mgt:invoice_workflow_close' %}{{ row|return_item:i }}" role="button" class="btn yellow" data-toggle="modal"> Close </a>
+                            {% if i == 'action' %}
+                                <a href="{% url 'budget_mgt:invoice_workflow_close' %}?pk={{ pk }}&action={{ row|return_item:i }}" role="button" class="btn yellow" data-toggle="modal"> Close </a>
                             {% elif i == 'status' and row|return_item:i == 'New' %}
                                 <span class="label label-danger"> {{ row|return_item:i }} </span>
                             {% elif i == 'status' and row|return_item:i == 'Done' %}

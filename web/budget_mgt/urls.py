@@ -27,7 +27,6 @@ urlpatterns = [
      url(r'^invoice-workflow/(?P<pk>[0-9]+)/$', views.TableWorkflowView.as_view()),
 
      url(r'^invoice-workflow/close/$', views.EditWorkflowView.as_view(), name='invoice_workflow_close'),
-     url(r'^invoice-workflow/close/(?P<pk>[0-9]+)/$', views.EditWorkflowView.as_view()),
 
      url(r'^invoice-summary/print/$', views.ForCertificationSummaryView.as_view(), name='invoice_print'),
 

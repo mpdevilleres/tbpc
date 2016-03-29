@@ -14,8 +14,8 @@ class Employee(TimeStampedBaseModel):
         default=False)
     short_section = models.CharField(max_length=100, default=None)
 
-    def __str__(self):              # __unicode__ on Python 2
-        return "%s" % (self.user.full_name)
+    # def __str__(self):              # __unicode__ on Python 2
+    #     return "%s" % (self.user.full_name)
 
     @property
     def choice_alias(self):

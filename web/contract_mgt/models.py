@@ -35,4 +35,4 @@ class Contract(TimeStampedBaseModel):
 
     @property
     def choice_alias(self):
-        return self.id, self.contract_no
+        return (self.id, self.contract_no)

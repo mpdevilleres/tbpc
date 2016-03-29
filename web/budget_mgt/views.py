@@ -5,12 +5,14 @@ import mimetypes
 
 import os
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.db.models import Sum, Q, F
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
 from django.utils.encoding import smart_str
+from django_fsm import TransitionNotAllowed, has_transition_perm
 
 from budget_mgt.forms import InvoiceForm, TaskForm
 from contract_mgt.models import Contractor
@@ -241,19 +243,36 @@ class TableWorkflowView(View):
     model = Workflow
     template_name = 'default/static_table.html'
     table_title = 'Workflow'
-    columns = ['process__owner', 'status', 'process__name', 'id']
+    columns = ['process_owner', 'status', 'process_name', 'action']
     column_names = ['Owner', 'Status', 'Description', 'Option']
     def get(self, request, *args, **kwargs):
         pk = kwargs.pop('pk', None)
         if pk is None:
             raise Http404()
-        workflow = Workflow.objects.filter(invoice__pk=pk).values('process__owner', 'status', 'process__name', 'id')
+
+        processes = Process.objects.all()
+        invoice = Invoice.objects.filter(pk=pk).first()
+
+        temp_list = []
+        status = 'Done'
+        for process in processes:
+            temp_list.append(
+                {
+                    'process_owner': process.owners,
+                    'status': status,
+                    'process_name': process.name,
+                    'action': '{0}'.format(process.name.lower().replace(' ', '_')),
+                }
+            )
+            if invoice.state == process.name:
+                status = 'New'
 
         context = {
             'table_title': self.table_title,
             'columns': self.columns,
             'column_names': self.column_names,
-            'table_data': workflow,
+            'table_data': temp_list,
+            'pk': pk
         }
         return render(request, self.template_name, context)
 
@@ -262,36 +281,42 @@ class EditWorkflowView(View):
     model = Workflow
 
     def get(self, request, *args, **kwargs):
-        pk = kwargs.pop('pk', None)
-        if pk is None:
+        action = request.GET.get('action', None)
+        pk = request.GET.get('pk', None)
+
+        if pk is None or action is None:
            raise Http404()
 
-        workflow = Workflow.objects.filter(pk=pk).first()
-        workflow.set_done()
-        invoice = Invoice.objects.filter(pk=workflow.invoice.pk).first()
-        process = Process.objects.filter(pk=workflow.process.pk+1).first()
-        invoice.current_process = process.name
-        invoice.save()
+        invoice = Invoice.objects.filter(pk=pk).first()
+        action = getattr(invoice, 'set_' + action)
 
-        return redirect(reverse('budget_mgt:invoice_workflow') + '%s' % workflow.invoice_id)
+        # check if user has permission to execute the method
+        if not has_transition_perm(action, request.user):
+            messages.warning(request, "Permission Denied")
+
+        else:
+            # try to transition and catchese if not allowed
+            try:
+                action(by=request.user)
+                invoice.save()
+
+            except TransitionNotAllowed:
+                messages.warning(request, "Transition Not Allowed")
+
+        return redirect(reverse('budget_mgt:invoice_workflow') + '%s' % pk)
 
 @method_decorator(team_decorators, name='dispatch')
 class ForCertificationSummaryView(View):
     model = Invoice
 
     def get(self, request, *args, **kwargs):
-        print_process = Process.objects.filter(pk=3).first()
-        next_process = Process.objects.filter(pk=4).first()
-        invoices = Invoice.objects.filter(Q(current_process=print_process.name) &
+        invoices = Invoice.objects.filter(Q(state='Print Summary') &
                                           Q(task__overrun=False)).all()
         if len(invoices) == 0:
             raise Http404()
 
         for invoice in invoices:
-            invoice.current_process = next_process.name
-            workflow = Workflow.objects.filter(Q(invoice__pk=invoice.pk) &
-                                               Q(process_id=print_process.id)).first()
-            workflow.set_done()
+            invoice.set_under_certification()
             invoice.save()
 
         invoice_ids = [str(i) for i in invoices.values_list('id', flat=True)]
