@@ -3,14 +3,15 @@ from django_fsm import TransitionNotAllowed
 
 from budget_mgt.forms import InvoiceForm
 from utils.forms import EnhancedForm
-from .factories import InvoiceFactory
-from .models import Invoice
+from .factories import InvoiceFactory, TaskFactory
+from .models import Invoice, Task
 
 #Fixtures
 
 status_choices = [
     ('Open','Open'),
-    ('Close','Close')
+    ('Close','Close'),
+    ('Reject','Reject')
 ]
 
 region_choices = [
@@ -34,7 +35,7 @@ class TestInvoiceModels(TestCase):
     3. Test for Transitions
     """
     def setUp(self):
-        self.invoice = InvoiceFactory.create_batch(21)
+        self.tasks = TaskFactory.create_batch(89)
 
     def tearDown(self):
         pass
@@ -54,5 +55,17 @@ class TestInvoiceModels(TestCase):
         self.assertEqual(form.fields['invoice_type'].choices, invoice_type_choices)
 
     def test_dynamic_choices(self):
-        
+        # Scenario 1: Task are already in the database and just need to show in choices
+        tasks = Task.objects.all()
         form = InvoiceForm()
+        task_choices = [(i.id, i.task_no) for i in tasks]
+        sorted_choices = sorted(task_choices, key=lambda x: x[1])
+        self.assertEqual(form.fields['task_id'].choices, sorted_choices)
+
+        # Scenario 2: Task are already in the database and we want to add in choices
+        TaskFactory.create()
+        tasks = Task.objects.all()
+        form = InvoiceForm()
+        task_choices = [(i.id, i.task_no) for i in tasks]
+        sorted_choices = sorted(task_choices, key=lambda x: x[1])
+        self.assertEqual(form.fields['task_id'].choices, sorted_choices)

@@ -2,35 +2,36 @@
 
 # Create your views here.
 import mimetypes
+from wsgiref.util import FileWrapper
 
 import os
+import pandas as pd
+
+from budget_mgt.forms import InvoiceForm, TaskForm
+from budget_mgt.utils import summarize_invoice
+from budget_mgt.utils.invoice_report_generator import InvoiceReportPrinter
+
+from contract_mgt.models import Contractor
+
 from django.contrib import messages
-from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.db.models import Sum, Q, F
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
 from django.utils.encoding import smart_str
-from django_fsm import TransitionNotAllowed, has_transition_perm
+from django.views.generic import View
 
-from budget_mgt.forms import InvoiceForm, TaskForm
-from contract_mgt.models import Contractor
+from django_fsm import TransitionNotAllowed, has_transition_perm
 from project import settings
-from utils.invoice_report_generator import InvoiceReportPrinter
-from utils.summarizer import summarize_invoice
-from utils.tools import capitalize
+
 from utils.decorators import team_decorators
+from utils.forms import populate_obj
+from utils.tools import capitalize
+
 
 from .models import Invoice, Task, Workflow, Process, Report
 from .tables_ajax import TaskJson, InvoiceJson
-
-from utils.forms import populate_obj
-from django.views.generic import View
-
-import pandas as pd
-from wsgiref.util import FileWrapper
-
 
 # Add Edit Views
 @method_decorator(team_decorators, name='dispatch')
@@ -41,7 +42,7 @@ class AddEditInvoiceView(View):
     success_redirect_link = 'budget_mgt:table_invoice'
 
     def get(self, request, *args, **kwargs):
-        pk = kwargs.pop('pk', None)
+        pk = request.GET.get('pk', None)
 
         if pk is None:
             forms = self.form_class()
@@ -53,7 +54,7 @@ class AddEditInvoiceView(View):
         return render(request, self.template_name, {'forms': forms})
 
     def post(self, request, *args, **kwargs):
-        pk = kwargs.pop('pk', None)
+        pk = request.GET.get('pk', None)
         if pk is None:
             record = self.model()
         else:
@@ -80,7 +81,7 @@ class AddEditTaskView(View):
     success_redirect_link = 'budget_mgt:table_task'
 
     def get(self, request, *args, **kwargs):
-        pk = kwargs.pop('pk', None)
+        pk = request.GET.get('pk', None)
         if pk is None:
             forms = self.form_class()
 
@@ -91,7 +92,7 @@ class AddEditTaskView(View):
         return render(request, self.template_name, {'forms': forms})
 
     def post(self, request, *args, **kwargs):
-        pk = kwargs.pop('pk', None)
+        pk = request.GET.get('pk', None)
         if pk is None:
             record = self.model()
         else:
@@ -115,7 +116,7 @@ class InvoiceSummaryView(View):
     template_name = 'budget_mgt/invoices_summary.html'
 
     def get(self, request, *args, **kwargs):
-        pk = kwargs.pop('pk',None)
+        pk = request.GET.get('pk', None)
         field_arrangement = [
             'id',
             'contractor_name',
@@ -127,7 +128,7 @@ class InvoiceSummaryView(View):
         ]
         task = Task.objects.filter(pk=pk).first()
 
-        df_invoice = pd.DataFrame.from_records(task.invoice_set.all().values())
+        df_invoice = pd.DataFrame.from_records(Invoice.objects.filter(task_pk=pk).all().values())
         df_contractor = pd.DataFrame.from_records(Contractor.objects.all().values())
 
         mg = pd.merge(df_invoice, df_contractor, left_on='contractor_id', right_on='id', how='left')
@@ -155,37 +156,7 @@ class InvoiceSummaryView(View):
         }
         return render(request, self.template_name, context)
 
-@method_decorator(team_decorators, name='dispatch')
-class InvoiceChangeLogView(View):
-    model = Invoice
-    template_name = 'budget_mgt/invoices_history.html'
 
-    def get(self, request, *args, **kwargs):
-        pk = kwargs.pop('pk', None)
-        invoice = self.model.objects.filter(pk=pk).first()
-
-        if invoice is None:
-            raise Http404()
-
-        history = invoice.changelog_set.order_by('pk')
-
-        if len(history) == 0:
-            update_by = None
-            last_id = None
-        else:
-            update_by = history.first().modified_by
-            last_id = invoice.changelog_set.order_by('-pk').first().pk
-        context = {
-            'invoice_no': invoice.invoice_no,
-            'task_no': invoice.task.task_no,
-            'contractor': invoice.contractor.name,
-            'update_by': update_by,
-            'history': history,
-            'pk': pk,
-            'last_id': last_id,
-            'edit_link': reverse('budget_mgt:add_edit_invoice')
-        }
-        return render(request, self.template_name, context)
 
 # Tables
 @method_decorator(team_decorators, name='dispatch')
@@ -198,7 +169,7 @@ class TableTaskView(View):
 
     def get(self, request, *args, **kwargs):
 
-        pk = kwargs.pop('pk', None)
+        pk = request.GET.get('pk', None)
         if pk is not None:
             self.data_table_url = self.data_table_url + pk
 
@@ -246,7 +217,7 @@ class TableWorkflowView(View):
     columns = ['process_owner', 'status', 'process_name', 'action']
     column_names = ['Owner', 'Status', 'Description', 'Option']
     def get(self, request, *args, **kwargs):
-        pk = kwargs.pop('pk', None)
+        pk = request.GET.get('pk', None)
         if pk is None:
             raise Http404()
 

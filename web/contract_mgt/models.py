@@ -9,12 +9,6 @@ class Contractor(TimeStampedBaseModel):
     profile = models.TextField()
     short_hand = models.CharField(max_length=100)
 
-    def __str__(self):
-        return "%s" % (self.name)
-
-    @property
-    def choice_alias(self):
-        return (self.id, self.name)
 
 class ContractorContact(TimeStampedBaseModel):
     name = models.CharField(max_length=100)
@@ -32,7 +26,3 @@ class ContractorContact(TimeStampedBaseModel):
 class Contract(TimeStampedBaseModel):
     contract_no = models.CharField(max_length=100)
     remarks = models.TextField()
-
-    @property
-    def choice_alias(self):
-        return (self.id, self.contract_no)

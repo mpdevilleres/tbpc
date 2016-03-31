@@ -14,7 +14,8 @@ class InvoiceForm(uforms.EnhancedForm):
 
     status_choices = [
         'Open',
-        'Close'
+        'Close',
+        'Reject'
     ]
 
     region_choices = [

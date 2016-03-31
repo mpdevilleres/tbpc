@@ -17,7 +17,7 @@ class ContractorForm(uforms.EnhancedForm):
 class ContractorContactForm(uforms.EnhancedForm):
 
     model_choices = {
-        'contractor_id': Contractor
+        'contractor_id': Contractor.objects.values_list('id', 'name')
     }
 
     contractor_id = uforms.EnhancedChoiceField(label='Contractor Name')

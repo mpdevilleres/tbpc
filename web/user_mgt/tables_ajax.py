@@ -54,7 +54,7 @@ class AttendanceJson(BaseDatatableView):
         elif column == 'date_time':
             # timedelta of 4 because users are in UAE and server uses utc
             time = dt.datetime.combine(dt.date.today(), row.date_time)  + dt.timedelta(hours=4)
-            return time.strftime('%H:%m')
+            return time.strftime('%H:%M')
         else:
             return super(AttendanceJson, self).render_column(row, column)
 

@@ -1,4 +1,6 @@
 from django import forms
+from django.contrib.auth.models import User
+
 from user_mgt.models import Employee
 
 import utils.forms as uforms
@@ -9,8 +11,8 @@ from .choices import *
 
 class TeamTaskForm(uforms.EnhancedForm):
     model_choices = {
-        'user': Employee.objects.filter(section=False),
-        'contractor_id': Contractor.objects.all()
+        'user': User.objects.filter(is_staff=True).values_list('id', 'username'),
+        'contractor_id': Contractor.objects.values_list('id', 'name')
     }
 
     form_order = [
@@ -44,7 +46,7 @@ class TeamTaskForm(uforms.EnhancedForm):
 
 class TeamTaskHistoryEditForm(uforms.EnhancedForm):
     model_choices = {
-        'user_id': Employee.objects.filter(section=False),
+        'user_id': User.objects.filter(is_staff=True).values_list('id', 'username')
     }
 
     form_order = [
@@ -71,7 +73,7 @@ class TeamTaskHistoryEditForm(uforms.EnhancedForm):
 
 class TeamTaskHistoryAddForm(uforms.EnhancedForm):
     model_choices = {
-        'user_id': Employee.objects.filter(section=False),
+        'user_id': User.objects.filter(is_staff=True).values_list('id', 'username')
     }
 
     form_order = [
@@ -95,7 +97,7 @@ class TeamTaskHistoryAddForm(uforms.EnhancedForm):
     status = uforms.EnhancedChoiceField(choices=choices_status)
     date_expected = uforms.EnhancedDateField(label='Task Expected Date')
     date_action = uforms.EnhancedDateField(label='Task Action Date')
-    file = uforms.EnhancedFileField(label='Attachment')
+    file = uforms.EnhancedFileField(label='Attachment', required=False)
 
 class TeamTaskAttachmentForm(uforms.EnhancedForm):
     form_order = [

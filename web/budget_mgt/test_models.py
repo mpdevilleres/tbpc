@@ -11,26 +11,26 @@ class TestInvoiceModels(TestCase):
     3. Test for Transitions
     """
     def setUp(self):
-        pass
+        InvoiceFactory.create_batch(9)
 
     def tearDown(self):
         pass
 
     def test_invoice_model_instance(self):
-        invoice = InvoiceFactory()
+        invoice = Invoice.objects.first()
         self.assertEqual(isinstance(invoice, Invoice), True)
 
     def test_invoice_amount(self):
-        invoice = InvoiceFactory()
+        invoice = Invoice.objects.first()
         self.assertEqual(invoice.invoice_amount,
                          invoice.revenue_amount + invoice.capex_amount + invoice.opex_amount)
 
     def test_invoice_ref(self):
-        invoice = InvoiceFactory()
+        invoice = Invoice.objects.first()
         self.assertEqual(invoice.invoice_ref, invoice.contractor.name + ':' + invoice.invoice_no)
 
     def test_invoice_model_transition(self):
-        invoice = InvoiceFactory()
+        invoice = Invoice.objects.first()
         self.assertRaises(TransitionNotAllowed, invoice.set_overrun_check)      # transition not allowed
         self.assertRaises(TransitionNotAllowed, invoice.set_print_summary)      # transition not allowed
         self.assertRaises(TransitionNotAllowed, invoice.set_under_certification)# transition not allowed
