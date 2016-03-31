@@ -1,5 +1,12 @@
+import datetime
+
 import factory
+import factory.fuzzy
+
 from decimal import Decimal
+
+from contract_mgt.factories import ContractorFactory
+from pytz import UTC
 
 from . import models
 
@@ -23,9 +30,45 @@ class InvoiceFactory(factory.Factory):
     class Meta:
         model = models.Invoice
 
-    first_name = 'Admin'
-    last_name = 'User'
-    admin = True
+    # contract = factory.SubFactory(ContractFactory)
+    contractor = factory.SubFactory(ContractorFactory)
+    task = factory.SubFactory(TaskFactory)
+
+    state = "New"
+
+    region = factory.Iterator(['HO', 'DXB', 'AUH', 'NE'])
+    invoice_no = factory.fuzzy.FuzzyText(length=12)
+    invoice_type = factory.Iterator(['Civil', 'Cable', 'Development', 'Service Provisioning'])
+    revenue_amount = factory.fuzzy.FuzzyDecimal(0.00,999999999999999999.99)
+    opex_amount = factory.fuzzy.FuzzyDecimal(0.00,999999999999999999.99)
+    capex_amount = factory.fuzzy.FuzzyDecimal(0.00,999999999999999999.99)
+    penalty = factory.fuzzy.FuzzyDecimal(0.00,999999999999999999.99)
+    invoice_date = factory.fuzzy.FuzzyDateTime(datetime.datetime(2008, 1, 1, tzinfo=UTC), 
+                                               datetime.datetime(2009, 1, 1, tzinfo=UTC))
+    invoice_cert_date = factory.fuzzy.FuzzyDateTime(datetime.datetime(2008, 1, 1, tzinfo=UTC), 
+                                               datetime.datetime(2009, 1, 1, tzinfo=UTC))
+    received_date = factory.fuzzy.FuzzyDateTime(datetime.datetime(2008, 1, 1, tzinfo=UTC), 
+                                               datetime.datetime(2009, 1, 1, tzinfo=UTC))
+    signed_date = factory.fuzzy.FuzzyDateTime(datetime.datetime(2008, 1, 1, tzinfo=UTC), 
+                                               datetime.datetime(2009, 1, 1, tzinfo=UTC))
+    start_date = factory.fuzzy.FuzzyDateTime(datetime.datetime(2008, 1, 1, tzinfo=UTC), 
+                                               datetime.datetime(2009, 1, 1, tzinfo=UTC))
+    end_date = factory.fuzzy.FuzzyDateTime(datetime.datetime(2008, 1, 1, tzinfo=UTC), 
+                                               datetime.datetime(2009, 1, 1, tzinfo=UTC))
+    rfs_date = factory.fuzzy.FuzzyDateTime(datetime.datetime(2008, 1, 1, tzinfo=UTC), 
+                                               datetime.datetime(2009, 1, 1, tzinfo=UTC))
+    sent_finance_date = factory.fuzzy.FuzzyDateTime(datetime.datetime(2008, 1, 1, tzinfo=UTC), 
+                                               datetime.datetime(2009, 1, 1, tzinfo=UTC))
+    cost_center = factory.fuzzy.FuzzyText(length=12)
+    expense_code = factory.fuzzy.FuzzyText(length=12)
+    remarks = factory.fuzzy.FuzzyText(length=12)
+    description = factory.fuzzy.FuzzyText(length=12)
+    proj_no = factory.fuzzy.FuzzyText(length=12)
+    status = factory.fuzzy.FuzzyText(length=12)
+    current_process = factory.fuzzy.FuzzyText(length=12)
+
+    invoice_ref = factory.PostGenerationMethodCall('set_invoice_ref')
+    invoice_amount = factory.PostGenerationMethodCall('set_invoice_amount')
 
 class ReportFactory(factory.Factory):
     class Meta:

@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'utils.apps.UtilsConfig',
 #    'more_testing.apps.MoreTestingConfig',
 
-    'django_fsm_log',
+#    'django_fsm_log',
 
     'django.contrib.admin',
     'django.contrib.auth',

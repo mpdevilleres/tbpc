@@ -31,10 +31,6 @@ class Task(TimeStampedBaseModel):
     status = models.CharField(max_length=100)
     overrun = models.BooleanField(default=True)
 
-    @property
-    def choice_alias(self):
-        return (self.id, self.task_no)
-
 class Process(ProcessModel):
     """
     Inherit Process Model to Implement Process Table for Invoices
@@ -128,9 +124,15 @@ class Invoice(ConcurrentTransitionMixin, TimeStampedBaseModel):
     def set_completed(self, by=None):
         pass
 
-    def save(self, *args, **kwargs):
+    def set_invoice_ref(self):
         self.invoice_ref = self.contractor.name + ':' + self.invoice_no
+
+    def set_invoice_amount(self):
         self.invoice_amount = self.revenue_amount + self.opex_amount + self.capex_amount
+
+    def save(self, *args, **kwargs):
+        self.set_invoice_ref()
+        self.set_invoice_amount()
         super(Invoice, self).save(*args, **kwargs)
 
 class Workflow(WorkflowModel):

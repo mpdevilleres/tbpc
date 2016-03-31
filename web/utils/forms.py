@@ -22,11 +22,14 @@ class EnhancedForm(forms.Form):
         :note: get choices from models
         """
         if hasattr(self, 'model_choices'):
+            # k is the form_name v is the model.objects.values_list
             for k, v in self.model_choices.items():
-                choices_value = [x.choice_alias for x in v]
+                # create a list of all the values
+                choices_value = list(v.all())
+                # sort according to the second element (first element, second element)
                 sorted_choices = sorted(choices_value, key=lambda x: x[1])
+                # attach choices according to field name
                 setattr(self.fields[k],'choices', sorted_choices)
-
 
 # Fields
 class EnhancedCharField(forms.CharField):

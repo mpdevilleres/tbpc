@@ -7,15 +7,10 @@ from .models import Task
 
 class InvoiceForm(uforms.EnhancedForm):
     model_choices = {
-        'contractor_id': Contractor.objects.all(),
-        'task_id': Task.objects.filter().all(),
-        'contract_id': Contract.objects.filter().all()
+        'contractor_id': Contractor.objects.values_list('id', 'name'),
+        'task_id': Task.objects.values_list('id', 'task_no'),
+        'contract_id': Contract.objects.values_list('id', 'contract_no'),
     }
-
-    penalty_choices = [
-        'Yes',
-        'No'
-    ]
 
     status_choices = [
         'Open',
