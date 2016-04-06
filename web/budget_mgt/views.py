@@ -128,23 +128,33 @@ class InvoiceSummaryView(View):
         ]
         task = Task.objects.filter(pk=pk).first()
 
-        df_invoice = pd.DataFrame.from_records(Invoice.objects.filter(task_pk=pk).all().values())
+        df_invoice = pd.DataFrame.from_records(Invoice.objects.filter(task_id=pk).all().values())
         df_contractor = pd.DataFrame.from_records(Contractor.objects.all().values())
 
-        mg = pd.merge(df_invoice, df_contractor, left_on='contractor_id', right_on='id', how='left')
+        if len(df_invoice) == 0 or len(df_contractor) == 0:
 
-        mg['decimal_str_format'] = mg['capex_amount'].map(lambda x: '{:,.2f}'.format(x))
+            data = {}
 
-        mg.rename(columns={'name': 'contractor_name',        # {'old_name': 'new_name'}
-                           'id_x': 'id',
-                           'decimal_str_format': 'amount'},
-                  inplace=True)
+            actual_total = 0
 
-        data = mg.to_dict('records')
+            overrun = False
+        
+        else:
+            mg = pd.merge(df_invoice, df_contractor, left_on='contractor_id', right_on='id', how='left')
 
-        actual_total = task.invoice_set.all().aggregate(sum=Sum('capex_amount'))['sum']
+            mg['decimal_str_format'] = mg['capex_amount'].map(lambda x: '{:,.2f}'.format(x))
 
-        overrun = task.overrun
+            mg.rename(columns={'name': 'contractor_name',        # {'old_name': 'new_name'}
+                               'id_x': 'id',
+                               'decimal_str_format': 'amount'},
+                      inplace=True)
+
+            data = mg.to_dict('records')
+
+            actual_total = task.invoice_set.all().aggregate(sum=Sum('capex_amount'))['sum']
+
+            overrun = task.overrun
+
         context = {
             'data': data,
             'columns': [i for i in capitalize(field_arrangement)],
