@@ -90,10 +90,18 @@ class TaskForm(uforms.EnhancedForm):
         ['commitment_value'],
 
     ]
+    sicet_type_choices = [
+        'Freight',
+        'Custom Duty',
+        'Staff Cost'
+    ]
+    contractor_id = uforms.EnhancedChoiceField(label='Contractor Name')
+    contract_id = uforms.EnhancedChoiceField(label='Contract No.')
 
     task_no = uforms.EnhancedCharField()
-    commitment_value = uforms.EnhancedDecimalField()
-    cear_title = uforms.EnhancedTextField()
-    remarks = uforms.EnhancedTextField()
+    authorize_commitment = uforms.EnhancedDecimalField()
+    authorize_expenditure = uforms.EnhancedDecimalField()
+    cear_title = uforms.EnhancedCharField()
+    remarks = uforms.EnhancedCharField()
     category = uforms.EnhancedCharField()
-    status = uforms.EnhancedCharField()
+    sicet_type = uforms.EnhancedChoiceField(choices=[(x,x) for x in sicet_types_choices])

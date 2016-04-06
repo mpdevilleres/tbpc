@@ -16,3 +16,4 @@ def summarize_invoice(task_pk=None):
         task.expenditure_actual = Decimal('0.00') if total_amount['sum']is None else total_amount['sum']
         task.overrun = False if task.expenditure_actual <= task.commitment_value else True
         task.save()
+

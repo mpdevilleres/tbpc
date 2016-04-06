@@ -14,18 +14,26 @@ class TaskFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = models.Task
 
-    task_no = factory.Iterator(['HO-13778-H,H,HO-HO-13778-H-0049-15','HO-13778-H,H,HO-DX-13778-H-0050-15'])
-    commitment_value = factory.Iterator([Decimal('221818.00'), Decimal('351818.00')])
-    expenditure_actual = Decimal('1.11')
-    cear_title = ''
-    remarks = ''
-    category = ''
-    status = ''
+    contract = factory.SubFactory(ContractFactory)
+    contractor = factory.SubFactory(ContractorFactory)
+
+    task_no = factory.fuzzy.FuzzyText(length=12)
+    authorize_commitment = factory.fuzzy.FuzzyDecimal(1.11,999999999999.99,2)
+    authorize_expenditure = factory.fuzzy.FuzzyDecimal(1.11,999999999999.99,2)
+    cear_title = factory.fuzzy.FuzzyText(length=12)
+    remarks = factory.fuzzy.FuzzyText(length=12)
+    category = factory.fuzzy.FuzzyText(length=12)
     overrun = factory.Iterator([True, False])
+    sicet_type = factory.Iterator(['Freight', 'Customs Duty', 'Staff Cost'])
 
-#    choice_alias = (id,)
+class AccrualFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = models.Accrual
 
-# Another, different, factory for the same object
+    task = factory.SubFactory(TaskFactory)
+    amount = factory.fuzzy.FuzzyDecimal(1.11,999999999999.99,2)
+
+
 class InvoiceFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = models.Invoice
@@ -72,7 +80,7 @@ class InvoiceFactory(factory.django.DjangoModelFactory):
 
 class ReportFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = models.Report
+        model = models.InvoiceReport
 
     first_name = 'John'
     last_name = 'Doe'
@@ -80,15 +88,7 @@ class ReportFactory(factory.django.DjangoModelFactory):
 
 class ProcessFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = models.Process
-
-    first_name = 'John'
-    last_name = 'Doe'
-    admin = False
-
-class WorkflowFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = models.Workflow
+        model = models.InvoiceProcess
 
     first_name = 'John'
     last_name = 'Doe'
@@ -96,7 +96,7 @@ class WorkflowFactory(factory.django.DjangoModelFactory):
 
 class ChangelogFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = models.ChangeLog
+        model = models.InvoiceChangeLog
 
     first_name = 'John'
     last_name = 'Doe'

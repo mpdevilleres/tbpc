@@ -30,7 +30,7 @@ from utils.forms import populate_obj
 from utils.tools import capitalize
 
 
-from .models import Invoice, Task, Workflow, Process, Report
+from .models import Invoice, Task, InvoiceProcess, InvoiceReport
 from .tables_ajax import TaskJson, InvoiceJson
 
 # Add Edit Views
@@ -128,7 +128,7 @@ class InvoiceSummaryView(View):
         ]
         task = Task.objects.filter(pk=pk).first()
 
-        df_invoice = pd.DataFrame.from_records(Invoice.objects.filter(task_pk=pk).all().values())
+        df_invoice = pd.DataFrame.from_records(Invoice.objects.filter(task__pk=pk).all().values())
         df_contractor = pd.DataFrame.from_records(Contractor.objects.all().values())
 
         mg = pd.merge(df_invoice, df_contractor, left_on='contractor_id', right_on='id', how='left')
@@ -150,7 +150,7 @@ class InvoiceSummaryView(View):
             'columns': [i for i in capitalize(field_arrangement)],
             'keys': field_arrangement,
             'task_no': task.task_no,
-            'commitment_value': task.commitment_value,
+            'authorize_commitment': task.authorize_commitment,
             'actual_total': actual_total,
             'overrun': overrun
         }
@@ -211,7 +211,7 @@ class TableInvoiceView(View):
 # Work Flow and Process
 @method_decorator(team_decorators, name='dispatch')
 class TableWorkflowView(View):
-    model = Workflow
+#    model = Workflow
     template_name = 'default/static_table.html'
     table_title = 'Workflow'
     columns = ['process_owner', 'status', 'process_name', 'action']
@@ -221,7 +221,7 @@ class TableWorkflowView(View):
         if pk is None:
             raise Http404()
 
-        processes = Process.objects.all()
+        processes = InvoiceProcess.objects.all()
         invoice = Invoice.objects.filter(pk=pk).first()
 
         temp_list = []
@@ -249,7 +249,7 @@ class TableWorkflowView(View):
 
 @method_decorator(team_decorators, name='dispatch')
 class EditWorkflowView(View):
-    model = Workflow
+#    model = Workflow
 
     def get(self, request, *args, **kwargs):
         action = request.GET.get('action', None)
@@ -291,7 +291,7 @@ class ForCertificationSummaryView(View):
             invoice.save()
 
         invoice_ids = [str(i) for i in invoices.values_list('id', flat=True)]
-        report = Report(invoice_ids='; '.join(invoice_ids))
+        report = InvoiceReport(invoice_ids='; '.join(invoice_ids))
         report.counter = F('counter') + 1
         report.save()
 

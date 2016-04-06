@@ -1,8 +1,12 @@
+import random
+
+from django.db.models import Sum
 from django.test import TestCase
 from django_fsm import TransitionNotAllowed
 
-from .factories import InvoiceFactory
-from .models import Invoice
+from .factories import InvoiceFactory, TaskFactory, AccrualFactory
+from .models import Invoice, Task, Accrual
+
 
 class TestInvoiceModels(TestCase):
     """
@@ -76,3 +80,39 @@ class TestInvoiceModels(TestCase):
         self.assertRaises(TransitionNotAllowed, invoice.set_print_summary)
         self.assertRaises(TransitionNotAllowed, invoice.set_verify_invoices)
         self.assertEqual(None, invoice.set_new())
+
+
+class TestTaskModels(TestCase):
+    """
+    1. Test of Model Instances
+    2. Test of Functions that manipulate the values of the fields
+    3. Test for Transitions
+    """
+    def setUp(self):
+        tasks = TaskFactory.create_batch(9)
+        invoices = InvoiceFactory.create_batch(9)
+        accruals = AccrualFactory.create_batch(9)
+
+    def tearDown(self):
+        pass
+
+    def test_task_model_instance(self):
+        task = Task.objects.first()
+        self.assertEqual(isinstance(task, Task), True)
+
+    def test_task_total_accrual(self):
+        task = Task.objects.first()
+        total_amount = Accrual.objects.all().\
+            aggregate(sum=Sum('amount'))
+        self.assertEqual(task.total_accrual,total_amount)
+
+    def test_task_total_expenditure(self):
+        task = Task.objects.first()
+        total_amount = Invoice.objects.filter(task_id=task.id).all().\
+            aggregate(sum=Sum('capex_amount'))
+        self.assertEqual(task.total_accrual,total_amount)
+
+    def test_task_model_transition(self):
+        task = Task.objects.first()
+        self.assertRaises(TransitionNotAllowed, task.set_work_completed)      # transition not allowed
+        self.assertEqual(None, task.set_work_in_progress())                   # transition to verify invoices

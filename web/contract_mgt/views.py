@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from contract_mgt.models import Contractor, ContractorContact
+from utils.forms import populate_obj
 
 from .forms import ContractorForm, ContractorContactForm
 from .tables_ajax import ContractorContactJson, ContractorJson
@@ -24,7 +25,7 @@ def add_edit_contractor(request, pk=None):
         form = _form(request.POST)
         if form.is_valid():
 
-            form.populate_obj(record)
+            populate_obj(form.cleaned_data, record)
             record.save()
             messages.info(request, "Successfully Updated the Database")
 
@@ -52,7 +53,7 @@ def add_edit_contact(request, pk=None):
         form = _form(request.POST)
         if form.is_valid():
             form.get_cleaned_data('pic')
-            form.populate_obj(record)
+            populate_obj(form.cleaned_data, record)
 
             record.save()
             messages.info(request, "Successfully Updated the Database")

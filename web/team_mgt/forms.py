@@ -11,7 +11,7 @@ from .choices import *
 
 class TeamTaskForm(uforms.EnhancedForm):
     model_choices = {
-        'user': User.objects.filter(is_staff=True).values_list('id', 'username'),
+        'user': User.objects.filter(is_staff=True).values_list('id', 'first_name'),
         'contractor_id': Contractor.objects.values_list('id', 'name')
     }
 

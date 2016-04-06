@@ -29,7 +29,7 @@ class TaskJson(BaseDatatableView):
 
 
     # define the columns that will be returned
-    columns = ['task_no', 'commitment_value', 'expenditure_actual',
+    columns = ['task_no', 'authorize_commitment', 'authorize_expenditure',
                'overrun', 'status', 'id']
 
     # Hide Columns
@@ -166,7 +166,7 @@ class InvoiceJson(BaseDatatableView):
         elif column == 'invoice_no':
             status = 'danger' if row.status == 'Reject' else 'info'
             icon = 'close' if row.status == 'Reject' else 'check'
-            value = row.task.invoice_no
+            value = row.invoice_no
             return '<span class="label label-{2}"> <i class="icon-{1}"></i></span>{0}'.format(value, icon, status)
 
         elif column == 'invoice_amount':

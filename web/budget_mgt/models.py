@@ -1,37 +1,88 @@
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django_fsm_log.decorators import fsm_log_by
-from django_fsm import FSMField, transition, ConcurrentTransitionMixin, FSMKeyField
+from django_fsm import transition, ConcurrentTransitionMixin, FSMKeyField
 from contract_mgt.models import Contractor, Contract
 
 from decimal import Decimal
 from django.db import models
 
-from utils.models import TimeStampedBaseModel, ProcessModel, WorkflowModel, ChangeLogModel
+from utils.models import TimeStampedBaseModel, ProcessModel, ChangeLogModel
 
 import datetime as dt
-from utils.middleware import get_current_user
 
-# Create your models here.
-# UTILS FUNCS
-def user_value():
-    try:
-        return get_current_user().username
-    except:
-        return "System"
 
 # Create your models here.
 
-class Task(TimeStampedBaseModel):
+class TaskProcess(ProcessModel):
+    """
+    Inherit Process Model to Implement Process Table for Task
+    """
+    pass
+
+class Task(ConcurrentTransitionMixin, TimeStampedBaseModel):
+    class Transitions:
+            trans_1 = ['New', 'Work in Progress', 'Work Completed']
+
+    contract = models.ForeignKey(Contract, on_delete=models.CASCADE)
+    contractor = models.ForeignKey(Contractor, on_delete=models.CASCADE)
+
+    state = FSMKeyField(TaskProcess, default="New")
+
     task_no = models.CharField(max_length=100)
-    commitment_value = models.DecimalField(max_digits=20, decimal_places=2)
-    expenditure_actual = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
+    authorize_commitment = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
+    authorize_expenditure = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
+    total_accrual = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
+    actual_expenditure = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
     cear_title = models.TextField(blank=True)
     remarks = models.TextField(blank=True)
     category = models.CharField(max_length=100)
-    status = models.CharField(max_length=100)
     overrun = models.BooleanField(default=True)
+    sicet_type = models.CharField(max_length=100)
 
-class Process(ProcessModel):
+    def sum_accrual(self):
+        total = self.accrual_set.all().aggregate(sum=Sum('amount'))
+        self.total_accrual = Decimal('0.00') if total['sum'] is None else total['sum']
+
+    def sum_actual_expenditure(self):
+        total = self.invoice_set.all().aggregate(sum=Sum('capex_amount'))
+        self.actual_expenditure = Decimal('0.00') if total['sum'] is None else total['sum']
+
+    def can_complete(self):
+        """
+        Return True if Task is not Overrun
+        """
+        return not self.overrun
+
+    def save(self, *args, **kwargs):
+        self.sum_accrual()
+        self.sum_actual_expenditure()
+        super(Task, self).save(*args, **kwargs)
+
+    @fsm_log_by
+    @transition(field=state, source='New', target='Work in Progress')
+    def set_work_in_progress(self, by=None):
+        pass
+
+    @fsm_log_by
+    @transition(field=state, source='Work in Progress', target='Work Completed',
+                conditions=[can_complete])
+    def set_work_completed(self, by=None):
+        pass
+
+
+class Accrual(ChangeLogModel):
+    task = models.ForeignKey(Task, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
+
+class Pcc(ChangeLogModel):
+    task = models.ForeignKey(Task, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
+    rfs_date = models.DateTimeField(blank=True, null=True)
+
+class TaskChangeLog(ChangeLogModel):
+    task = models.ForeignKey(Task, on_delete=models.CASCADE)
+
+class InvoiceProcess(ProcessModel):
     """
     Inherit Process Model to Implement Process Table for Invoices
     """
@@ -48,7 +99,7 @@ class Invoice(ConcurrentTransitionMixin, TimeStampedBaseModel):
     contractor = models.ForeignKey(Contractor, on_delete=models.CASCADE)
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
 
-    state = FSMKeyField(Process, default="New")
+    state = FSMKeyField(InvoiceProcess, default="New")
 
     region = models.CharField(max_length=100)
     invoice_no = models.CharField(max_length=100)
@@ -135,14 +186,10 @@ class Invoice(ConcurrentTransitionMixin, TimeStampedBaseModel):
         self.set_invoice_amount()
         super(Invoice, self).save(*args, **kwargs)
 
-class Workflow(WorkflowModel):
-    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
-    process = models.ForeignKey(Process, on_delete=models.CASCADE)
-
-class ChangeLog(ChangeLogModel):
+class InvoiceChangeLog(ChangeLogModel):
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
 
-class Report(TimeStampedBaseModel):
+class InvoiceReport(TimeStampedBaseModel):
     reference_no = models.CharField(max_length=100)
     invoice_ids = models.CharField(max_length=100)
     counter = models.PositiveIntegerField(editable=False, unique=True)
@@ -158,5 +205,4 @@ class Report(TimeStampedBaseModel):
 
             self.reference_no = r'Invoice Management/{}/{}'.format(dt.datetime.now().strftime('%b%Y'),self.counter)
 
-        super(Report, self).save(*args, **kwargs)
-
+        super(InvoiceReport, self).save(*args, **kwargs)
