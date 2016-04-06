@@ -138,7 +138,6 @@ class InvoiceJson(BaseDatatableView):
 
     # define hidden columns
 
-
     # set max limit of records returned, this is used to protect our site if someone tries to attack our site
     # and make it return huge amount of data
     max_display_length = 500
@@ -146,7 +145,6 @@ class InvoiceJson(BaseDatatableView):
     def render_column(self, row, column):
         # We want to render user as a custom column
         if column == 'id':
-
 
             return '<a href="{1}?pk={0}" class="btn default btn-xs red-stripe">Edit</a>' \
                    '<a href="{2}?pk={0}" class="btn default btn-xs blue-stripe">Workflow</a>' \
