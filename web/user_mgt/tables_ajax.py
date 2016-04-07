@@ -76,7 +76,7 @@ class AttendanceSummaryJson(BaseDatatableView):
 
 
     # define the columns that will be returned
-    columns = ['user.username', 'date_day', 'date_time_in', 'date_time_out', 'total_hours',
+    columns = ['created_by', 'date_day', 'date_time_in', 'date_time_out', 'total_hours',
                'reason_for_excess', 'accepted', 'id']
 
     column_names = [x for x in capitalize(columns)]

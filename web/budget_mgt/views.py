@@ -7,8 +7,8 @@ from wsgiref.util import FileWrapper
 import os
 import pandas as pd
 
-from budget_mgt.forms import InvoiceForm, TaskForm
-from budget_mgt.utils import summarize_invoice
+from budget_mgt.forms import InvoiceForm, TaskForm, AccrualForm, PccForm
+from budget_mgt.utils import summarize_invoice, summarize_accrual
 from budget_mgt.utils.invoice_report_generator import InvoiceReportPrinter
 
 from contract_mgt.models import Contractor
@@ -30,8 +30,9 @@ from utils.forms import populate_obj
 from utils.tools import capitalize
 
 
-from .models import Invoice, Task, InvoiceProcess, InvoiceReport
-from .tables_ajax import TaskJson, InvoiceJson
+from .models import Invoice, Task, InvoiceProcess, InvoiceReport, Accrual, TaskProcess, Pcc
+from .tables_ajax import TaskJson, InvoiceJson, AccrualJson, PccJson
+
 
 # Add Edit Views
 @method_decorator(team_decorators, name='dispatch')
@@ -111,6 +112,82 @@ class AddEditTaskView(View):
         return render(request, self.template_name, {'forms': form})
 
 @method_decorator(team_decorators, name='dispatch')
+class AddEditAccrualView(View):
+    model = Accrual
+    form_class = AccrualForm
+    template_name = 'default/add_form.html'
+    success_redirect_link = 'budget_mgt:table_task'
+
+    def get(self, request, *args, **kwargs):
+        pk = request.GET.get('pk', None)
+        if pk is None:
+            forms = self.form_class()
+
+        else:
+            record = get_object_or_404(self.model, pk=pk)
+            forms = self.form_class(initial=record.__dict__)
+
+        return render(request, self.template_name, {'forms': forms})
+
+    def post(self, request, *args, **kwargs):
+        pk = request.GET.get('pk', None)
+        if pk is None:
+            record = self.model()
+        else:
+            record = get_object_or_404(self.model, pk=pk)
+
+        form = self.form_class(request.POST)
+
+        if form.is_valid():
+            cleaned_data = form.clean()
+            populate_obj(cleaned_data, record)
+            record.save()
+            summarize_accrual(task_pk=record.task_id)
+
+            messages.success(request, "Successfully Updated the Database")
+            return redirect(self.success_redirect_link)
+
+        return render(request, self.template_name, {'forms': form})
+
+@method_decorator(team_decorators, name='dispatch')
+class AddEditPccView(View):
+    model = Pcc
+    form_class = PccForm
+    template_name = 'default/add_form.html'
+    success_redirect_link = 'budget_mgt:table_pcc'
+
+    def get(self, request, *args, **kwargs):
+        pk = request.GET.get('pk', None)
+        if pk is None:
+            forms = self.form_class()
+
+        else:
+            record = get_object_or_404(self.model, pk=pk)
+            forms = self.form_class(initial=record.__dict__)
+
+        return render(request, self.template_name, {'forms': forms})
+
+    def post(self, request, *args, **kwargs):
+        pk = request.GET.get('pk', None)
+        if pk is None:
+            record = self.model()
+        else:
+            record = get_object_or_404(self.model, pk=pk)
+
+        form = self.form_class(request.POST)
+
+        if form.is_valid():
+            cleaned_data = form.clean()
+            populate_obj(cleaned_data, record)
+            record.save()
+            summarize_accrual(task_pk=record.task_id)
+
+            messages.success(request, "Successfully Updated the Database")
+            return redirect(self.success_redirect_link)
+
+        return render(request, self.template_name, {'forms': form})
+
+@method_decorator(team_decorators, name='dispatch')
 class InvoiceSummaryView(View):
     model = Task
     template_name = 'budget_mgt/invoices_summary.html'
@@ -167,9 +244,51 @@ class InvoiceSummaryView(View):
         }
         return render(request, self.template_name, context)
 
+#Tables
+@method_decorator(team_decorators, name='dispatch')
+class TableAccrualView(View):
+    add_record_link = reverse_lazy('budget_mgt:add_edit_accrual')
+    columns = getattr(AccrualJson,'column_names')
+    data_table_url = reverse_lazy('budget_mgt:table_accrual_json')
+    template_name = 'default/datatable.html'
+    table_title = 'Expenditure Accrual'
 
+    def get(self, request, *args, **kwargs):
 
-# Tables
+        pk = request.GET.get('pk', None)
+        if pk is not None:
+            self.data_table_url += '?pk={}'.format(pk)
+
+        context = {
+            'table_title': self.table_title,
+            'columns': self.columns,
+            'data_table_url': self.data_table_url,
+            'add_record_link': self.add_record_link,
+        }
+        return render(request, self.template_name, context)
+
+@method_decorator(team_decorators, name='dispatch')
+class TablePccView(View):
+    add_record_link = reverse_lazy('budget_mgt:add_edit_pcc')
+    columns = getattr(PccJson,'column_names')
+    data_table_url = reverse_lazy('budget_mgt:table_pcc_json')
+    template_name = 'default/datatable.html'
+    table_title = 'Expenditure Pcc'
+
+    def get(self, request, *args, **kwargs):
+
+        pk = request.GET.get('pk', None)
+        if pk is not None:
+            self.data_table_url += '?pk={}'.format(pk)
+
+        context = {
+            'table_title': self.table_title,
+            'columns': self.columns,
+            'data_table_url': self.data_table_url,
+            'add_record_link': self.add_record_link,
+        }
+        return render(request, self.template_name, context)
+
 @method_decorator(team_decorators, name='dispatch')
 class TableTaskView(View):
     add_record_link = reverse_lazy('budget_mgt:add_edit_task')
@@ -221,8 +340,11 @@ class TableInvoiceView(View):
 
 # Work Flow and Process
 @method_decorator(team_decorators, name='dispatch')
-class TableWorkflowView(View):
-#    model = Workflow
+class TableInvoiceWorkflowView(View):
+    model = Invoice
+    process_model = InvoiceProcess
+    url_edit_workflow = 'budget_mgt:invoice_workflow_close'
+
     template_name = 'default/static_table.html'
     table_title = 'Workflow'
     columns = ['process_owner', 'status', 'process_name', 'action']
@@ -232,8 +354,8 @@ class TableWorkflowView(View):
         if pk is None:
             raise Http404()
 
-        processes = InvoiceProcess.objects.all()
-        invoice = Invoice.objects.filter(pk=pk).first()
+        processes = self.process_model.objects.all()
+        record = self.model.objects.filter(pk=pk).first()
 
         temp_list = []
         status = 'Done'
@@ -246,7 +368,7 @@ class TableWorkflowView(View):
                     'action': '{0}'.format(process.name.lower().replace(' ', '_')),
                 }
             )
-            if invoice.state == process.name:
+            if record.state == process.name:
                 status = 'New'
 
         context = {
@@ -254,13 +376,15 @@ class TableWorkflowView(View):
             'columns': self.columns,
             'column_names': self.column_names,
             'table_data': temp_list,
-            'pk': pk
+            'pk': pk,
+            'url_edit_workflow': reverse_lazy(self.url_edit_workflow)
         }
         return render(request, self.template_name, context)
 
 @method_decorator(team_decorators, name='dispatch')
-class EditWorkflowView(View):
-#    model = Workflow
+class EditInvoiceWorkflowView(View):
+    model = Invoice
+    url_redirect_workflow_table = 'budget_mgt:invoice_workflow'
 
     def get(self, request, *args, **kwargs):
         action = request.GET.get('action', None)
@@ -269,8 +393,8 @@ class EditWorkflowView(View):
         if pk is None or action is None:
            raise Http404()
 
-        invoice = Invoice.objects.filter(pk=pk).first()
-        action = getattr(invoice, 'set_' + action)
+        record = self.model.objects.filter(pk=pk).first()
+        action = getattr(record, 'set_' + action)
 
         # check if user has permission to execute the method
         if not has_transition_perm(action, request.user):
@@ -280,12 +404,85 @@ class EditWorkflowView(View):
             # try to transition and catchese if not allowed
             try:
                 action(by=request.user)
-                invoice.save()
+                record.save()
 
             except TransitionNotAllowed:
                 messages.warning(request, "Transition Not Allowed")
 
-        return redirect(reverse('budget_mgt:invoice_workflow') + '%s' % pk)
+        return redirect(reverse(self.url_redirect_workflow_table) + '?pk=%s' % pk)
+
+@method_decorator(team_decorators, name='dispatch')
+class TableTaskWorkflowView(View):
+#    model = Workflow
+    model = Task
+    process_model = TaskProcess
+    url_edit_workflow = 'budget_mgt:task_workflow_close'
+
+    template_name = 'default/static_table.html'
+    table_title = 'Workflow'
+    columns = ['process_owner', 'status', 'process_name', 'action']
+    column_names = ['Owner', 'Status', 'Description', 'Option']
+    def get(self, request, *args, **kwargs):
+        pk = request.GET.get('pk', None)
+        if pk is None:
+            raise Http404()
+
+        processes = self.process_model.objects.all()
+        record = self.model.objects.filter(pk=pk).first()
+
+        temp_list = []
+        status = 'Done'
+        for process in processes:
+            temp_list.append(
+                {
+                    'process_owner': process.owners,
+                    'status': status,
+                    'process_name': process.name,
+                    'action': '{0}'.format(process.name.lower().replace(' ', '_')),
+                }
+            )
+            if record.state == process.name:
+                status = 'New'
+
+        context = {
+            'table_title': self.table_title,
+            'columns': self.columns,
+            'column_names': self.column_names,
+            'table_data': temp_list,
+            'pk': pk,
+            'url_edit_workflow': reverse_lazy(self.url_edit_workflow)
+        }
+        return render(request, self.template_name, context)
+
+@method_decorator(team_decorators, name='dispatch')
+class EditTaskWorkflowView(View):
+    model = Task
+    url_redirect_workflow_table = 'budget_mgt:task_workflow'
+
+    def get(self, request, *args, **kwargs):
+        action = request.GET.get('action', None)
+        pk = request.GET.get('pk', None)
+
+        if pk is None or action is None:
+           raise Http404()
+
+        record = self.model.objects.filter(pk=pk).first()
+        action = getattr(record, 'set_' + action)
+
+        # check if user has permission to execute the method
+        if not has_transition_perm(action, request.user):
+            messages.warning(request, "Permission Denied")
+
+        else:
+            # try to transition and catchese if not allowed
+            try:
+                action(by=request.user)
+                record.save()
+
+            except TransitionNotAllowed:
+                messages.warning(request, "Transition Not Allowed")
+
+        return redirect(reverse(self.url_redirect_workflow_table) + '?pk=%s' % pk)
 
 @method_decorator(team_decorators, name='dispatch')
 class ForCertificationSummaryView(View):

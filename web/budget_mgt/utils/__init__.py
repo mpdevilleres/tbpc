@@ -13,7 +13,16 @@ def summarize_invoice(task_pk=None):
 
     for task in expenditure_tasks:
         total_amount = task.invoice_set.all().aggregate(sum=Sum('capex_amount'))
-        task.expenditure_actual = Decimal('0.00') if total_amount['sum']is None else total_amount['sum']
-        task.overrun = False if task.expenditure_actual <= task.commitment_value else True
+        task.actual_expenditure = Decimal('0.00') if total_amount['sum']is None else total_amount['sum']
         task.save()
 
+def summarize_accrual(task_pk=None):
+    if task_pk is None:
+        expenditure_tasks = Task.objects.all()
+    else:
+        expenditure_tasks = Task.objects.filter(pk=task_pk)
+
+    for task in expenditure_tasks:
+        total_amount = task.accrual_set.all().aggregate(sum=Sum('amount'))
+        task.total_accrual = Decimal('0.00') if total_amount['sum']is None else total_amount['sum']
+        task.save()

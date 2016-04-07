@@ -1,5 +1,4 @@
 from django.test import TestCase
-from django_fsm import TransitionNotAllowed
 
 from budget_mgt.forms import InvoiceForm
 from utils.forms import EnhancedForm

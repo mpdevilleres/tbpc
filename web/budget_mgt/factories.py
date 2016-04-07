@@ -17,22 +17,40 @@ class TaskFactory(factory.django.DjangoModelFactory):
     contract = factory.SubFactory(ContractFactory)
     contractor = factory.SubFactory(ContractorFactory)
 
-    task_no = factory.fuzzy.FuzzyText(length=12)
-    authorize_commitment = factory.fuzzy.FuzzyDecimal(1.11,999999999999.99,2)
-    authorize_expenditure = factory.fuzzy.FuzzyDecimal(1.11,999999999999.99,2)
+    state = "New"
+
+    task_no = factory.Iterator(['AU-HO-13742-C-0394-15', 'DX-DX-13281-C-0069-13', 'HO-HO-13691-H-0005-14'])
+    authorize_commitment = factory.fuzzy.FuzzyDecimal(1.11,9999999999.99,2)
+    authorize_expenditure = factory.fuzzy.FuzzyDecimal(1.11,9999999999.99,2)
     cear_title = factory.fuzzy.FuzzyText(length=12)
     remarks = factory.fuzzy.FuzzyText(length=12)
     category = factory.fuzzy.FuzzyText(length=12)
-    overrun = factory.Iterator([True, False])
     sicet_type = factory.Iterator(['Freight', 'Customs Duty', 'Staff Cost'])
+    section = factory.fuzzy.FuzzyText(length=12)
+
 
 class AccrualFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = models.Accrual
 
     task = factory.SubFactory(TaskFactory)
-    amount = factory.fuzzy.FuzzyDecimal(1.11,999999999999.99,2)
+    amount = factory.fuzzy.FuzzyDecimal(1.11,9999999999.99,2)
+    accrual_date = factory.fuzzy.FuzzyDateTime(datetime.datetime(2008, 1, 1, tzinfo=UTC),
+                                               datetime.datetime(2009, 1, 1, tzinfo=UTC))
 
+class PccFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = models.Pcc
+
+    task = factory.SubFactory(TaskFactory)
+    amount = factory.fuzzy.FuzzyDecimal(1.11,9999999999.99,2)
+
+    rfs_ref = factory.fuzzy.FuzzyText(length=12)
+    rfs_date = factory.fuzzy.FuzzyDateTime(datetime.datetime(2008, 1, 1, tzinfo=UTC),
+                                               datetime.datetime(2009, 1, 1, tzinfo=UTC))
+    pcc_date = factory.fuzzy.FuzzyDateTime(datetime.datetime(2008, 1, 1, tzinfo=UTC),
+                                               datetime.datetime(2009, 1, 1, tzinfo=UTC))
+    partial = factory.Iterator([True, False])
 
 class InvoiceFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -63,7 +81,7 @@ class InvoiceFactory(factory.django.DjangoModelFactory):
                                                datetime.datetime(2009, 1, 1, tzinfo=UTC))
     end_date = factory.fuzzy.FuzzyDateTime(datetime.datetime(2008, 1, 1, tzinfo=UTC), 
                                                datetime.datetime(2009, 1, 1, tzinfo=UTC))
-    rfs_date = factory.fuzzy.FuzzyDateTime(datetime.datetime(2008, 1, 1, tzinfo=UTC), 
+    rfs_date = factory.fuzzy.FuzzyDateTime(datetime.datetime(2008, 1, 1, tzinfo=UTC),
                                                datetime.datetime(2009, 1, 1, tzinfo=UTC))
     sent_finance_date = factory.fuzzy.FuzzyDateTime(datetime.datetime(2008, 1, 1, tzinfo=UTC), 
                                                datetime.datetime(2009, 1, 1, tzinfo=UTC))
@@ -75,16 +93,11 @@ class InvoiceFactory(factory.django.DjangoModelFactory):
     status = factory.fuzzy.FuzzyText(length=12)
     current_process = factory.fuzzy.FuzzyText(length=12)
 
-    invoice_ref = factory.PostGenerationMethodCall('set_invoice_ref')
-    invoice_amount = factory.PostGenerationMethodCall('set_invoice_amount')
-
-class ReportFactory(factory.django.DjangoModelFactory):
+class InvoiceReportFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = models.InvoiceReport
 
-    first_name = 'John'
-    last_name = 'Doe'
-    admin = False
+    invoice_ids = factory.fuzzy.FuzzyText(length=12)
 
 class ProcessFactory(factory.django.DjangoModelFactory):
     class Meta:

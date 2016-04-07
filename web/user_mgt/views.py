@@ -79,9 +79,9 @@ def table_attendance(request):
 
 @login_required
 def table_attendance_summary(request):
-    if request.user.id not in [1]:
-        raise Http404("option must be valid")
-
+    # if request.user.id not in [1]:
+    #     raise Http404("option must be valid")
+    #
     data_table_url = reverse('user_mgt:table_attendance_summary_json') + '%s' % request.user.id
 
     context = {

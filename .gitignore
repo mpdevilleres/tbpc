@@ -6,6 +6,7 @@ __pycahe__
 
 *.pyc
 .env
+.cache
 .coverage
 .idea
 workflow.txt

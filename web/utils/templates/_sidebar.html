@@ -131,6 +131,34 @@
                     </li>
                     <li class="nav-item  ">
                         <a href="javascript:;" class="nav-link nav-toggle">
+                            <span class="title">Accrual</span>
+                            <span class="arrow"></span>
+                        </a>
+                        <ul class="sub-menu">
+                            <li class="nav-item ">
+                                <a href="{% url 'budget_mgt:add_edit_accrual' %}" class="nav-link "> Add Record </a>
+                            </li>
+                            <li class="nav-item ">
+                                <a href="{% url 'budget_mgt:table_accrual' %}" class="nav-link "> View Records </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="nav-item  ">
+                        <a href="javascript:;" class="nav-link nav-toggle">
+                            <span class="title">Proj Completion Cert</span>
+                            <span class="arrow"></span>
+                        </a>
+                        <ul class="sub-menu">
+                            <li class="nav-item ">
+                                <a href="{% url 'budget_mgt:add_edit_pcc' %}" class="nav-link "> Add Record </a>
+                            </li>
+                            <li class="nav-item ">
+                                <a href="{% url 'budget_mgt:table_pcc' %}" class="nav-link "> View Records </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="nav-item  ">
+                        <a href="javascript:;" class="nav-link nav-toggle">
                             <span class="title">Invoice</span>
                             <span class="arrow"></span>
                         </a>

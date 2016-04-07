@@ -1,4 +1,4 @@
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, F
 from django_fsm_log.decorators import fsm_log_by
 from django_fsm import transition, ConcurrentTransitionMixin, FSMKeyField
 from contract_mgt.models import Contractor, Contract
@@ -29,34 +29,81 @@ class Task(ConcurrentTransitionMixin, TimeStampedBaseModel):
     state = FSMKeyField(TaskProcess, default="New")
 
     task_no = models.CharField(max_length=100)
+    region = models.CharField(max_length=100)
+    category = models.CharField(max_length=100)
+    year = models.CharField(max_length=100)
+
     authorize_commitment = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
     authorize_expenditure = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
+
     total_accrual = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
     actual_expenditure = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
+    wip_amount = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
+    total_pcc_amount = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
+
+    sicet_type = models.CharField(max_length=100)
+    section = models.CharField(max_length=100)
+
     cear_title = models.TextField(blank=True)
     remarks = models.TextField(blank=True)
-    category = models.CharField(max_length=100)
-    overrun = models.BooleanField(default=True)
-    sicet_type = models.CharField(max_length=100)
 
-    def sum_accrual(self):
+    @property
+    def is_overrun(self):
+        return self.actual_expenditure > self.total_accrual
+
+    @property
+    def is_overbook(self):
+        return self.total_accrual > self.authorize_expenditure
+
+    @property
+    def is_pcc_issued(self):
+        return True if len(self.pcc_set.all()) != 0 else False
+
+    def get_wip_amount(self):
+        return self.authorize_expenditure - self.total_pcc_amount
+
+    def get_year(self):
+        string = str(self.task_no)
+        string = string.split('-')
+        return string[-1]
+
+    def get_region(self):
+        string = str(self.task_no)
+        string = string.split('-')
+        return string[0]
+
+    def get_category(self):
+        string = str(self.task_no)
+        string = string.split('-')
+        return string[3]
+
+    def get_total_accrual(self):
         total = self.accrual_set.all().aggregate(sum=Sum('amount'))
-        self.total_accrual = Decimal('0.00') if total['sum'] is None else total['sum']
+        return Decimal('0.00') if total['sum'] is None else total['sum']
 
-    def sum_actual_expenditure(self):
+    def get_actual_expenditure(self):
         total = self.invoice_set.all().aggregate(sum=Sum('capex_amount'))
-        self.actual_expenditure = Decimal('0.00') if total['sum'] is None else total['sum']
+        return Decimal('0.00') if total['sum'] is None else total['sum']
 
     def can_complete(self):
         """
         Return True if Task is not Overrun
         """
-        return not self.overrun
+        return not self.is_overbook and not self.is_overrun and self.is_pcc_issued
 
     def save(self, *args, **kwargs):
-        self.sum_accrual()
-        self.sum_actual_expenditure()
+        self.wip_amount = self.get_wip_amount()
+        self.year = self.get_year()
+        self.region = self.get_region()
+        self.category = self.get_category()
+        self.total_accrual = self.get_total_accrual()
+        self.actual_expenditure = self.get_actual_expenditure()
         super(Task, self).save(*args, **kwargs)
+
+    @fsm_log_by
+    @transition(field=state, source='*', target='New')
+    def set_new(self, by=None):
+        pass
 
     @fsm_log_by
     @transition(field=state, source='New', target='Work in Progress')
@@ -69,15 +116,49 @@ class Task(ConcurrentTransitionMixin, TimeStampedBaseModel):
     def set_work_completed(self, by=None):
         pass
 
-
 class Accrual(ChangeLogModel):
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
+    accrual_date = models.DateTimeField(blank=True, null=True)
     amount = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
+    ref_no = models.CharField(max_length=100)
+
+    def generate_reference_no(self):
+         return 'ACL-{0:%y-%m-%d}'.format(self.accrual_date)
+
+    def save(self, *args, **kwargs):
+        self.ref_no = self.generate_reference_no()
+        super(Accrual, self).save(*args, **kwargs)
+        self.task.total_accrual = self.task.get_total_accrual()
+        self.task.save()
 
 class Pcc(ChangeLogModel):
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
+    rfs_ref = models.CharField(max_length=100)
     rfs_date = models.DateTimeField(blank=True, null=True)
+    pcc_date = models.DateTimeField(blank=True, null=True)
+    partial = models.BooleanField(default=False)
+
+    ref_no = models.CharField(max_length=100)
+    counter = models.PositiveIntegerField()
+
+    def inc_counter(self):
+        if not self.id:
+            obj = self.__class__.objects.filter(task__pk=self.task_id).order_by("-counter").first()
+            if obj is None:
+                self.counter = 1
+            else:
+                self.counter =  obj.counter + 1
+
+    def generate_reference_no(self):
+        return 'PCC-{0}-{1:%y-%m-%d}-{2}'.format(self.task.task_no,
+                                             self.pcc_date,
+                                             str(self.counter).zfill(3))
+
+    def save(self, *args, **kwargs):
+        self.inc_counter()
+        self.ref_no = self.generate_reference_no()
+        super(Pcc, self).save(*args, **kwargs)
 
 class TaskChangeLog(ChangeLogModel):
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
@@ -126,11 +207,24 @@ class Invoice(ConcurrentTransitionMixin, TimeStampedBaseModel):
     current_process = models.CharField(max_length=100)
     invoice_ref = models.CharField(max_length=100, unique=True) # checks uniqueness of invoice_no over the contractor
 
+    def get_invoice_ref(self):
+        return self.contractor.name + ':' + self.invoice_no
+
+    def get_invoice_amount(self):
+        return self.revenue_amount + self.opex_amount + self.capex_amount
+
+    def save(self, *args, **kwargs):
+        self.invoice_ref = self.get_invoice_ref()
+        self.invoice_amount = self.get_invoice_amount()
+        super(Invoice, self).save(*args, **kwargs)
+        self.task.actual_expenditure = self.task.get_actual_expenditure()
+        self.task.save()
+
     def can_print(self):
         """
         Return True if Task is not Overrun
         """
-        return not self.task.overrun
+        return not self.task.is_overrun and not self.task.is_overbook
 
     @fsm_log_by
     @transition(field=state, source='*', target='New',
@@ -175,27 +269,15 @@ class Invoice(ConcurrentTransitionMixin, TimeStampedBaseModel):
     def set_completed(self, by=None):
         pass
 
-    def set_invoice_ref(self):
-        self.invoice_ref = self.contractor.name + ':' + self.invoice_no
-
-    def set_invoice_amount(self):
-        self.invoice_amount = self.revenue_amount + self.opex_amount + self.capex_amount
-
-    def save(self, *args, **kwargs):
-        self.set_invoice_ref()
-        self.set_invoice_amount()
-        super(Invoice, self).save(*args, **kwargs)
-
 class InvoiceChangeLog(ChangeLogModel):
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
 
 class InvoiceReport(TimeStampedBaseModel):
-    reference_no = models.CharField(max_length=100)
+    ref_no = models.CharField(max_length=100)
     invoice_ids = models.CharField(max_length=100)
     counter = models.PositiveIntegerField(editable=False, unique=True)
 
-    def save(self, *args, **kwargs):
-
+    def inc_counter(self):
         if not self.id:
             obj = self.__class__.objects.order_by("-counter").first()
             if obj is None:
@@ -203,6 +285,11 @@ class InvoiceReport(TimeStampedBaseModel):
             else:
                 self.counter =  obj.counter + 1
 
-            self.reference_no = r'Invoice Management/{}/{}'.format(dt.datetime.now().strftime('%b%Y'),self.counter)
+    def generate_reference_no(self):
+        return r'Invoice Management-{0:%y-%m-%d}-{1}'.format(dt.datetime.now(),
+                                                  str(self.counter).zfill(3))
 
+    def save(self, *args, **kwargs):
+        self.inc_counter()
+        self.ref_no = self.generate_reference_no()
         super(InvoiceReport, self).save(*args, **kwargs)
