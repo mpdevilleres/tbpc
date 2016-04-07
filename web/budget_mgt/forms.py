@@ -52,9 +52,12 @@ class InvoiceForm(uforms.EnhancedForm):
         ['signed_date', 'sent_finance_date'],
     ]
 
+
+    contract_id = uforms.EnhancedChoiceField(label='Contract No.')
     contractor_id = uforms.EnhancedChoiceField(label='Contractor Name')
     task_id = uforms.EnhancedChoiceField(label='Task No')
-    contract_id = uforms.EnhancedChoiceField(label='Contract No.')
+
+    # state not included
 
     region = uforms.EnhancedChoiceField(choices=[(x,x) for x in region_choices])
     invoice_no = uforms.EnhancedCharField()
@@ -62,6 +65,10 @@ class InvoiceForm(uforms.EnhancedForm):
     revenue_amount = uforms.EnhancedDecimalField()
     opex_amount = uforms.EnhancedDecimalField()
     capex_amount = uforms.EnhancedDecimalField()
+
+    # invoice_amount not included
+
+    penalty = uforms.EnhancedDecimalField()
     invoice_date = uforms.EnhancedDateField()
     invoice_cert_date = uforms.EnhancedDateField()
     received_date = uforms.EnhancedDateField()
@@ -76,8 +83,6 @@ class InvoiceForm(uforms.EnhancedForm):
     description = uforms.EnhancedTextField()
     proj_no = uforms.EnhancedCharField()
     status = uforms.EnhancedChoiceField(choices=[(x,x) for x in status_choices])
-    penalty = uforms.EnhancedDecimalField()
-
 
 class TaskForm(uforms.EnhancedForm):
     model_choices = {
@@ -88,11 +93,11 @@ class TaskForm(uforms.EnhancedForm):
     form_order = [
         ['contractor_id', 'contract_id'],
         ['task_no','status'],
-        ['sicet_type', 'category'],
+        ['sicet_type', 'section'],
         ['authorize_commitment', 'authorize_expenditure'],
         ['cear_title', 'remarks']
     ]
-    sicet_types_choices = [
+    sicet_type_choices = [
         'Freight',
         'Custom Duty',
         'Staff Cost'
@@ -104,17 +109,30 @@ class TaskForm(uforms.EnhancedForm):
         'On-Hold'
     ]
 
-    contractor_id = uforms.EnhancedChoiceField(label='Contractor Name')
     contract_id = uforms.EnhancedChoiceField(label='Contract No.')
+    contractor_id = uforms.EnhancedChoiceField(label='Contractor Name')
+
+    # state no included
 
     status = uforms.EnhancedChoiceField(choices=[(x,x) for x in status_choices])
     task_no = uforms.EnhancedCharField()
+
+    # region
+    # category
+    # year
+
     authorize_commitment = uforms.EnhancedDecimalField()
     authorize_expenditure = uforms.EnhancedDecimalField()
+
+    # total_accrual
+    # actual_expenditure
+    # wip_amount
+    # total_pcc_amount
+
+    sicet_type = uforms.EnhancedChoiceField(choices=[(x,x) for x in sicet_type_choices])
+    section = uforms.EnhancedCharField()
     cear_title = uforms.EnhancedCharField()
     remarks = uforms.EnhancedTextField()
-    category = uforms.EnhancedCharField()
-    sicet_type = uforms.EnhancedChoiceField(choices=[(x,x) for x in sicet_types_choices])
 
     # def clean(self):
     #     super(TaskForm, self).clean()
@@ -128,20 +146,23 @@ class AccrualForm(uforms.EnhancedForm):
     }
 
     form_order = [
-        ['task_id','blank'],
+        ['task_id','accrual_date'],
         ['amount', 'blank'],
 
     ]
 
     task_id = uforms.EnhancedChoiceField(label='Task No')
-
+    accrual_date = uforms.EnhancedDateField()
     amount = uforms.EnhancedDecimalField(label='Accrual Amount')
 
 class PccForm(uforms.EnhancedForm):
     model_choices = {
         'task_id': Task.objects.values_list('id', 'task_no'),
     }
-
+    partial_choices = [
+        False,
+        True
+    ]
     form_order = [
         ['task_id','blank'],
         ['amount','blank'],
@@ -152,6 +173,9 @@ class PccForm(uforms.EnhancedForm):
     task_id = uforms.EnhancedChoiceField(label='Task No')
     amount = uforms.EnhancedDecimalField(label='PCC Amount')
     rfs_ref = uforms.EnhancedCharField()
-    pcc_ref = uforms.EnhancedCharField()
+
+    # ref_no
+
     rfs_date = uforms.EnhancedDateField()
     pcc_date = uforms.EnhancedDateField()
+    partial = uforms.EnhancedChoiceField(choices=[(x,x) for x in partial_choices])

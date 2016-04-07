@@ -28,6 +28,7 @@ class Task(ConcurrentTransitionMixin, TimeStampedBaseModel):
 
     state = FSMKeyField(TaskProcess, default="New")
 
+    status = models.CharField(max_length=100)
     task_no = models.CharField(max_length=100)
     region = models.CharField(max_length=100)
     category = models.CharField(max_length=100)
@@ -116,7 +117,7 @@ class Task(ConcurrentTransitionMixin, TimeStampedBaseModel):
     def set_work_completed(self, by=None):
         pass
 
-class Accrual(ChangeLogModel):
+class Accrual(TimeStampedBaseModel):
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
     accrual_date = models.DateTimeField(blank=True, null=True)
     amount = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
@@ -131,7 +132,7 @@ class Accrual(ChangeLogModel):
         self.task.total_accrual = self.task.get_total_accrual()
         self.task.save()
 
-class Pcc(ChangeLogModel):
+class Pcc(TimeStampedBaseModel):
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
     rfs_ref = models.CharField(max_length=100)
@@ -204,6 +205,7 @@ class Invoice(ConcurrentTransitionMixin, TimeStampedBaseModel):
     description = models.TextField(blank=True)
     proj_no = models.CharField(max_length=100)
     status = models.CharField(max_length=100, default='Ongoing')
+
     current_process = models.CharField(max_length=100)
     invoice_ref = models.CharField(max_length=100, unique=True) # checks uniqueness of invoice_no over the contractor
 

@@ -55,7 +55,7 @@ class EnhancedDateField(forms.DateField):
             attrs={'class': 'form-control',
                    'readonly': True
                    })
-        super(EnhancedDateField, self).__init__(initial=dt.datetime(1990,1,1),
+        super(EnhancedDateField, self).__init__(required=False,
                                                 *args, **kwargs)
 
 class EnhancedDecimalField(forms.DecimalField):
