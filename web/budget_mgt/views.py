@@ -231,7 +231,7 @@ class InvoiceSummaryView(View):
 
             actual_total = task.invoice_set.all().aggregate(sum=Sum('capex_amount'))['sum']
 
-            overrun = task.overrun
+            overrun = task.is_overrun
 
         context = {
             'data': data,

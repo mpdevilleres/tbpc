@@ -100,8 +100,8 @@ class TaskJson(BaseDatatableView):
         elif column == 'overrun':
             return '<span class="label label-{}"> {} </span>'.\
                 format(
-                    'danger' if row.overrun else 'success',
-                    row.overrun
+                    'danger' if row.is_overrun else 'success',
+                    row.is_overrun
                 )
         else:
             return super(TaskJson, self).render_column(row, column)
@@ -182,8 +182,8 @@ class InvoiceJson(BaseDatatableView):
             )
 
         elif column == 'task.task_no':
-            status = 'danger' if row.task.overrun is True else 'info'
-            icon = 'close' if row.task.overrun is True else 'check'
+            status = 'danger' if row.task.is_overrun is True else 'info'
+            icon = 'close' if row.task.is_overrun is True else 'check'
             value = row.task.task_no
             url = reverse('budget_mgt:summary_invoice') + '?pk=' + '{}'.format(row.task_id)
             return '<span class="label label-{2}"> <i class="icon-{1}"></i></span> <a href="{3}">{0}</a>'.format(value, icon, status, url)
