@@ -1,0 +1,189 @@
+{% extends '_dashboard.html' %}
+{% load custom_tags %}
+
+{% block dashboard_script %}
+<script>
+    var Dashboard = function() {
+
+        return {
+
+            initAmChart4: function() {
+                if (typeof(AmCharts) === 'undefined' || $('#dashboard_amchart_4').size() === 0) {
+                    return;
+                }
+
+                var chart = AmCharts.makeChart("dashboard_amchart_4", {
+                    "type": "pie",
+                    "theme": "light",
+                    "path": "../assets/global/plugins/amcharts/ammap/images/",
+                    "dataProvider": {{ pie_data|safe }},
+                    "valueField": "value",
+                    "titleField": "title",
+                    "outlineAlpha": 0.4,
+                    "depth3D": 15,
+                    "balloonText": "[[title]]<br><span style='font-size:14px'><b>[[value]]</b> ([[percents]]%)</span>",
+                    "angle": 15,
+                    "export": {
+                        "enabled": true
+                    }
+                });
+                jQuery('.chart-input').off().on('input change', function() {
+                    var property = jQuery(this).data('property');
+                    var target = chart;
+                    var value = Number(this.value);
+                    chart.startDuration = 0;
+
+                    if (property == 'innerRadius') {
+                        value += "%";
+                    }
+
+                    target[property] = value;
+                    chart.validateNow();
+                });
+            },
+            init: function() {
+
+                this.initAmChart4();
+
+            }
+        };
+
+    }();
+
+    if (App.isAngularJsApp() === false) {
+        jQuery(document).ready(function() {
+            Dashboard.init(); // init metronic core componets
+        });
+    }
+</script>
+{% endblock dashboard_script %}
+
+{% block dashboard %}
+<div class="row widget-row">
+        <div class="col-md-2">
+            <!-- BEGIN WIDGET THUMB -->
+            {% with var=widgets_data|return_item:'Work in Progress' %}
+            <div class="widget-thumb widget-bg-color-white text-uppercase margin-bottom-20 bordered">
+                <h4 class="widget-thumb-heading">{{ var|return_item:'title' }}</h4>
+                <div class="widget-thumb-wrap">
+                    <i class="widget-thumb-icon bg-yellow icon-bulb"></i>
+                    <div class="widget-thumb-body">
+                        <span class="widget-thumb-subtitle">Count</span>
+                        <span class="widget-thumb-body-stat" data-counter="counterup" data-value="{{ var|return_item:'value' }}">0</span>
+                    </div>
+                </div>
+            </div>
+            {% endwith %}
+            <!-- END WIDGET THUMB -->
+        </div>
+        <div class="col-md-2">
+            <!-- BEGIN WIDGET THUMB -->
+            {% with var=widgets_data|return_item:'Work Completed without PCC' %}
+            <div class="widget-thumb widget-bg-color-white text-uppercase margin-bottom-20 bordered">
+                <h4 class="widget-thumb-heading">Work Completed w/o PCC</h4>
+                <div class="widget-thumb-wrap">
+                    <i class="widget-thumb-icon bg-red icon-bulb"></i>
+                    <div class="widget-thumb-body">
+                        <span class="widget-thumb-subtitle">COUNT</span>
+                        <span class="widget-thumb-body-stat" data-counter="counterup" data-value="{{ var|return_item:'value' }}">0</span>
+                    </div>
+                </div>
+            </div>
+            {% endwith %}
+            <!-- END WIDGET THUMB -->
+        </div>
+        <div class="col-md-2">
+            <!-- BEGIN WIDGET THUMB -->
+            {% with var=widgets_data|return_item:'Work Completed with PCC' %}
+            <div class="widget-thumb widget-bg-color-white text-uppercase margin-bottom-20 bordered">
+                <h4 class="widget-thumb-heading">{{ var|return_item:'title' }}</h4>
+                <div class="widget-thumb-wrap">
+                    <i class="widget-thumb-icon bg-green-jungle icon-bulb"></i>
+                    <div class="widget-thumb-body">
+                        <span class="widget-thumb-subtitle">COUNT</span>
+                        <span class="widget-thumb-body-stat" data-counter="counterup" data-value="{{ var|return_item:'value' }}">0</span>
+                    </div>
+                </div>
+            </div>
+            {% endwith %}
+            <!-- END WIDGET THUMB -->
+        </div>
+        <div class="col-md-2">
+            <!-- BEGIN WIDGET THUMB -->
+            {% with var=widgets_data|return_item:'overrun' %}
+            <div class="widget-thumb widget-bg-color-white text-uppercase margin-bottom-20 bordered">
+                <h4 class="widget-thumb-heading">{{ var|return_item:'title' }}</h4>
+                <div class="widget-thumb-wrap">
+                    <i class="widget-thumb-icon bg-red-flamingo icon-bulb"></i>
+                    <div class="widget-thumb-body">
+                        <span class="widget-thumb-subtitle">COUNT</span>
+                        <span class="widget-thumb-body-stat" data-counter="counterup" data-value="{{ var|return_item:'value' }}">0</span>
+                    </div>
+                </div>
+            </div>
+            {% endwith %}
+            <!-- END WIDGET THUMB -->
+        </div>
+        <div class="col-md-2">
+            <!-- BEGIN WIDGET THUMB -->
+            {% with var=widgets_data|return_item:'overbook' %}
+            <div class="widget-thumb widget-bg-color-white text-uppercase margin-bottom-20 bordered">
+                <h4 class="widget-thumb-heading">{{ var|return_item:'title' }}</h4>
+                <div class="widget-thumb-wrap">
+                    <i class="widget-thumb-icon bg-red-haze icon-bulb"></i>
+                    <div class="widget-thumb-body">
+                        <span class="widget-thumb-subtitle">COUNT</span>
+                        <span class="widget-thumb-body-stat" data-counter="counterup" data-value="{{ var|return_item:'value' }}">0</span>
+                    </div>
+                </div>
+            </div>
+            {% endwith %}
+            <!-- END WIDGET THUMB -->
+        </div>
+        <div class="col-md-2">
+            <!-- BEGIN WIDGET THUMB -->
+            {% with var=widgets_data|return_item:'good' %}
+            <div class="widget-thumb widget-bg-color-white text-uppercase margin-bottom-20 bordered">
+                <h4 class="widget-thumb-heading">{{ var|return_item:'title' }}</h4>
+                <div class="widget-thumb-wrap">
+                    <i class="widget-thumb-icon bg-green-jungle icon-bulb"></i>
+                    <div class="widget-thumb-body">
+                        <span class="widget-thumb-subtitle">COUNT</span>
+                        <span class="widget-thumb-body-stat" data-counter="counterup" data-value="{{ var|return_item:'value' }}">0</span>
+                    </div>
+                </div>
+            </div>
+            {% endwith %}
+            <!-- END WIDGET THUMB -->
+        </div>
+</div>
+    <div class="row">
+        <div class="col-md-6 col-sm-6">
+            <div class="portlet light bordered">
+                <div class="portlet-title">
+                    <div class="caption font-green">
+                        <span class="caption-subject bold uppercase">Task By Status</span>
+                        <span class="caption-helper">overall</span>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <div id="dashboard_amchart_4" class="CSSAnimationChart"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-sm-6">
+            <div class="portlet light bordered">
+                <div class="portlet-title">
+                    <div class="caption font-green">
+                        <span class="caption-subject bold uppercase">Accrual vs Expenditure</span>
+                        <span class="caption-helper">overall</span>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <div id="dashboard_amchart_5" class="CSSAnimationChart"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+{% endblock dashboard %}

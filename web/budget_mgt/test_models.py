@@ -21,7 +21,7 @@ class TestInvoiceModel(TestCase):
         from dump import dump_task_process, dump_invoice_process
         dump_task_process()
         dump_invoice_process()
-        tasks = TaskFactory.create_batch(10)
+        tasks = TaskFactory.create_batch(3)
         for i in range(1,50):
             InvoiceFactory.create(task=random.choice(tasks))
             AccrualFactory.create(task=random.choice(tasks))
@@ -42,8 +42,27 @@ class TestInvoiceModel(TestCase):
         self.assertEqual(invoice.invoice_amount,
                          invoice.revenue_amount + invoice.capex_amount + invoice.opex_amount)
 
-    def test_invoice_model_transition(self):
-        invoice = Invoice.objects.first()
+    def test_invoice_set_verify_invoices(self):
+
+        # New > Verify Invoices
+        # Case 1 with Task New
+        task = TaskFactory.create()
+        invoice = InvoiceFactory.create(task=task)
+        task.state = 'New'
+        task.save()
+        self.assertRaises(TransitionNotAllowed, invoice.set_overrun_check)      # transition not allowed
+        self.assertRaises(TransitionNotAllowed, invoice.set_print_summary)      # transition not allowed
+        self.assertRaises(TransitionNotAllowed, invoice.set_under_certification)# transition not allowed
+        self.assertRaises(TransitionNotAllowed, invoice.set_sent_to_finance)    # transition not allowed
+        self.assertRaises(TransitionNotAllowed, invoice.set_completed)          # transition not allowed
+        self.assertRaises(TransitionNotAllowed, invoice.set_verify_invoices)    # transition to verify invoices
+
+        # New > Verify Invoices
+        # Case 2 with Task "Work in Progress"
+        task = TaskFactory.create()
+        invoice = InvoiceFactory.create(task=task)
+        task.state = 'Work in Progress'
+        task.save()
         self.assertRaises(TransitionNotAllowed, invoice.set_overrun_check)      # transition not allowed
         self.assertRaises(TransitionNotAllowed, invoice.set_print_summary)      # transition not allowed
         self.assertRaises(TransitionNotAllowed, invoice.set_under_certification)# transition not allowed
@@ -51,6 +70,35 @@ class TestInvoiceModel(TestCase):
         self.assertRaises(TransitionNotAllowed, invoice.set_completed)          # transition not allowed
         self.assertEqual(None, invoice.set_verify_invoices())                   # transition to verify invoices
 
+        # New > Verify Invoices
+        # Case 3 with Task "Work Completed with PCC"
+        task = TaskFactory.create()
+        invoice = InvoiceFactory.create(task=task)
+        task.state = 'Work Completed with PCC'
+        task.save()
+        self.assertRaises(TransitionNotAllowed, invoice.set_overrun_check)      # transition not allowed
+        self.assertRaises(TransitionNotAllowed, invoice.set_print_summary)      # transition not allowed
+        self.assertRaises(TransitionNotAllowed, invoice.set_under_certification)# transition not allowed
+        self.assertRaises(TransitionNotAllowed, invoice.set_sent_to_finance)    # transition not allowed
+        self.assertRaises(TransitionNotAllowed, invoice.set_completed)          # transition not allowed
+        self.assertEqual(None, invoice.set_verify_invoices())                   # transition to verify invoices
+
+        # New > Verify Invoices
+        # Case 4 with Task "Work Completed without PCC"
+        task = TaskFactory.create()
+        invoice = InvoiceFactory.create(task=task)
+        task.state = 'Work Completed without PCC'
+        task.save()
+        self.assertRaises(TransitionNotAllowed, invoice.set_overrun_check)      # transition not allowed
+        self.assertRaises(TransitionNotAllowed, invoice.set_print_summary)      # transition not allowed
+        self.assertRaises(TransitionNotAllowed, invoice.set_under_certification)# transition not allowed
+        self.assertRaises(TransitionNotAllowed, invoice.set_sent_to_finance)    # transition not allowed
+        self.assertRaises(TransitionNotAllowed, invoice.set_completed)          # transition not allowed
+        self.assertEqual(None, invoice.set_verify_invoices())                   # transition to verify invoices
+
+    def test_invoice_transitions(self):
+
+        invoice = Invoice.objects.first()
         invoice.state='Verify Invoices'
         self.assertRaises(TransitionNotAllowed, invoice.set_print_summary)
         self.assertRaises(TransitionNotAllowed, invoice.set_under_certification)
@@ -130,7 +178,7 @@ class TestTaskModel(TestCase):
         from dump import dump_task_process, dump_invoice_process
         dump_task_process()
         dump_invoice_process()
-        tasks = TaskFactory.create_batch(10)
+        tasks = TaskFactory.create_batch(3)
         for i in range(1,50):
             InvoiceFactory.create(task=random.choice(tasks))
             AccrualFactory.create(task=random.choice(tasks))
@@ -193,16 +241,23 @@ class TestTaskModel(TestCase):
 
     def test_task_can_complete(self):
         task = Task.objects.first()
-        self.assertEqual(not task.is_overbook and not task.is_overrun and task.is_pcc_issued,
+        self.assertEqual(not task.is_overbook and not task.is_overrun,
                          task.can_complete())
 
-    def test_task_model_transition(self):
-        # from "New"
+    def test_task_pcc_is_issued(self):
         task = Task.objects.first()
-        self.assertRaises(TransitionNotAllowed, task.set_work_completed)
+        self.assertEqual(task.is_pcc_issued,
+                         task.pcc_is_issued())
+
+    def test_task_model_transition_set_work_in_progress(self):
+        # from "New" > "Work In Progress"
+        task = Task.objects.first()
+        self.assertRaises(TransitionNotAllowed, task.set_work_completed_without_pcc)
+        self.assertRaises(TransitionNotAllowed, task.set_work_completed_with_pcc)
         self.assertEqual(None, task.set_work_in_progress())
 
-        # Case 1 this is the only way to pass
+    def test_task_model_transition_set_work_completed_without_pcc(self):
+        # Case 1 can pass
         # overbook, overrun, pcc_issued
         # 0,        0,       1
         task = TaskFactory.create(authorize_expenditure=Decimal('500'))
@@ -210,16 +265,16 @@ class TestTaskModel(TestCase):
         acrrual = AccrualFactory.create(task=task, amount=Decimal('400'))
         pcc = PccFactory.create(task=task)
         task.state = 'Work in Progress'
-        self.assertEqual(None, task.set_work_completed())
+        self.assertEqual(None, task.set_work_completed_without_pcc())
 
-        # Case 2 must not pass
+        # Case 2 can pass
         # overbook, overrun, pcc_issued
         # 0,        0,       0
         task = TaskFactory.create(authorize_expenditure=Decimal('500'))
         invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('300'))
         acrrual = AccrualFactory.create(task=task, amount=Decimal('400'))
         task.state = 'Work in Progress'
-        self.assertRaises(TransitionNotAllowed, task.set_work_completed)
+        self.assertEqual(None, task.set_work_completed_without_pcc())
 
         # Case 3 must not pass
         # overbook, overrun, pcc_issued
@@ -228,7 +283,7 @@ class TestTaskModel(TestCase):
         invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('600'))
         acrrual = AccrualFactory.create(task=task, amount=Decimal('400'))
         task.state = 'Work in Progress'
-        self.assertRaises(TransitionNotAllowed, task.set_work_completed)
+        self.assertRaises(TransitionNotAllowed, task.set_work_completed_without_pcc)
 
         # Case 4 must not pass
         # overbook, overrun, pcc_issued
@@ -238,7 +293,7 @@ class TestTaskModel(TestCase):
         acrrual = AccrualFactory.create(task=task, amount=Decimal('400'))
         pcc = PccFactory.create(task=task)
         task.state = 'Work in Progress'
-        self.assertRaises(TransitionNotAllowed, task.set_work_completed)
+        self.assertRaises(TransitionNotAllowed, task.set_work_completed_without_pcc)
 
         # Case 5 must not pass
         # overbook, overrun, pcc_issued
@@ -247,7 +302,7 @@ class TestTaskModel(TestCase):
         invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('300'))
         acrrual = AccrualFactory.create(task=task, amount=Decimal('600'))
         task.state = 'Work in Progress'
-        self.assertRaises(TransitionNotAllowed, task.set_work_completed)
+        self.assertRaises(TransitionNotAllowed, task.set_work_completed_without_pcc)
 
         # Case 6 must not pass
         # overbook, overrun, pcc_issued
@@ -257,7 +312,7 @@ class TestTaskModel(TestCase):
         acrrual = AccrualFactory.create(task=task, amount=Decimal('600'))
         pcc = PccFactory.create(task=task)
         task.state = 'Work in Progress'
-        self.assertRaises(TransitionNotAllowed, task.set_work_completed)
+        self.assertRaises(TransitionNotAllowed, task.set_work_completed_without_pcc)
 
         # Case 7 must not pass
         # overbook, overrun, pcc_issued
@@ -266,7 +321,7 @@ class TestTaskModel(TestCase):
         invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('1000'))
         acrrual = AccrualFactory.create(task=task, amount=Decimal('2000'))
         task.state = 'Work in Progress'
-        self.assertRaises(TransitionNotAllowed, task.set_work_completed)
+        self.assertRaises(TransitionNotAllowed, task.set_work_completed_without_pcc)
 
         # Case 8 must not pass
         # overbook, overrun, pcc_issued
@@ -276,7 +331,84 @@ class TestTaskModel(TestCase):
         acrrual = AccrualFactory.create(task=task, amount=Decimal('2000'))
         pcc = PccFactory.create(task=task)
         task.state = 'Work in Progress'
-        self.assertRaises(TransitionNotAllowed, task.set_work_completed)
+        self.assertRaises(TransitionNotAllowed, task.set_work_completed_without_pcc)
+
+    def test_task_model_transition_set_work_completed_with_pcc(self):
+        # Case 1 can pass
+        # overbook, overrun, pcc_issued
+        # 0,        0,       1
+        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('300'))
+        acrrual = AccrualFactory.create(task=task, amount=Decimal('400'))
+        pcc = PccFactory.create(task=task)
+        task.state = 'Work in Progress'
+        self.assertEqual(None, task.set_work_completed_with_pcc())
+
+        # Case 2 must not pass
+        # overbook, overrun, pcc_issued
+        # 0,        0,       0
+        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('300'))
+        acrrual = AccrualFactory.create(task=task, amount=Decimal('400'))
+        task.state = 'Work in Progress'
+        self.assertRaises(TransitionNotAllowed, task.set_work_completed_with_pcc)
+
+        # Case 3 must not pass
+        # overbook, overrun, pcc_issued
+        # 0,        1,       0
+        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('600'))
+        acrrual = AccrualFactory.create(task=task, amount=Decimal('400'))
+        task.state = 'Work in Progress'
+        self.assertRaises(TransitionNotAllowed, task.set_work_completed_with_pcc)
+
+        # Case 4 must not pass
+        # overbook, overrun, pcc_issued
+        # 0,        1,       1
+        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('600'))
+        acrrual = AccrualFactory.create(task=task, amount=Decimal('400'))
+        pcc = PccFactory.create(task=task)
+        task.state = 'Work in Progress'
+        self.assertRaises(TransitionNotAllowed, task.set_work_completed_with_pcc)
+
+        # Case 5 must not pass
+        # overbook, overrun, pcc_issued
+        # 1,        0,       0
+        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('300'))
+        acrrual = AccrualFactory.create(task=task, amount=Decimal('600'))
+        task.state = 'Work in Progress'
+        self.assertRaises(TransitionNotAllowed, task.set_work_completed_with_pcc)
+
+        # Case 6 must not pass
+        # overbook, overrun, pcc_issued
+        # 1,        0,       1
+        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('300'))
+        acrrual = AccrualFactory.create(task=task, amount=Decimal('600'))
+        pcc = PccFactory.create(task=task)
+        task.state = 'Work in Progress'
+        self.assertRaises(TransitionNotAllowed, task.set_work_completed_with_pcc)
+
+        # Case 7 must not pass
+        # overbook, overrun, pcc_issued
+        # 1,        1,       0
+        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('1000'))
+        acrrual = AccrualFactory.create(task=task, amount=Decimal('2000'))
+        task.state = 'Work in Progress'
+        self.assertRaises(TransitionNotAllowed, task.set_work_completed_with_pcc)
+
+        # Case 8 must not pass
+        # overbook, overrun, pcc_issued
+        # 1,        1,       1
+        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('1000'))
+        acrrual = AccrualFactory.create(task=task, amount=Decimal('2000'))
+        pcc = PccFactory.create(task=task)
+        task.state = 'Work in Progress'
+        self.assertRaises(TransitionNotAllowed, task.set_work_completed_with_pcc)
 
 @pytest.mark.django_db
 class TestAccrualModel:

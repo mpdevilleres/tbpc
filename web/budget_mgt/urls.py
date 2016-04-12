@@ -27,6 +27,8 @@ urlpatterns = [
 
      url(r'^invoice-summary/print/$', views.ForCertificationSummaryView.as_view(), name='invoice_print'),
 
+     url(r'^dashboard/$', views.DashboardView.as_view(), name='dashboard'),
+
      # Datatables Ajax Link
      url(r'^task/data/$',
          login_required(views.TaskJson.as_view()),
@@ -37,7 +39,7 @@ urlpatterns = [
      url(r'^accrual/data/$',
          login_required(views.AccrualJson.as_view()),
          name='table_accrual_json'),
-     url(r'^accrual/data/$',
+     url(r'^pcc/data/$',
          login_required(views.PccJson.as_view()),
          name='table_pcc_json'),
 ]

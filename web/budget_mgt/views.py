@@ -6,6 +6,10 @@ from wsgiref.util import FileWrapper
 
 import os
 import pandas as pd
+import numpy as np
+from django.contrib.auth.models import Permission, User
+from django.contrib.contenttypes.models import ContentType
+from django.db import IntegrityError
 
 from budget_mgt.forms import InvoiceForm, TaskForm, AccrualForm, PccForm
 from budget_mgt.utils import summarize_invoice, summarize_accrual
@@ -22,7 +26,7 @@ from django.utils.decorators import method_decorator
 from django.utils.encoding import smart_str
 from django.views.generic import View
 
-from django_fsm import TransitionNotAllowed, has_transition_perm
+from django_fsm import TransitionNotAllowed, has_transition_perm, can_proceed
 from project import settings
 
 from utils.decorators import team_decorators
@@ -52,7 +56,7 @@ class AddEditInvoiceView(View):
             record = get_object_or_404(self.model, pk=pk)
             forms = self.form_class(initial=record.__dict__)
 
-        return render(request, self.template_name, {'forms': forms})
+        return render(request, self.template_name, {'forms': forms, 'form_title': self.model.__name__})
 
     def post(self, request, *args, **kwargs):
         pk = request.GET.get('pk', None)
@@ -72,7 +76,7 @@ class AddEditInvoiceView(View):
             messages.success(request, "Successfully Updated the Database")
             return redirect(self.success_redirect_link)
 
-        return render(request, self.template_name, {'forms': form})
+        return render(request, self.template_name, {'forms': form, 'form_title': self.model.__name__})
 
 @method_decorator(team_decorators, name='dispatch')
 class AddEditTaskView(View):
@@ -104,12 +108,14 @@ class AddEditTaskView(View):
         if form.is_valid():
             cleaned_data = form.clean()
             populate_obj(cleaned_data, record)
-            record.save()
+            try:
+                record.save()
+                messages.success(request, "Successfully Updated the Database")
+                return redirect(self.success_redirect_link)
+            except IntegrityError:
+                messages.error(request, "{} already exist".format(record.task_no))
 
-            messages.success(request, "Successfully Updated the Database")
-            return redirect(self.success_redirect_link)
-
-        return render(request, self.template_name, {'forms': form})
+        return render(request, self.template_name, {'forms': form, 'form_title': self.model.__name__})
 
 @method_decorator(team_decorators, name='dispatch')
 class AddEditAccrualView(View):
@@ -127,7 +133,7 @@ class AddEditAccrualView(View):
             record = get_object_or_404(self.model, pk=pk)
             forms = self.form_class(initial=record.__dict__)
 
-        return render(request, self.template_name, {'forms': forms})
+        return render(request, self.template_name, {'forms': forms, 'form_title': self.model.__name__})
 
     def post(self, request, *args, **kwargs):
         pk = request.GET.get('pk', None)
@@ -165,7 +171,7 @@ class AddEditPccView(View):
             record = get_object_or_404(self.model, pk=pk)
             forms = self.form_class(initial=record.__dict__)
 
-        return render(request, self.template_name, {'forms': forms})
+        return render(request, self.template_name, {'forms': forms, 'form_title': self.model.__name__})
 
     def post(self, request, *args, **kwargs):
         pk = request.GET.get('pk', None)
@@ -238,9 +244,11 @@ class InvoiceSummaryView(View):
             'columns': [i for i in capitalize(field_arrangement)],
             'keys': field_arrangement,
             'task_no': task.task_no,
-            'authorize_commitment': task.authorize_commitment,
+            'authorize_expenditure': task.authorize_expenditure,
+            'total_accrual': task.total_accrual,
             'actual_total': actual_total,
-            'overrun': overrun
+            'overrun': task.is_overrun,
+            'overbook': task.is_overbook,
         }
         return render(request, self.template_name, context)
 
@@ -322,8 +330,8 @@ class TableInvoiceView(View):
     def get(self, request, *args, **kwargs):
         filter = request.GET.get('filter', None)
 
-        closed = Invoice.objects.filter(current_process='Completed').count()
-        ongoing = Invoice.objects.filter(~Q(current_process='Completed')).count()
+        closed = Invoice.objects.filter(state='Completed').count()
+        ongoing = Invoice.objects.filter(~Q(state='Completed')).count()
 
         if filter is not None:
             self.data_table_url += '?{}={}'.format('filter', filter)
@@ -397,17 +405,18 @@ class EditInvoiceWorkflowView(View):
         action = getattr(record, 'set_' + action)
 
         # check if user has permission to execute the method
-        if not has_transition_perm(action, request.user):
+        if not can_proceed(action):
+            if action.__name__ == 'set_verify_invoices':
+                messages.warning(request, "Task Must Be Work in Progress or Higher")
+            else:
+                messages.warning(request, "Transistion is not Allowed")
+
+        elif not has_transition_perm(action, request.user):
             messages.warning(request, "Permission Denied")
 
         else:
-            # try to transition and catchese if not allowed
-            try:
-                action(by=request.user)
-                record.save()
-
-            except TransitionNotAllowed:
-                messages.warning(request, "Transition Not Allowed")
+            action(by=request.user)
+            record.save()
 
         return redirect(reverse(self.url_redirect_workflow_table) + '?pk=%s' % pk)
 
@@ -433,9 +442,12 @@ class TableTaskWorkflowView(View):
         temp_list = []
         status = 'Done'
         for process in processes:
+            users = User.objects.filter(Q(user_permissions__codename='change_taskprocess') |
+                                        Q(groups__permissions__codename='change_taskprocess'))\
+                .distinct()
             temp_list.append(
                 {
-                    'process_owner': process.owners,
+                    'process_owner': '; '.join([user.first_name for user in users]),
                     'status': status,
                     'process_name': process.name,
                     'action': '{0}'.format(process.name.lower().replace(' ', '_')),
@@ -489,8 +501,7 @@ class ForCertificationSummaryView(View):
     model = Invoice
 
     def get(self, request, *args, **kwargs):
-        invoices = Invoice.objects.filter(Q(state='Print Summary') &
-                                          Q(task__overrun=False)).all()
+        invoices = Invoice.objects.filter(Q(state='Print Summary')).all()
         if len(invoices) == 0:
             raise Http404()
 
@@ -503,7 +514,7 @@ class ForCertificationSummaryView(View):
         report.counter = F('counter') + 1
         report.save()
 
-        printer = InvoiceReportPrinter(records=invoices, reference=report.reference_no)
+        printer = InvoiceReportPrinter(records=invoices, reference=report.ref_no)
         success = printer.run()
 
         if success is False:
@@ -519,3 +530,41 @@ class ForCertificationSummaryView(View):
         response['Content-Disposition'] = "attachment; filename=%s" % smart_str(filename)
         response['X-Sendfile']= smart_str(os.path.join(settings.MEDIA_ROOT, path, filename))
         return response
+
+# DASHBOARD REPORTS
+@method_decorator(team_decorators, name='dispatch')
+class DashboardView(View):
+    model = Task
+    process_model = TaskProcess
+
+    template_name = 'default/dashboard.html'
+    table_title = 'Workflow'
+
+    def get(self, request, *args, **kwargs):
+        # for Pie Chart
+        series = pd.Series(Task.objects.values_list('state', flat=True))
+        series = series.value_counts()
+        widgets_data = {}
+        for k, v in series.items():
+            widgets_data[k]={'value': v, 'title': k}
+
+        # WIDGETS DATA
+        df_task = pd.DataFrame.from_records(Task.objects.values('task_no',
+                                                                     'actual_expenditure',
+                                                                     'total_accrual',
+                                                                     'authorize_expenditure'))
+
+        df_task['overrun']=(df_task['actual_expenditure'] > df_task['total_accrual']).astype('int')
+        df_task['overbook']=(df_task['total_accrual'] > df_task['authorize_expenditure']).astype('int')
+        df_task['good']=(np.logical_or(df_task['overrun'], df_task['overbook'])).astype('int')
+        summary = df_task.sum()
+        widgets_data['overrun']={'value': summary['overrun'], 'title': 'overrun'}
+        widgets_data['overbook']={'value': summary['overbook'], 'title': 'overbook'}
+        widgets_data['good']={'value': summary['good'], 'title': 'good'}
+        # END WIDGETS DATA
+
+        
+        context = {
+            'widgets_data': widgets_data
+        }
+        return render(request, self.template_name, context)

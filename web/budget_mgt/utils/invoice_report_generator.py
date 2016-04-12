@@ -37,7 +37,7 @@ class InvoiceReportPrinter(object):
                      'C': record.region,
                      'D': record.contractor.name,
                      'E': record.invoice_no,
-                     'F': record.contract_no,
+                     'F': record.contract.contract_no,
                      'G': record.revenue_amount,
                      'H': record.opex_amount,
                      'I': record.capex_amount,

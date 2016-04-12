@@ -1,3 +1,5 @@
+from django.core.validators import RegexValidator
+
 from contract_mgt.models import Contractor, Contract
 
 import utils.forms as uforms
@@ -109,13 +111,29 @@ class TaskForm(uforms.EnhancedForm):
         'On-Hold'
     ]
 
+    section_choices = [
+        'CSE',
+        'MP',
+        'ND',
+        'BP&TE',
+        'MN',
+        'MAM',
+        'O&M',
+        'DS&CE',
+        'FAN',
+        'DT&TI',
+        'ES&DC',
+        'EOPS'
+    ]
     contract_id = uforms.EnhancedChoiceField(label='Contract No.')
     contractor_id = uforms.EnhancedChoiceField(label='Contractor Name')
 
     # state no included
 
     status = uforms.EnhancedChoiceField(choices=[(x,x) for x in status_choices])
-    task_no = uforms.EnhancedCharField()
+    task_no = uforms.EnhancedCharField(validators=[
+        RegexValidator('^[A-Z]{2}-[A-Z]{2}-\d*-[A-Z]-\d*-\d{2}$',
+                       'Must be in format "HA-HO-1323-D-12312-15"')])
 
     # region
     # category
@@ -130,8 +148,8 @@ class TaskForm(uforms.EnhancedForm):
     # total_pcc_amount
 
     sicet_type = uforms.EnhancedChoiceField(choices=[(x,x) for x in sicet_type_choices])
-    section = uforms.EnhancedCharField()
-    cear_title = uforms.EnhancedCharField()
+    section = uforms.EnhancedChoiceField(choices=sorted([(x,x) for x in section_choices]))
+    cear_title = uforms.EnhancedTextField()
     remarks = uforms.EnhancedTextField()
 
     # def clean(self):
@@ -152,7 +170,7 @@ class AccrualForm(uforms.EnhancedForm):
     ]
 
     task_id = uforms.EnhancedChoiceField(label='Task No')
-    accrual_date = uforms.EnhancedDateField()
+    accrual_date = uforms.EnhancedDateField(required=True)
     amount = uforms.EnhancedDecimalField(label='Accrual Amount')
 
 class PccForm(uforms.EnhancedForm):
@@ -164,10 +182,10 @@ class PccForm(uforms.EnhancedForm):
         True
     ]
     form_order = [
-        ['task_id','blank'],
-        ['amount','blank'],
-        ['rfs_ref', 'pcc_ref'],
-        ['rfs_date', 'pcc_date'],
+        ['task_id','rfs_ref'],
+        ['amount','partial'],
+        ['pcc_date', 'rfs_date'],
+
     ]
 
     task_id = uforms.EnhancedChoiceField(label='Task No')
@@ -176,6 +194,6 @@ class PccForm(uforms.EnhancedForm):
 
     # ref_no
 
-    rfs_date = uforms.EnhancedDateField()
-    pcc_date = uforms.EnhancedDateField()
+    rfs_date = uforms.EnhancedDateField(required=True)
+    pcc_date = uforms.EnhancedDateField(required=True)
     partial = uforms.EnhancedChoiceField(choices=[(x,x) for x in partial_choices])

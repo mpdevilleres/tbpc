@@ -30,7 +30,7 @@ class TaskJson(BaseDatatableView):
 
     # define the columns that will be returned
     columns = ['task_no', 'authorize_commitment', 'authorize_expenditure', 'total_accrual',
-               'actual_expenditure', 'state', 'id']
+               'total_pcc_amount', 'actual_expenditure', 'state', 'id']
 
     # Hide Columns
     hidden_columns = [ i for i, x in enumerate(columns) if x in
@@ -40,7 +40,8 @@ class TaskJson(BaseDatatableView):
     column_names = [x for x in capitalize(columns)]
     column_names[1] = 'A. Commitment'
     column_names[2] = 'A. Expenditure'
-    column_names[-3] = 'Current Process'
+    column_names[4] = 'Total PCC Amount'
+    column_names[-2] = 'Current Process'
     column_names[-1] = 'Option'
     # define column names that will be used in sorting
     # order is important and should be same as order of columns
@@ -76,17 +77,23 @@ class TaskJson(BaseDatatableView):
             val = getattr(row, column)
             return '<span class="label label-{2}"> <i class="icon-{1}"></i></span> {0:,.2f}'.format(val, icon, status)
 
+        elif column == 'total_pcc_amount':
+            status = 'danger' if not row.is_pcc_amount_ok else 'info'
+            icon = 'close' if not row.is_pcc_amount_ok else 'check'
+            val = getattr(row, column)
+            return '<span class="label label-{2}"> <i class="icon-{1}"></i></span> {0:,.2f}'.format(val, icon, status)
+
         elif column == 'actual_expenditure':
             status = 'danger' if row.is_overrun else 'info'
             icon = 'close' if row.is_overrun else 'check'
             val = getattr(row, column)
             return '<span class="label label-{2}"> <i class="icon-{1}"></i></span> {0:,.2f}'.format(val, icon, status)
 
-        elif column == 'commitment_value':
+        elif column == 'authorize_commitment':
             val = getattr(row, column)
             return '{:,.2f}'.format(val)
 
-        elif column == 'expenditure_actual':
+        elif column == 'authorize_expenditure':
             val = getattr(row, column)
             return '{:,.2f}'.format(val)
 
@@ -95,7 +102,7 @@ class TaskJson(BaseDatatableView):
             if row.is_pcc_issued:
                 return '{0} <sup><h6 class="badge badge-info">PCC Issued</h6></sup>'.format(val)
             else:
-                return val
+                return '{0} <sup><h6 class="badge badge-danger">No PCC</h6></sup>'.format(val)
 
         elif column == 'overrun':
             return '<span class="label label-{}"> {} </span>'.\
@@ -192,7 +199,7 @@ class InvoiceJson(BaseDatatableView):
             status = 'danger' if row.status == 'Reject' else 'info'
             icon = 'close' if row.status == 'Reject' else 'check'
             value = row.invoice_no
-            return '<span class="label label-{2}"> <i class="icon-{1}"></i></span>{0}'.format(value, icon, status)
+            return '<span class="label label-{2}"> <i class="icon-{1}"></i></span> {0}'.format(value, icon, status)
 
         elif column == 'invoice_amount':
             val = getattr(row, column)
@@ -240,7 +247,7 @@ class AccrualJson(BaseDatatableView):
 
 
     # define the columns that will be returned
-    columns = ['task.task_no', 'amount', 'id']
+    columns = ['task.task_no', 'ref_no', 'amount', 'id']
 
     # Hide Columns
     hidden_columns = [ i for i, x in enumerate(columns) if x in
@@ -267,6 +274,14 @@ class AccrualJson(BaseDatatableView):
         if column == 'amount':
             val = getattr(row, column)
             return '{0:,.2f}'.format(val)
+
+        elif column == 'id':
+            return '<a href="{1}?pk={0}" class="btn default btn-xs red-stripe">Edit</a>' \
+                .format(
+                    row.id,
+                    reverse('budget_mgt:add_edit_accrual'),
+            )
+
         else:
             return super(AccrualJson, self).render_column(row, column)
 
@@ -309,7 +324,7 @@ class PccJson(BaseDatatableView):
 
 
     # define the columns that will be returned
-    columns = ['task.task_no', 'amount', 'id']
+    columns = ['task.task_no', 'ref_no', 'amount', 'id']
 
     # Hide Columns
     hidden_columns = [ i for i, x in enumerate(columns) if x in
@@ -317,6 +332,7 @@ class PccJson(BaseDatatableView):
                        ]
 
     column_names = [x for x in capitalize(columns)]
+    column_names[0] = 'Task No'
     column_names[-1] = 'Option'
     # define column names that will be used in sorting
     # order is important and should be same as order of columns

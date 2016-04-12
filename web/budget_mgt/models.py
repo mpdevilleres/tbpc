@@ -1,12 +1,14 @@
-from django.db.models import Q, Sum, F
+from django.db.models import Sum
 from django_fsm_log.decorators import fsm_log_by
 from django_fsm import transition, ConcurrentTransitionMixin, FSMKeyField
+
+
 from contract_mgt.models import Contractor, Contract
 
 from decimal import Decimal
 from django.db import models
 
-from utils.models import TimeStampedBaseModel, ProcessModel, ChangeLogModel
+from utils.models import TimeStampedBaseModel, ProcessModel, ChangeLogModel, FsmLogMixin
 
 import datetime as dt
 
@@ -19,9 +21,10 @@ class TaskProcess(ProcessModel):
     """
     pass
 
-class Task(ConcurrentTransitionMixin, TimeStampedBaseModel):
+class Task(ConcurrentTransitionMixin, FsmLogMixin, TimeStampedBaseModel):
     class Transitions:
-            trans_1 = ['New', 'Work in Progress', 'Work Completed']
+            trans_1 = ['New', 'Work in Progress', 'Work Completed', 'Work Completed without PCC',
+                       'Work Completed without PCC']
 
     contract = models.ForeignKey(Contract, on_delete=models.CASCADE)
     contractor = models.ForeignKey(Contractor, on_delete=models.CASCADE)
@@ -29,7 +32,7 @@ class Task(ConcurrentTransitionMixin, TimeStampedBaseModel):
     state = FSMKeyField(TaskProcess, default="New")
 
     status = models.CharField(max_length=100)
-    task_no = models.CharField(max_length=100)
+    task_no = models.CharField(max_length=100, unique=True)
     region = models.CharField(max_length=100)
     category = models.CharField(max_length=100)
     year = models.CharField(max_length=100)
@@ -60,6 +63,10 @@ class Task(ConcurrentTransitionMixin, TimeStampedBaseModel):
     def is_pcc_issued(self):
         return True if len(self.pcc_set.all()) != 0 else False
 
+    @property
+    def is_pcc_amount_ok(self):
+        return self.total_pcc_amount <= self.total_accrual
+
     def get_wip_amount(self):
         return self.authorize_expenditure - self.total_pcc_amount
 
@@ -78,6 +85,10 @@ class Task(ConcurrentTransitionMixin, TimeStampedBaseModel):
         string = string.split('-')
         return string[3]
 
+    def get_total_pcc(self):
+        total = self.pcc_set.all().aggregate(sum=Sum('amount'))
+        return Decimal('0.00') if total['sum'] is None else total['sum']
+
     def get_total_accrual(self):
         total = self.accrual_set.all().aggregate(sum=Sum('amount'))
         return Decimal('0.00') if total['sum'] is None else total['sum']
@@ -87,10 +98,10 @@ class Task(ConcurrentTransitionMixin, TimeStampedBaseModel):
         return Decimal('0.00') if total['sum'] is None else total['sum']
 
     def can_complete(self):
-        """
-        Return True if Task is not Overrun
-        """
-        return not self.is_overbook and not self.is_overrun and self.is_pcc_issued
+        return not self.is_overbook and not self.is_overrun and self.is_pcc_amount_ok
+
+    def pcc_is_issued(self):
+        return self.is_pcc_issued
 
     def save(self, *args, **kwargs):
         self.wip_amount = self.get_wip_amount()
@@ -98,6 +109,7 @@ class Task(ConcurrentTransitionMixin, TimeStampedBaseModel):
         self.region = self.get_region()
         self.category = self.get_category()
         self.total_accrual = self.get_total_accrual()
+        self.total_pcc_amount = self.get_total_pcc()
         self.actual_expenditure = self.get_actual_expenditure()
         super(Task, self).save(*args, **kwargs)
 
@@ -112,9 +124,16 @@ class Task(ConcurrentTransitionMixin, TimeStampedBaseModel):
         pass
 
     @fsm_log_by
-    @transition(field=state, source='Work in Progress', target='Work Completed',
+    @transition(field=state, source='Work in Progress', target='Work Completed without PCC',
                 conditions=[can_complete])
-    def set_work_completed(self, by=None):
+    def set_work_completed_without_pcc(self, by=None):
+        pass
+
+    @fsm_log_by
+    @transition(field=state, source=['Work in Progress', 'Work Completed without PCC'],
+                target='Work Completed with PCC',
+                conditions=[can_complete, pcc_is_issued])
+    def set_work_completed_with_pcc(self, by=None):
         pass
 
 class Accrual(TimeStampedBaseModel):
@@ -170,7 +189,7 @@ class InvoiceProcess(ProcessModel):
     """
     pass
 
-class Invoice(ConcurrentTransitionMixin, TimeStampedBaseModel):
+class Invoice(ConcurrentTransitionMixin, FsmLogMixin, TimeStampedBaseModel):
     class Transitions:
             trans_1 = ['New', 'Verify Invoices', 'Overrun Check', 'Print Summary',
                              'Under Certification', 'Sent to Finance', 'Completed']
@@ -228,6 +247,11 @@ class Invoice(ConcurrentTransitionMixin, TimeStampedBaseModel):
         """
         return not self.task.is_overrun and not self.task.is_overbook
 
+    def can_verify(self):
+        allowed_task_state = ['Work in Progress', 'Work Completed without PCC',
+                              'Work Completed with PCC']
+        return True if self.task.state in allowed_task_state else False
+
     @fsm_log_by
     @transition(field=state, source='*', target='New',
                 permission='budget_mgt.change_workflow')
@@ -236,7 +260,8 @@ class Invoice(ConcurrentTransitionMixin, TimeStampedBaseModel):
 
     @fsm_log_by
     @transition(field=state, source='New', target='Verify Invoices',
-                permission='budget_mgt.change_workflow')
+                permission='budget_mgt.change_workflow',
+                conditions=[can_verify])
     def set_verify_invoices(self, by=None):
         pass
 

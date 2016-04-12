@@ -1,6 +1,10 @@
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
+from django_fsm_log.models import StateLog
+
 from utils.middleware import get_current_user
 
 # Create your models here.
@@ -98,3 +102,11 @@ class ManytoManyMixin(models.Model):
         return val_dict
     class Meta:
        abstract = True
+
+class FsmLogMixin(object):
+
+    @property
+    def fsm_log(self):
+        content_type = ContentType.objects.get_for_model(self)
+        logs = StateLog.objects.filter(Q(content_type=content_type) & Q(object_id=self.pk)).order_by('-pk').all()
+        return logs

@@ -50,12 +50,13 @@ class EnhancedChoiceField(forms.ChoiceField):
 
 class EnhancedDateField(forms.DateField):
     def __init__(self, *args, **kwargs):
+        required = kwargs.pop('required', False)
         self.input_formats=['%Y-%m-%d']
         self.widget = forms.DateInput(
             attrs={'class': 'form-control',
                    'readonly': True
                    })
-        super(EnhancedDateField, self).__init__(required=False,
+        super(EnhancedDateField, self).__init__(required=required,
                                                 *args, **kwargs)
 
 class EnhancedDecimalField(forms.DecimalField):

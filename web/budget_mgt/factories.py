@@ -1,4 +1,5 @@
 import datetime
+import random
 
 import factory
 import factory.fuzzy
@@ -17,24 +18,27 @@ class TaskFactory(factory.django.DjangoModelFactory):
     contract = factory.SubFactory(ContractFactory)
     contractor = factory.SubFactory(ContractorFactory)
 
-    state = "New"
-
-    task_no = factory.Iterator(['AU-HO-13742-C-0394-15', 'DX-DX-13281-C-0069-13', 'HO-HO-13691-H-0005-14'])
-    authorize_commitment = factory.fuzzy.FuzzyDecimal(1.11,9999999999.99,2)
-    authorize_expenditure = factory.fuzzy.FuzzyDecimal(1.11,9999999999.99,2)
+    state = factory.Iterator(["New", "Work in Progress", "Work Completed without PCC", "Work Completed with PCC"])
+    #['AU-HO-13742-C-0394-15', 'DX-DX-13281-C-0069-13', 'HO-HO-13691-H-0005-14']
+    task_no = factory.Sequence(lambda n: 'AU-HO-13742-C-{0:04d}-{1}'.format(n,
+                                                                           random.choice(['13','14','15','16','17','18']
+                                                                                            )
+                                                                           )
+                               )
+    authorize_commitment = factory.fuzzy.FuzzyDecimal(1.11,999999.99,2)
+    authorize_expenditure = factory.fuzzy.FuzzyDecimal(1.11,999999.99,2)
     cear_title = factory.fuzzy.FuzzyText(length=12)
     remarks = factory.fuzzy.FuzzyText(length=12)
     category = factory.fuzzy.FuzzyText(length=12)
     sicet_type = factory.Iterator(['Freight', 'Customs Duty', 'Staff Cost'])
     section = factory.fuzzy.FuzzyText(length=12)
 
-
 class AccrualFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = models.Accrual
 
     task = factory.SubFactory(TaskFactory)
-    amount = factory.fuzzy.FuzzyDecimal(1.11,9999999999.99,2)
+    amount = factory.fuzzy.FuzzyDecimal(1.11,999999.99,2)
     accrual_date = factory.fuzzy.FuzzyDateTime(datetime.datetime(2008, 1, 1, tzinfo=UTC),
                                                datetime.datetime(2009, 1, 1, tzinfo=UTC))
 
@@ -43,7 +47,7 @@ class PccFactory(factory.django.DjangoModelFactory):
         model = models.Pcc
 
     task = factory.SubFactory(TaskFactory)
-    amount = factory.fuzzy.FuzzyDecimal(1.11,9999999999.99,2)
+    amount = factory.fuzzy.FuzzyDecimal(1.11,999999.99,2)
 
     rfs_ref = factory.fuzzy.FuzzyText(length=12)
     rfs_date = factory.fuzzy.FuzzyDateTime(datetime.datetime(2008, 1, 1, tzinfo=UTC),
@@ -65,10 +69,10 @@ class InvoiceFactory(factory.django.DjangoModelFactory):
     region = factory.Iterator(['HO', 'DXB', 'AUH', 'NE'])
     invoice_no = factory.fuzzy.FuzzyText(length=12)
     invoice_type = factory.Iterator(['Civil', 'Cable', 'Development', 'Service Provisioning'])
-    revenue_amount = factory.fuzzy.FuzzyDecimal(1.11,999999999999999.99,2)
-    opex_amount = factory.fuzzy.FuzzyDecimal(1.11,999999999999999.99,2)
-    capex_amount = factory.fuzzy.FuzzyDecimal(1.11,999999999999999.99,2)
-    penalty = factory.fuzzy.FuzzyDecimal(1.11,999999999999999.99,2)
+    revenue_amount = factory.fuzzy.FuzzyDecimal(1.11,9999999.99,2)
+    opex_amount = factory.fuzzy.FuzzyDecimal(1.11,9999999.99,2)
+    capex_amount = factory.fuzzy.FuzzyDecimal(1.11,9999999.99,2)
+    penalty = factory.fuzzy.FuzzyDecimal(1.11,9999999.99,2)
     invoice_date = factory.fuzzy.FuzzyDateTime(datetime.datetime(2008, 1, 1, tzinfo=UTC), 
                                                datetime.datetime(2009, 1, 1, tzinfo=UTC))
     invoice_cert_date = factory.fuzzy.FuzzyDateTime(datetime.datetime(2008, 1, 1, tzinfo=UTC), 
