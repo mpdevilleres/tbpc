@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/mpdevilleres/tbpc.svg?branch=master)](https://travis-ci.org/mpdevilleres/tbpc)
 ##Dockerizing Wagtail(Django) Boilerplate
 
 ###Specification

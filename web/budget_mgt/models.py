@@ -52,6 +52,10 @@ class Task(ConcurrentTransitionMixin, FsmLogMixin, TimeStampedBaseModel):
     remarks = models.TextField(blank=True)
 
     @property
+    def state__name(self):
+        return self.state
+
+    @property
     def is_overrun(self):
         return self.actual_expenditure > self.total_accrual
 
@@ -227,6 +231,10 @@ class Invoice(ConcurrentTransitionMixin, FsmLogMixin, TimeStampedBaseModel):
 
     current_process = models.CharField(max_length=100)
     invoice_ref = models.CharField(max_length=100, unique=True) # checks uniqueness of invoice_no over the contractor
+
+    @property
+    def state__name(self):
+        return self.state
 
     def get_invoice_ref(self):
         return self.contractor.name + ':' + self.invoice_no

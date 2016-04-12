@@ -30,7 +30,7 @@ class TaskJson(BaseDatatableView):
 
     # define the columns that will be returned
     columns = ['task_no', 'authorize_commitment', 'authorize_expenditure', 'total_accrual',
-               'total_pcc_amount', 'actual_expenditure', 'state', 'id']
+               'total_pcc_amount', 'actual_expenditure', 'state__name', 'id']
 
     # Hide Columns
     hidden_columns = [ i for i, x in enumerate(columns) if x in
@@ -152,7 +152,7 @@ class InvoiceJson(BaseDatatableView):
 
     # define the columns that will be returned
     columns = ['contractor.name', 'task.task_no', 'region', 'invoice_no', 'invoice_amount',
-               'state', 'remarks', 'id']
+               'state__name', 'remarks', 'id']
 
     # Hide Columns
     hidden_columns = [ i for i, x in enumerate(columns) if x in
