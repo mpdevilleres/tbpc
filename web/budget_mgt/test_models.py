@@ -61,13 +61,14 @@ class TestInvoiceModel(TestCase):
         # Case 2 with Task "Work in Progress"
         task = TaskFactory.create()
         invoice = InvoiceFactory.create(task=task)
-        task.state = 'Work in Progress'
-        task.save()
         self.assertRaises(TransitionNotAllowed, invoice.set_overrun_check)      # transition not allowed
         self.assertRaises(TransitionNotAllowed, invoice.set_print_summary)      # transition not allowed
         self.assertRaises(TransitionNotAllowed, invoice.set_under_certification)# transition not allowed
         self.assertRaises(TransitionNotAllowed, invoice.set_sent_to_finance)    # transition not allowed
         self.assertRaises(TransitionNotAllowed, invoice.set_completed)          # transition not allowed
+        self.assertRaises(TransitionNotAllowed, invoice.set_verify_invoices)          # transition not allowed
+        task.set_work_in_progress()
+        task.save()
         self.assertEqual(None, invoice.set_verify_invoices())                   # transition to verify invoices
 
         # New > Verify Invoices
@@ -251,7 +252,7 @@ class TestTaskModel(TestCase):
 
     def test_task_model_transition_set_work_in_progress(self):
         # from "New" > "Work In Progress"
-        task = Task.objects.first()
+        task = TaskFactory.create()
         self.assertRaises(TransitionNotAllowed, task.set_work_completed_without_pcc)
         self.assertRaises(TransitionNotAllowed, task.set_work_completed_with_pcc)
         self.assertEqual(None, task.set_work_in_progress())

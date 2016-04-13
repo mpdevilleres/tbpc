@@ -94,7 +94,8 @@ class TaskForm(uforms.EnhancedForm):
 
     form_order = [
         ['contractor_id', 'contract_id'],
-        ['task_no','status'],
+        ['task_no'],
+
         ['sicet_type', 'section'],
         ['authorize_commitment', 'authorize_expenditure'],
         ['cear_title', 'remarks']
@@ -130,11 +131,11 @@ class TaskForm(uforms.EnhancedForm):
 
     # state no included
 
-    status = uforms.EnhancedChoiceField(choices=[(x,x) for x in status_choices])
+#    status = uforms.EnhancedChoiceField(choices=[(x,x) for x in status_choices])
     task_no = uforms.EnhancedCharField(validators=[
         RegexValidator('^[A-Z]{2}-[A-Z]{2}-\d*-[A-Z]-\d*-\d{2}$',
                        'Must be in format "HA-HO-1323-D-12312-15"')])
-
+#    other_ref = uforms.EnhancedCharField()
     # region
     # category
     # year

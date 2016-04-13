@@ -3,12 +3,13 @@ from django.db.models import Q
 from django.utils.decorators import method_decorator
 
 from django_datatables_view.base_datatable_view import BaseDatatableView
+from pytz import utc
 
 from utils.decorators import team_decorators
 from utils.tools import capitalize
 
 from .models import Task, Invoice, Accrual, Pcc
-
+import datetime as dt
 
 @method_decorator(team_decorators, name='dispatch')
 class TaskJson(BaseDatatableView):
@@ -63,12 +64,15 @@ class TaskJson(BaseDatatableView):
                    '<a href="{2}?pk={0}" class="btn default btn-xs green-stripe">Invoices</a>' \
                    '<a href="{3}?pk={0}" class="btn default btn-xs yellow-stripe">Workflow</a>' \
                    '<a href="{4}?pk={0}" class="btn default btn-xs blue-stripe">Accrual</a>' \
+                   '<a href="{5}?pk={0}" class="btn default btn-xs purple-stripe">PCC</a>' \
                 .format(
                     row.id,
                     reverse('budget_mgt:add_edit_task'),
                     reverse('budget_mgt:summary_invoice'),
                     reverse('budget_mgt:task_workflow'),
                     reverse('budget_mgt:table_accrual'),
+                    reverse('budget_mgt:table_pcc'),
+
             )
 
         elif column == 'total_accrual':
@@ -97,12 +101,17 @@ class TaskJson(BaseDatatableView):
             val = getattr(row, column)
             return '{:,.2f}'.format(val)
 
-        elif column == 'state':
+        elif column == 'state__name':
             val = getattr(row, column)
-            if row.is_pcc_issued:
-                return '{0} <sup><h6 class="badge badge-info">PCC Issued</h6></sup>'.format(val)
-            else:
-                return '{0} <sup><h6 class="badge badge-danger">No PCC</h6></sup>'.format(val)
+            if row.state == "Work Completed without PCC" :
+                if isinstance(row.state_date, dt.datetime):
+                    duration = dt.datetime.now(tz=utc) - row.state_date
+                    days = duration.days
+                else:
+                    days = 0
+                label_color = 'info' if days > 0 else 'danger'
+                return '<h4 class="badge badge-{2}">{1}</h4> {0}'.format(val, days, label_color)
+            return getattr(row, column)
 
         elif column == 'overrun':
             return '<span class="label label-{}"> {} </span>'.\
@@ -110,6 +119,7 @@ class TaskJson(BaseDatatableView):
                     'danger' if row.is_overrun else 'success',
                     row.is_overrun
                 )
+
         else:
             return super(TaskJson, self).render_column(row, column)
 
@@ -349,6 +359,15 @@ class PccJson(BaseDatatableView):
         if column == 'amount':
             val = getattr(row, column)
             return '{0:,.2f}'.format(val)
+
+        elif column == 'id':
+
+            return '<a href="{1}?pk={0}" class="btn default btn-xs red-stripe">Edit</a>' \
+                .format(
+                    row.id,
+                    reverse('budget_mgt:add_edit_pcc'),
+            )
+
         else:
             return super(PccJson, self).render_column(row, column)
 

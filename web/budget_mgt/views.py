@@ -5,6 +5,7 @@ import mimetypes
 from wsgiref.util import FileWrapper
 
 import os
+import datetime as dt
 import pandas as pd
 import numpy as np
 from django.contrib.auth.models import Permission, User
@@ -489,6 +490,7 @@ class EditTaskWorkflowView(View):
             # try to transition and catchese if not allowed
             try:
                 action(by=request.user)
+                record.state_date = dt.datetime.now()
                 record.save()
 
             except TransitionNotAllowed:
@@ -556,7 +558,7 @@ class DashboardView(View):
 
         df_task['overrun']=(df_task['actual_expenditure'] > df_task['total_accrual']).astype('int')
         df_task['overbook']=(df_task['total_accrual'] > df_task['authorize_expenditure']).astype('int')
-        df_task['good']=(np.logical_or(df_task['overrun'], df_task['overbook'])).astype('int')
+        df_task['good']=(np.logical_not(np.logical_or(df_task['overrun'], df_task['overbook']))).astype('int')
         summary = df_task.sum()
         widgets_data['overrun']={'value': summary['overrun'], 'title': 'overrun'}
         widgets_data['overbook']={'value': summary['overbook'], 'title': 'overbook'}

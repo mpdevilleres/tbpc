@@ -30,9 +30,11 @@ class Task(ConcurrentTransitionMixin, FsmLogMixin, TimeStampedBaseModel):
     contractor = models.ForeignKey(Contractor, on_delete=models.CASCADE)
 
     state = FSMKeyField(TaskProcess, default="New")
+    state_date = models.DateTimeField(blank=True, null=True)
 
-    status = models.CharField(max_length=100)
+#    status = models.CharField(max_length=100)
     task_no = models.CharField(max_length=100, unique=True)
+    #other_ref = models.CharField(max_length=100, unique=True) # other reference aside for task if any.
     region = models.CharField(max_length=100)
     category = models.CharField(max_length=100)
     year = models.CharField(max_length=100)
@@ -145,6 +147,7 @@ class Accrual(TimeStampedBaseModel):
     accrual_date = models.DateTimeField(blank=True, null=True)
     amount = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
     ref_no = models.CharField(max_length=100)
+    remarks = models.TextField()
 
     def generate_reference_no(self):
          return 'ACL-{0:%y-%m-%d}'.format(self.accrual_date)

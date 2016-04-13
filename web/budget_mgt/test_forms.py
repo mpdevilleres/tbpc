@@ -77,11 +77,6 @@ class TestTaskForm:
         ('Staff Cost', 'Staff Cost')
     ]
 
-    status_choices = [
-        ('Ongoing', 'Ongoing'),
-        ('Completed','Completed'),
-        ('On-Hold', 'On-Hold')
-    ]
 
     def test_task_form_instance(self):
         task = TaskFactory.create()
@@ -92,7 +87,6 @@ class TestTaskForm:
 
     def test_static_choices(self):
         form = TaskForm()
-        assert form.fields['status'].choices == self.status_choices
         assert form.fields['sicet_type'].choices == self.sicet_type_choices
 
     def test_dynamic_contract_choices(self):
