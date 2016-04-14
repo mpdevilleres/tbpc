@@ -31,7 +31,8 @@ class InvoiceForm(uforms.EnhancedForm):
         'Civil',
         'Cable',
         'Development',
-        'Service Provisioning'
+        'Service Provisioning',
+        'Supply of Material'
     ]
 
     form_order = [

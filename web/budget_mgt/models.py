@@ -38,6 +38,7 @@ class Task(ConcurrentTransitionMixin, FsmLogMixin, TimeStampedBaseModel):
     region = models.CharField(max_length=100)
     category = models.CharField(max_length=100)
     year = models.CharField(max_length=100)
+    is_cancelled = models.BooleanField()
 
     authorize_commitment = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
     authorize_expenditure = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
@@ -232,7 +233,7 @@ class Invoice(ConcurrentTransitionMixin, FsmLogMixin, TimeStampedBaseModel):
     proj_no = models.CharField(max_length=100)
     status = models.CharField(max_length=100, default='Ongoing')
 
-    current_process = models.CharField(max_length=100)
+    #current_process = models.CharField(max_length=100)
     invoice_ref = models.CharField(max_length=100, unique=True) # checks uniqueness of invoice_no over the contractor
 
     @property

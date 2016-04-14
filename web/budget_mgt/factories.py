@@ -32,6 +32,7 @@ class TaskFactory(factory.django.DjangoModelFactory):
     category = factory.fuzzy.FuzzyText(length=12)
     sicet_type = factory.Iterator(['Freight', 'Customs Duty', 'Staff Cost'])
     section = factory.fuzzy.FuzzyText(length=12)
+    is_cancelled = factory.Iterator([True, False])
 
 class AccrualFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -95,7 +96,6 @@ class InvoiceFactory(factory.django.DjangoModelFactory):
     description = factory.fuzzy.FuzzyText(length=12)
     proj_no = factory.fuzzy.FuzzyText(length=12)
     status = factory.fuzzy.FuzzyText(length=12)
-    current_process = factory.fuzzy.FuzzyText(length=12)
 
 class InvoiceReportFactory(factory.django.DjangoModelFactory):
     class Meta:

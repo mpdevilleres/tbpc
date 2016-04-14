@@ -60,11 +60,7 @@ class TaskJson(BaseDatatableView):
     def render_column(self, row, column):
         # We want to render user as a custom column
         if column == 'id':
-            return '<a href="{1}?pk={0}" class="btn default btn-xs red-stripe">Edit</a>' \
-                   '<a href="{2}?pk={0}" class="btn default btn-xs green-stripe">Invoices</a>' \
-                   '<a href="{3}?pk={0}" class="btn default btn-xs yellow-stripe">Workflow</a>' \
-                   '<a href="{4}?pk={0}" class="btn default btn-xs blue-stripe">Accrual</a>' \
-                   '<a href="{5}?pk={0}" class="btn default btn-xs purple-stripe">PCC</a>' \
+            return '<a href="{3}?pk={0}" class="btn default btn-xs yellow-stripe">Workflow</a>' \
                 .format(
                     row.id,
                     reverse('budget_mgt:add_edit_task'),
@@ -72,26 +68,49 @@ class TaskJson(BaseDatatableView):
                     reverse('budget_mgt:task_workflow'),
                     reverse('budget_mgt:table_accrual'),
                     reverse('budget_mgt:table_pcc'),
-
+            )
+        elif column == 'task_no':
+            val = getattr(row, column)
+            return '<a href="{1}?pk={0}">{2}</a>' \
+                .format(
+                    row.id,
+                    reverse('budget_mgt:add_edit_task'),
+                    val
             )
 
         elif column == 'total_accrual':
+            val = getattr(row, column)
+
             status = 'danger' if row.is_overbook else 'info'
             icon = 'close' if row.is_overbook else 'check'
-            val = getattr(row, column)
-            return '<span class="label label-{2}"> <i class="icon-{1}"></i></span> {0:,.2f}'.format(val, icon, status)
+            html_indicator = '<span class="label label-{0}"> <i class="icon-{1}"></i></span>'.format(status, icon)
+            html_val = '<a href="{1}?pk={2}">{0:,.2f}</a>'.format(val,
+                                                             reverse('budget_mgt:table_accrual'),
+                                                             row.id)
+            html = html_indicator + ' ' + html_val
+            return html
 
         elif column == 'total_pcc_amount':
+            val = getattr(row, column)
             status = 'danger' if not row.is_pcc_amount_ok else 'info'
             icon = 'close' if not row.is_pcc_amount_ok else 'check'
-            val = getattr(row, column)
-            return '<span class="label label-{2}"> <i class="icon-{1}"></i></span> {0:,.2f}'.format(val, icon, status)
+            html_indicator = '<span class="label label-{0}"> <i class="icon-{1}"></i></span>'.format(status, icon)
+            html_val = '<a href="{1}?pk={2}">{0:,.2f}</a>'.format(val,
+                                                             reverse('budget_mgt:table_pcc'),
+                                                             row.id)
+            html = html_indicator + ' ' + html_val
+            return html
 
         elif column == 'actual_expenditure':
+            val = getattr(row, column)
             status = 'danger' if row.is_overrun else 'info'
             icon = 'close' if row.is_overrun else 'check'
-            val = getattr(row, column)
-            return '<span class="label label-{2}"> <i class="icon-{1}"></i></span> {0:,.2f}'.format(val, icon, status)
+            html_indicator = '<span class="label label-{0}"> <i class="icon-{1}"></i></span>'.format(status, icon)
+            html_val = '<a href="{1}?pk={2}">{0:,.2f}</a>'.format(val,
+                                                             reverse('budget_mgt:summary_invoice'),
+                                                             row.id)
+            html = html_indicator + ' ' +html_val
+            return html
 
         elif column == 'authorize_commitment':
             val = getattr(row, column)
@@ -158,7 +177,7 @@ class InvoiceJson(BaseDatatableView):
         if filter == 'all':
             return self.model.objects.all()
 
-        return self.model.objects.filter(~Q(current_process='Completed')).all()
+        return self.model.objects.filter(~Q(state='Completed')).all()
 
     # define the columns that will be returned
     columns = ['contractor.name', 'task.task_no', 'region', 'invoice_no', 'invoice_amount',
