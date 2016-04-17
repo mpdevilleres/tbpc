@@ -114,17 +114,22 @@ class TaskForm(uforms.EnhancedForm):
     ]
 
     section_choices = [
+        'BUDGETS',
         'CSE',
+        'ES&DC',
+        'FAN',
+        'IPTV',
+        'ISS',
         'MP',
-        'ND',
-        'BP&TE',
         'MN',
+        'ND',
+
+        'BP&TE',
         'MAM',
         'O&M',
         'DS&CE',
-        'FAN',
         'DT&TI',
-        'ES&DC',
+
         'EOPS'
     ]
     contract_id = uforms.EnhancedChoiceField(label='Contract No.')

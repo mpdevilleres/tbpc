@@ -72,7 +72,7 @@ class AddEditInvoiceView(View):
             cleaned_data = form.clean()
             populate_obj(cleaned_data, record)
             record.save()
-            summarize_invoice(task_pk=record.task_id)
+#            summarize_invoice(task_pk=record.task_id)
 
             messages.success(request, "Successfully Updated the Database")
             return redirect(self.success_redirect_link)
@@ -110,6 +110,7 @@ class AddEditTaskView(View):
             cleaned_data = form.clean()
             populate_obj(cleaned_data, record)
             try:
+#                record.parse_task_no()
                 record.save()
                 messages.success(request, "Successfully Updated the Database")
                 return redirect(self.success_redirect_link)

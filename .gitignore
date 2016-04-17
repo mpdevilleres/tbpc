@@ -17,6 +17,8 @@ migrations/
 
 /web/dump
 /web/dump_new
+/web/dump_actual
+
 /web/py_pkg
 /web/static
 /web/project/static/theme

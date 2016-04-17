@@ -31,7 +31,7 @@ class TaskJson(BaseDatatableView):
 
     # define the columns that will be returned
     columns = ['task_no', 'authorize_commitment', 'authorize_expenditure', 'total_accrual',
-               'total_pcc_amount', 'actual_expenditure', 'state__name', 'id']
+               'total_pcc_amount', 'actual_expenditure', 'state__name']
 
     # Hide Columns
     hidden_columns = [ i for i, x in enumerate(columns) if x in
@@ -42,8 +42,7 @@ class TaskJson(BaseDatatableView):
     column_names[1] = 'A. Commitment'
     column_names[2] = 'A. Expenditure'
     column_names[4] = 'Total PCC Amount'
-    column_names[-2] = 'Current Process'
-    column_names[-1] = 'Option'
+    column_names[-1] = 'Current Process'
     # define column names that will be used in sorting
     # order is important and should be same as order of columns
     # displayed by datatables. For non sortable columns use empty
@@ -59,19 +58,9 @@ class TaskJson(BaseDatatableView):
 
     def render_column(self, row, column):
         # We want to render user as a custom column
-        if column == 'id':
-            return '<a href="{3}?pk={0}" class="btn default btn-xs yellow-stripe">Workflow</a>' \
-                .format(
-                    row.id,
-                    reverse('budget_mgt:add_edit_task'),
-                    reverse('budget_mgt:summary_invoice'),
-                    reverse('budget_mgt:task_workflow'),
-                    reverse('budget_mgt:table_accrual'),
-                    reverse('budget_mgt:table_pcc'),
-            )
-        elif column == 'task_no':
+        if column == 'task_no':
             val = getattr(row, column)
-            return '<a href="{1}?pk={0}">{2}</a>' \
+            return '<a target="_blank" href="{1}?pk={0}">{2}</a>' \
                 .format(
                     row.id,
                     reverse('budget_mgt:add_edit_task'),
@@ -84,7 +73,7 @@ class TaskJson(BaseDatatableView):
             status = 'danger' if row.is_overbook else 'info'
             icon = 'close' if row.is_overbook else 'check'
             html_indicator = '<span class="label label-{0}"> <i class="icon-{1}"></i></span>'.format(status, icon)
-            html_val = '<a href="{1}?pk={2}">{0:,.2f}</a>'.format(val,
+            html_val = '<a target="_blank" href="{1}?pk={2}">{0:,.2f}</a>'.format(val,
                                                              reverse('budget_mgt:table_accrual'),
                                                              row.id)
             html = html_indicator + ' ' + html_val
@@ -95,7 +84,7 @@ class TaskJson(BaseDatatableView):
             status = 'danger' if not row.is_pcc_amount_ok else 'info'
             icon = 'close' if not row.is_pcc_amount_ok else 'check'
             html_indicator = '<span class="label label-{0}"> <i class="icon-{1}"></i></span>'.format(status, icon)
-            html_val = '<a href="{1}?pk={2}">{0:,.2f}</a>'.format(val,
+            html_val = '<a target="_blank" href="{1}?pk={2}">{0:,.2f}</a>'.format(val,
                                                              reverse('budget_mgt:table_pcc'),
                                                              row.id)
             html = html_indicator + ' ' + html_val
@@ -106,7 +95,7 @@ class TaskJson(BaseDatatableView):
             status = 'danger' if row.is_overrun else 'info'
             icon = 'close' if row.is_overrun else 'check'
             html_indicator = '<span class="label label-{0}"> <i class="icon-{1}"></i></span>'.format(status, icon)
-            html_val = '<a href="{1}?pk={2}">{0:,.2f}</a>'.format(val,
+            html_val = '<a target="_blank" href="{1}?pk={2}">{0:,.2f}</a>'.format(val,
                                                              reverse('budget_mgt:summary_invoice'),
                                                              row.id)
             html = html_indicator + ' ' +html_val
@@ -122,15 +111,19 @@ class TaskJson(BaseDatatableView):
 
         elif column == 'state__name':
             val = getattr(row, column)
+            html_val = '<a target="_blank" href="{1}?pk={2}">{0}</a>'.format(val,
+                                                             reverse('budget_mgt:task_workflow'),
+                                                             row.id)
             if row.state == "Work Completed without PCC" :
                 if isinstance(row.state_date, dt.datetime):
                     duration = dt.datetime.now(tz=utc) - row.state_date
-                    days = duration.days
+                    days = 30 - duration.days
                 else:
                     days = 0
                 label_color = 'info' if days > 0 else 'danger'
-                return '<h4 class="badge badge-{2}">{1}</h4> {0}'.format(val, days, label_color)
-            return getattr(row, column)
+                html_indicator = '<h4 class="badge badge-{1}">{0}</h4>'.format(days, label_color)
+                return html_indicator + ' ' + html_val
+            return html_val
 
         elif column == 'overrun':
             return '<span class="label label-{}"> {} </span>'.\
@@ -209,8 +202,8 @@ class InvoiceJson(BaseDatatableView):
         # We want to render user as a custom column
         if column == 'id':
 
-            return '<a href="{1}?pk={0}" class="btn default btn-xs red-stripe">Edit</a>' \
-                   '<a href="{2}?pk={0}" class="btn default btn-xs blue-stripe">Workflow</a>' \
+            return '<a target="_blank" href="{1}?pk={0}" class="btn default btn-xs red-stripe">Edit</a>' \
+                   '<a target="_blank" href="{2}?pk={0}" class="btn default btn-xs blue-stripe">Workflow</a>' \
                 .format(
                     row.id,
                     reverse('budget_mgt:add_edit_invoice'),
@@ -222,7 +215,7 @@ class InvoiceJson(BaseDatatableView):
             icon = 'close' if row.task.is_overrun is True else 'check'
             value = row.task.task_no
             url = reverse('budget_mgt:summary_invoice') + '?pk=' + '{}'.format(row.task_id)
-            return '<span class="label label-{2}"> <i class="icon-{1}"></i></span> <a href="{3}">{0}</a>'.format(value, icon, status, url)
+            return '<span class="label label-{2}"> <i class="icon-{1}"></i></span> <a target="_blank" href="{3}">{0}</a>'.format(value, icon, status, url)
 
         elif column == 'invoice_no':
             status = 'danger' if row.status == 'Reject' else 'info'
@@ -305,7 +298,7 @@ class AccrualJson(BaseDatatableView):
             return '{0:,.2f}'.format(val)
 
         elif column == 'id':
-            return '<a href="{1}?pk={0}" class="btn default btn-xs red-stripe">Edit</a>' \
+            return '<a target="_blank" href="{1}?pk={0}" class="btn default btn-xs red-stripe">Edit</a>' \
                 .format(
                     row.id,
                     reverse('budget_mgt:add_edit_accrual'),
@@ -381,7 +374,7 @@ class PccJson(BaseDatatableView):
 
         elif column == 'id':
 
-            return '<a href="{1}?pk={0}" class="btn default btn-xs red-stripe">Edit</a>' \
+            return '<a target="_blank" href="{1}?pk={0}" class="btn default btn-xs red-stripe">Edit</a>' \
                 .format(
                     row.id,
                     reverse('budget_mgt:add_edit_pcc'),

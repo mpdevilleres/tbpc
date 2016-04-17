@@ -39,9 +39,9 @@
                             {% if i == 'action' %}
                                 <a href="{{ url_edit_workflow }}?pk={{ pk }}&action={{ row|return_item:i }}" role="button" class="btn yellow" data-toggle="modal"> Close </a>
                             {% elif i == 'status' and row|return_item:i == 'New' %}
-                                <span class="label label-danger"> {{ row|return_item:i }} </span>
+                                <span class="label bg-red-flamingo"> <i class="icon-close"></i> </span>
                             {% elif i == 'status' and row|return_item:i == 'Done' %}
-                                <span class="label label-default"> {{ row|return_item:i }} </span>
+                                <span class="label label-default"> <i class="icon-check"></i> </span>
                             {% else %}
                                 {{ row|return_item:i }}
                             {% endif %}

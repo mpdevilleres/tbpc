@@ -26,19 +26,20 @@ class Task(ConcurrentTransitionMixin, FsmLogMixin, TimeStampedBaseModel):
             trans_1 = ['New', 'Work in Progress', 'Work Completed', 'Work Completed without PCC',
                        'Work Completed without PCC']
 
-    contract = models.ForeignKey(Contract, on_delete=models.CASCADE)
-    contractor = models.ForeignKey(Contractor, on_delete=models.CASCADE)
+    contract = models.ForeignKey(Contract, null=True, on_delete=models.CASCADE)
+    contractor = models.ForeignKey(Contractor, null=True, on_delete=models.CASCADE)
 
     state = FSMKeyField(TaskProcess, default="New")
     state_date = models.DateTimeField(blank=True, null=True)
 
-#    status = models.CharField(max_length=100)
+    status = models.CharField(max_length=100)
     task_no = models.CharField(max_length=100, unique=True)
     #other_ref = models.CharField(max_length=100, unique=True) # other reference aside for task if any.
     region = models.CharField(max_length=100)
     category = models.CharField(max_length=100)
+    proj_no = models.CharField(max_length=100)
     year = models.CharField(max_length=100)
-    is_cancelled = models.BooleanField()
+#    is_cancelled = models.BooleanField()
 
     authorize_commitment = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
     authorize_expenditure = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
@@ -53,6 +54,7 @@ class Task(ConcurrentTransitionMixin, FsmLogMixin, TimeStampedBaseModel):
 
     cear_title = models.TextField(blank=True)
     remarks = models.TextField(blank=True)
+    finance_remarks = models.TextField(blank=True)
 
     @property
     def state__name(self):
@@ -80,17 +82,26 @@ class Task(ConcurrentTransitionMixin, FsmLogMixin, TimeStampedBaseModel):
     def get_year(self):
         string = str(self.task_no)
         string = string.split('-')
-        return string[-1]
+        try:
+            return string[-1]
+        except IndexError:
+            return 'invalid Task No'
 
     def get_region(self):
         string = str(self.task_no)
         string = string.split('-')
-        return string[0]
+        try:
+            return string[0]
+        except IndexError:
+            return 'invalid Task No'
 
     def get_category(self):
         string = str(self.task_no)
         string = string.split('-')
-        return string[3]
+        try:
+            return string[3]
+        except IndexError:
+            return 'invalid Task No'
 
     def get_total_pcc(self):
         total = self.pcc_set.all().aggregate(sum=Sum('amount'))
@@ -110,11 +121,13 @@ class Task(ConcurrentTransitionMixin, FsmLogMixin, TimeStampedBaseModel):
     def pcc_is_issued(self):
         return self.is_pcc_issued
 
-    def save(self, *args, **kwargs):
-        self.wip_amount = self.get_wip_amount()
+    def parse_task_no(self):
         self.year = self.get_year()
         self.region = self.get_region()
         self.category = self.get_category()
+
+    def save(self, *args, **kwargs):
+        self.wip_amount = self.get_wip_amount()
         self.total_accrual = self.get_total_accrual()
         self.total_pcc_amount = self.get_total_pcc()
         self.actual_expenditure = self.get_actual_expenditure()
@@ -204,9 +217,9 @@ class Invoice(ConcurrentTransitionMixin, FsmLogMixin, TimeStampedBaseModel):
 
             trans_2 = ['*', 'Verify Invoices']
 
-    contract = models.ForeignKey(Contract, on_delete=models.CASCADE)
-    contractor = models.ForeignKey(Contractor, on_delete=models.CASCADE)
-    task = models.ForeignKey(Task, on_delete=models.CASCADE)
+    contract = models.ForeignKey(Contract, null=True, on_delete=models.CASCADE)
+    contractor = models.ForeignKey(Contractor, null=True, on_delete=models.CASCADE)
+    task = models.ForeignKey(Task, null=True, on_delete=models.CASCADE)
 
     state = FSMKeyField(InvoiceProcess, default="New")
 
