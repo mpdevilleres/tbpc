@@ -23,13 +23,12 @@ class TaskProcess(ProcessModel):
 
 class Task(ConcurrentTransitionMixin, FsmLogMixin, TimeStampedBaseModel):
     class Transitions:
-            trans_1 = ['New', 'Work in Progress', 'Work Completed', 'Work Completed without PCC',
-                       'Work Completed without PCC']
+            trans_1 = ['Work in Progress', 'PCC to be Issued', 'PCC Issued']
 
     contract = models.ForeignKey(Contract, null=True, on_delete=models.CASCADE)
     contractor = models.ForeignKey(Contractor, null=True, on_delete=models.CASCADE)
 
-    state = FSMKeyField(TaskProcess, default="New")
+    state = FSMKeyField(TaskProcess, default="Work in Progress")
     state_date = models.DateTimeField(blank=True, null=True)
 
     status = models.CharField(max_length=100)
@@ -39,10 +38,11 @@ class Task(ConcurrentTransitionMixin, FsmLogMixin, TimeStampedBaseModel):
     category = models.CharField(max_length=100)
     proj_no = models.CharField(max_length=100)
     year = models.CharField(max_length=100)
-#    is_cancelled = models.BooleanField()
+    #is_cancelled = models.BooleanField()
 
-    authorize_commitment = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
-    authorize_expenditure = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
+    total_authorize_commitment = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
+    total_authorize_expenditure = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
+    finance_actual_expenditure = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
 
     total_accrual = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
     actual_expenditure = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
@@ -66,7 +66,7 @@ class Task(ConcurrentTransitionMixin, FsmLogMixin, TimeStampedBaseModel):
 
     @property
     def is_overbook(self):
-        return self.total_accrual > self.authorize_expenditure
+        return self.total_accrual > self.total_authorize_expenditure
 
     @property
     def is_pcc_issued(self):
@@ -74,10 +74,18 @@ class Task(ConcurrentTransitionMixin, FsmLogMixin, TimeStampedBaseModel):
 
     @property
     def is_pcc_amount_ok(self):
-        return self.total_pcc_amount <= self.total_accrual
+        return self.total_pcc_amount <= self.total_authorize_expenditure
+
+    @property
+    def is_within_work_criteria(self):
+        if self.total_authorize_expenditure != 0:
+            work_percent = self.total_pcc_amount/ self.total_authorize_expenditure
+            return 100 >= work_percent*100 >= 95
+        else:
+            return False
 
     def get_wip_amount(self):
-        return self.authorize_expenditure - self.total_pcc_amount
+        return self.total_authorize_expenditure - self.total_pcc_amount
 
     def get_year(self):
         string = str(self.task_no)
@@ -103,6 +111,14 @@ class Task(ConcurrentTransitionMixin, FsmLogMixin, TimeStampedBaseModel):
         except IndexError:
             return 'invalid Task No'
 
+    def get_total_authorize_commitment(self):
+        total = self.authorization_set.all().aggregate(sum=Sum('authorize_commitment'))
+        return Decimal('0.00') if total['sum'] is None else total['sum']
+
+    def get_total_authorize_expenditure(self):
+        total = self.authorization_set.all().aggregate(sum=Sum('authorize_expenditure'))
+        return Decimal('0.00') if total['sum'] is None else total['sum']
+
     def get_total_pcc(self):
         total = self.pcc_set.all().aggregate(sum=Sum('amount'))
         return Decimal('0.00') if total['sum'] is None else total['sum']
@@ -116,7 +132,7 @@ class Task(ConcurrentTransitionMixin, FsmLogMixin, TimeStampedBaseModel):
         return Decimal('0.00') if total['sum'] is None else total['sum']
 
     def can_complete(self):
-        return not self.is_overbook and not self.is_overrun and self.is_pcc_amount_ok
+        return not self.is_overbook and not self.is_overrun and self.is_pcc_amount_ok and self.is_within_work_criteria
 
     def pcc_is_issued(self):
         return self.is_pcc_issued
@@ -131,29 +147,26 @@ class Task(ConcurrentTransitionMixin, FsmLogMixin, TimeStampedBaseModel):
         self.total_accrual = self.get_total_accrual()
         self.total_pcc_amount = self.get_total_pcc()
         self.actual_expenditure = self.get_actual_expenditure()
+        self.total_authorize_commitment = self.get_total_authorize_commitment()
+        self.total_authorize_expenditure = self.get_total_authorize_expenditure()
         super(Task, self).save(*args, **kwargs)
 
     @fsm_log_by
-    @transition(field=state, source='*', target='New')
-    def set_new(self, by=None):
-        pass
-
-    @fsm_log_by
-    @transition(field=state, source='New', target='Work in Progress')
+    @transition(field=state, source='*', target='Work in Progress')
     def set_work_in_progress(self, by=None):
         pass
 
     @fsm_log_by
-    @transition(field=state, source='Work in Progress', target='Work Completed without PCC',
+    @transition(field=state, source='Work in Progress', target='PCC to be Issued',
                 conditions=[can_complete])
-    def set_work_completed_without_pcc(self, by=None):
+    def set_pcc_to_be_issued(self, by=None):
         pass
 
     @fsm_log_by
-    @transition(field=state, source=['Work in Progress', 'Work Completed without PCC'],
-                target='Work Completed with PCC',
+    @transition(field=state, source=['Work in Progress', 'PCC to be Issued'],
+                target='PCC Issued',
                 conditions=[can_complete, pcc_is_issued])
-    def set_work_completed_with_pcc(self, by=None):
+    def set_pcc_issued(self, by=None):
         pass
 
 class Accrual(TimeStampedBaseModel):
@@ -171,6 +184,33 @@ class Accrual(TimeStampedBaseModel):
         super(Accrual, self).save(*args, **kwargs)
         self.task.total_accrual = self.task.get_total_accrual()
         self.task.save()
+
+class Authorization(TimeStampedBaseModel):
+    task = models.ForeignKey(Task, on_delete=models.CASCADE)
+    authorize_commitment = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
+    authorize_expenditure = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
+    authorization_date = models.DateTimeField(blank=True, null=True)
+
+    ref_no = models.CharField(max_length=100)
+    counter = models.PositiveIntegerField()
+
+    def inc_counter(self):
+        if not self.id:
+            obj = self.__class__.objects.filter(task__pk=self.task_id).order_by("-counter").first()
+            if obj is None:
+                self.counter = 1
+            else:
+                self.counter =  obj.counter + 1
+
+    def generate_reference_no(self):
+        return 'ATRN-{0:%y-%m-%d}-{1}'.format(
+                                             self.authorization_date,
+                                             str(self.counter).zfill(3))
+
+    def save(self, *args, **kwargs):
+        self.inc_counter()
+        self.ref_no = self.generate_reference_no()
+        super(Authorization, self).save(*args, **kwargs)
 
 class Pcc(TimeStampedBaseModel):
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
@@ -345,3 +385,16 @@ class InvoiceReport(TimeStampedBaseModel):
         self.inc_counter()
         self.ref_no = self.generate_reference_no()
         super(InvoiceReport, self).save(*args, **kwargs)
+
+
+class BackLogTaskProcess(TaskProcess):
+    pass
+
+class BackLogTask(Task):
+    pass
+
+class BackLogAccrual(Accrual):
+    pass
+
+class BackLogPcc(Pcc):
+    pass

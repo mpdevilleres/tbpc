@@ -98,7 +98,7 @@ class TaskForm(uforms.EnhancedForm):
         ['task_no'],
 
         ['sicet_type', 'section'],
-        ['authorize_commitment', 'authorize_expenditure'],
+        # ['authorize_commitment', 'authorize_expenditure'],
         ['cear_title', 'remarks']
     ]
     sicet_type_choices = [
@@ -146,8 +146,8 @@ class TaskForm(uforms.EnhancedForm):
     # category
     # year
 
-    authorize_commitment = uforms.EnhancedDecimalField()
-    authorize_expenditure = uforms.EnhancedDecimalField()
+    # authorize_commitment = uforms.EnhancedDecimalField()
+    # authorize_expenditure = uforms.EnhancedDecimalField()
 
     # total_accrual
     # actual_expenditure
@@ -204,3 +204,21 @@ class PccForm(uforms.EnhancedForm):
     rfs_date = uforms.EnhancedDateField(required=True)
     pcc_date = uforms.EnhancedDateField(required=True)
     partial = uforms.EnhancedChoiceField(choices=[(x,x) for x in partial_choices])
+
+class AuthorizationForm(uforms.EnhancedForm):
+    model_choices = {
+        'task_id': Task.objects.values_list('id', 'task_no'),
+    }
+    partial_choices = [
+        False,
+        True
+    ]
+    form_order = [
+        ['task_id','authorization_date'],
+        ['authorize_commitment','authorize_expenditure'],
+    ]
+
+    task_id = uforms.EnhancedChoiceField(label='Task No')
+    authorize_commitment = uforms.EnhancedDecimalField(label='Commitment')
+    authorize_expenditure = uforms.EnhancedDecimalField(label='Expenditure')
+    authorization_date = uforms.EnhancedDateField(required=True)

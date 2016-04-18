@@ -25,6 +25,9 @@ urlpatterns = [
      url(r'^pcc/$', views.AddEditPccView.as_view(), name='add_edit_pcc'),
      url(r'^pcc/table/$', views.TablePccView.as_view(), name='table_pcc'),
 
+     url(r'^authorization/$', views.AddEditAuthorizationView.as_view(), name='add_edit_authorization'),
+     url(r'^authorization/table/$', views.TableAuthorizationView.as_view(), name='table_authorization'),
+
      url(r'^invoice-summary/print/$', views.ForCertificationSummaryView.as_view(), name='invoice_print'),
 
      url(r'^dashboard/$', views.DashboardView.as_view(), name='dashboard'),
@@ -42,4 +45,13 @@ urlpatterns = [
      url(r'^pcc/data/$',
          login_required(views.PccJson.as_view()),
          name='table_pcc_json'),
+
+     url(r'^authorization/data/$',
+         login_required(views.AuthorizationJson.as_view()),
+         name='table_authorization_json'),
+
+     # Task Choices
+     url(r'^choices/task/$',
+         views.TaskChoicesView.as_view(),
+         name='task_form_choices'),
 ]

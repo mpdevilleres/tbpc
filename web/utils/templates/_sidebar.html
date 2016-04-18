@@ -131,6 +131,20 @@
                     </li>
                     <li class="nav-item  ">
                         <a href="javascript:;" class="nav-link nav-toggle">
+                            <span class="title">Authorization</span>
+                            <span class="arrow"></span>
+                        </a>
+                        <ul class="sub-menu">
+                            <li class="nav-item ">
+                                <a href="{% url 'budget_mgt:add_edit_authorization' %}" class="nav-link "> Add Record </a>
+                            </li>
+                            <li class="nav-item ">
+                                <a href="{% url 'budget_mgt:table_authorization' %}" class="nav-link "> View Records </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="nav-item  ">
+                        <a href="javascript:;" class="nav-link nav-toggle">
                             <span class="title">Accrual</span>
                             <span class="arrow"></span>
                         </a>

@@ -10,9 +10,10 @@ import pandas as pd
 import numpy as np
 from django.contrib.auth.models import Permission, User
 from django.contrib.contenttypes.models import ContentType
+import json
 from django.db import IntegrityError
 
-from budget_mgt.forms import InvoiceForm, TaskForm, AccrualForm, PccForm
+from budget_mgt.forms import InvoiceForm, TaskForm, AccrualForm, PccForm, AuthorizationForm
 from budget_mgt.utils import summarize_invoice, summarize_accrual
 from budget_mgt.utils.invoice_report_generator import InvoiceReportPrinter
 
@@ -35,8 +36,23 @@ from utils.forms import populate_obj
 from utils.tools import capitalize
 
 
-from .models import Invoice, Task, InvoiceProcess, InvoiceReport, Accrual, TaskProcess, Pcc
-from .tables_ajax import TaskJson, InvoiceJson, AccrualJson, PccJson
+from .models import Invoice, Task, InvoiceProcess, InvoiceReport, Accrual, TaskProcess, Pcc, Authorization
+from .tables_ajax import TaskJson, InvoiceJson, AccrualJson, PccJson, AuthorizationJson
+
+
+# Task Choices
+# Add Edit Views
+@method_decorator(team_decorators, name='dispatch')
+class TaskChoicesView(View):
+    model = Task
+
+    def get(self, request, *args, **kwargs):
+        term = request.GET.get("term", "")
+        numbers = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five']
+        numbers = filter(lambda num: term.lower() in num.lower(), numbers)
+        results = [{'id': index, 'text': value} for (index, value) in enumerate(numbers)]
+        results = list(self.model.objects.filter(task_no__contains=term).values('pk', 'task_no'))
+        return HttpResponse(json.dumps({'err': 'nil', 'results': results}), content_type='application/json')
 
 
 # Add Edit Views
@@ -110,7 +126,6 @@ class AddEditTaskView(View):
             cleaned_data = form.clean()
             populate_obj(cleaned_data, record)
             try:
-#                record.parse_task_no()
                 record.save()
                 messages.success(request, "Successfully Updated the Database")
                 return redirect(self.success_redirect_link)
@@ -124,12 +139,15 @@ class AddEditAccrualView(View):
     model = Accrual
     form_class = AccrualForm
     template_name = 'default/add_form.html'
-    success_redirect_link = 'budget_mgt:table_task'
+    success_redirect_link = reverse_lazy('budget_mgt:table_accrual')
 
     def get(self, request, *args, **kwargs):
         pk = request.GET.get('pk', None)
+        task_pk = request.GET.get('task_pk', None)
+
         if pk is None:
-            forms = self.form_class()
+            initials = {'task_id': task_pk}
+            forms = self.form_class(initial=initials)
 
         else:
             record = get_object_or_404(self.model, pk=pk)
@@ -139,6 +157,10 @@ class AddEditAccrualView(View):
 
     def post(self, request, *args, **kwargs):
         pk = request.GET.get('pk', None)
+        task_pk = request.GET.get('task_pk', None)
+        if task_pk is not None:
+            self.success_redirect_link += '?pk=%s' % task_pk
+
         if pk is None:
             record = self.model()
         else:
@@ -158,16 +180,21 @@ class AddEditAccrualView(View):
         return render(request, self.template_name, {'forms': form})
 
 @method_decorator(team_decorators, name='dispatch')
-class AddEditPccView(View):
-    model = Pcc
-    form_class = PccForm
+class AddEditAuthorizationView(View):
+    model = Authorization
+    form_class = AuthorizationForm
     template_name = 'default/add_form.html'
-    success_redirect_link = 'budget_mgt:table_pcc'
+    success_redirect_link = reverse_lazy('budget_mgt:table_authorization')
 
     def get(self, request, *args, **kwargs):
         pk = request.GET.get('pk', None)
+        task_pk = request.GET.get('task_pk', None)
+        if task_pk is not None:
+            self.success_redirect_link += '?pk=%s' % task_pk
+
         if pk is None:
-            forms = self.form_class()
+            initials = {'task_id': task_pk}
+            forms = self.form_class(initial=initials)
 
         else:
             record = get_object_or_404(self.model, pk=pk)
@@ -177,6 +204,60 @@ class AddEditPccView(View):
 
     def post(self, request, *args, **kwargs):
         pk = request.GET.get('pk', None)
+        task_pk = request.GET.get('task_pk', None)
+
+        if task_pk is not None:
+            self.success_redirect_link += '?pk=%s' % task_pk
+
+        if pk is None:
+            record = self.model()
+        else:
+            record = get_object_or_404(self.model, pk=pk)
+
+        form = self.form_class(request.POST)
+
+        if form.is_valid():
+            cleaned_data = form.clean()
+            populate_obj(cleaned_data, record)
+            record.save()
+            task = Task.objects.filter(pk=record.task.pk).first()
+            task.save()
+
+            messages.success(request, "Successfully Updated the Database")
+            return redirect(self.success_redirect_link)
+
+        return render(request, self.template_name, {'forms': form})
+
+@method_decorator(team_decorators, name='dispatch')
+class AddEditPccView(View):
+    model = Pcc
+    form_class = PccForm
+    template_name = 'default/add_form.html'
+    success_redirect_link = reverse_lazy('budget_mgt:table_pcc')
+
+    def get(self, request, *args, **kwargs):
+        pk = request.GET.get('pk', None)
+        task_pk = request.GET.get('task_pk', None)
+        if task_pk is not None:
+            self.success_redirect_link += '?pk=%s' % task_pk
+
+        if pk is None:
+            initials = {'task_id': task_pk}
+            forms = self.form_class(initial=initials)
+
+        else:
+            record = get_object_or_404(self.model, pk=pk)
+            forms = self.form_class(initial=record.__dict__)
+
+        return render(request, self.template_name, {'forms': forms, 'form_title': self.model.__name__})
+
+    def post(self, request, *args, **kwargs):
+        pk = request.GET.get('pk', None)
+        task_pk = request.GET.get('task_pk', None)
+
+        if task_pk is not None:
+            self.success_redirect_link += '?pk=%s' % task_pk
+
         if pk is None:
             record = self.model()
         else:
@@ -246,7 +327,7 @@ class InvoiceSummaryView(View):
             'columns': [i for i in capitalize(field_arrangement)],
             'keys': field_arrangement,
             'task_no': task.task_no,
-            'authorize_expenditure': task.authorize_expenditure,
+            'authorize_expenditure': task.total_authorize_expenditure,
             'total_accrual': task.total_accrual,
             'actual_total': actual_total,
             'overrun': task.is_overrun,
@@ -268,6 +349,30 @@ class TableAccrualView(View):
         pk = request.GET.get('pk', None)
         if pk is not None:
             self.data_table_url += '?pk={}'.format(pk)
+            self.add_record_link += '?task_pk={}'.format(pk)
+
+        context = {
+            'table_title': self.table_title,
+            'columns': self.columns,
+            'data_table_url': self.data_table_url,
+            'add_record_link': self.add_record_link,
+        }
+        return render(request, self.template_name, context)
+
+@method_decorator(team_decorators, name='dispatch')
+class TableAuthorizationView(View):
+    add_record_link = reverse_lazy('budget_mgt:add_edit_authorization')
+    columns = getattr(AuthorizationJson,'column_names')
+    data_table_url = reverse_lazy('budget_mgt:table_authorization_json')
+    template_name = 'default/datatable.html'
+    table_title = 'Budget Authorization'
+
+    def get(self, request, *args, **kwargs):
+
+        pk = request.GET.get('pk', None)
+        if pk is not None:
+            self.data_table_url += '?pk={}'.format(pk)
+            self.add_record_link += '?task_pk={}'.format(pk)
 
         context = {
             'table_title': self.table_title,
@@ -290,6 +395,7 @@ class TablePccView(View):
         pk = request.GET.get('pk', None)
         if pk is not None:
             self.data_table_url += '?pk={}'.format(pk)
+            self.add_record_link += '?task_pk={}'.format(pk)
 
         context = {
             'table_title': self.table_title,
@@ -331,7 +437,6 @@ class TableInvoiceView(View):
 
     def get(self, request, *args, **kwargs):
         filter = request.GET.get('filter', None)
-
         closed = Invoice.objects.filter(state='Completed').count()
         ongoing = Invoice.objects.filter(~Q(state='Completed')).count()
 

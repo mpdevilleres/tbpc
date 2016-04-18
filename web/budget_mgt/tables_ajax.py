@@ -8,7 +8,7 @@ from pytz import utc
 from utils.decorators import team_decorators
 from utils.tools import capitalize
 
-from .models import Task, Invoice, Accrual, Pcc
+from .models import Task, Invoice, Accrual, Pcc, Authorization
 import datetime as dt
 
 @method_decorator(team_decorators, name='dispatch')
@@ -30,7 +30,7 @@ class TaskJson(BaseDatatableView):
 
 
     # define the columns that will be returned
-    columns = ['task_no', 'authorize_commitment', 'authorize_expenditure', 'total_accrual',
+    columns = ['task_no', 'total_authorize_commitment', 'total_authorize_expenditure', 'total_accrual',
                'total_pcc_amount', 'actual_expenditure', 'state__name']
 
     # Hide Columns
@@ -81,12 +81,17 @@ class TaskJson(BaseDatatableView):
 
         elif column == 'total_pcc_amount':
             val = getattr(row, column)
-            status = 'danger' if not row.is_pcc_amount_ok else 'info'
-            icon = 'close' if not row.is_pcc_amount_ok else 'check'
-            html_indicator = '<span class="label label-{0}"> <i class="icon-{1}"></i></span>'.format(status, icon)
+            if row.total_authorize_expenditure != 0:
+                percentage = row.total_pcc_amount / row.total_authorize_expenditure
+            else:
+                percentage = 0
+            status = 'danger' if not row.is_within_work_criteria else 'info'
+            #icon = 'close' if not row.is_within_work_criteria else 'check'
+            html_indicator = '<span class="label label-{0}">{1:.0%}</span>'.format(status, percentage)
             html_val = '<a target="_blank" href="{1}?pk={2}">{0:,.2f}</a>'.format(val,
-                                                             reverse('budget_mgt:table_pcc'),
-                                                             row.id)
+                                                                                  reverse('budget_mgt:table_pcc'),
+                                                                                  row.id,
+                                                             )
             html = html_indicator + ' ' + html_val
             return html
 
@@ -101,13 +106,19 @@ class TaskJson(BaseDatatableView):
             html = html_indicator + ' ' +html_val
             return html
 
-        elif column == 'authorize_commitment':
+        elif column == 'total_authorize_commitment':
             val = getattr(row, column)
-            return '{:,.2f}'.format(val)
+            html = '<a target="_blank" href="{1}?pk={2}">{0:,.2f}</a>'.format(val,
+                                                             reverse('budget_mgt:table_authorization'),
+                                                             row.id)
+            return html
 
-        elif column == 'authorize_expenditure':
+        elif column == 'total_authorize_expenditure':
             val = getattr(row, column)
-            return '{:,.2f}'.format(val)
+            html = '<a target="_blank" href="{1}?pk={2}">{0:,.2f}</a>'.format(val,
+                                                             reverse('budget_mgt:table_authorization'),
+                                                             row.id)
+            return html
 
         elif column == 'state__name':
             val = getattr(row, column)
@@ -269,7 +280,7 @@ class AccrualJson(BaseDatatableView):
 
 
     # define the columns that will be returned
-    columns = ['task.task_no', 'ref_no', 'amount', 'id']
+    columns = ['task.task_no', 'accrual_date', 'ref_no', 'amount', 'id']
 
     # Hide Columns
     hidden_columns = [ i for i, x in enumerate(columns) if x in
@@ -277,6 +288,7 @@ class AccrualJson(BaseDatatableView):
                        ]
 
     column_names = [x for x in capitalize(columns)]
+    column_names[0] = 'Task No'
     column_names[-1] = 'Option'
     # define column names that will be used in sorting
     # order is important and should be same as order of columns
@@ -297,6 +309,10 @@ class AccrualJson(BaseDatatableView):
             val = getattr(row, column)
             return '{0:,.2f}'.format(val)
 
+        elif column == 'accrual_date':
+            val = getattr(row, column)
+            return '{0:%d-%b-%Y}'.format(val)
+
         elif column == 'id':
             return '<a target="_blank" href="{1}?pk={0}" class="btn default btn-xs red-stripe">Edit</a>' \
                 .format(
@@ -306,6 +322,90 @@ class AccrualJson(BaseDatatableView):
 
         else:
             return super(AccrualJson, self).render_column(row, column)
+
+    def filter_queryset(self, qs):
+        """
+        Change the default startswith filtering to contains
+        """
+        if not self.pre_camel_case_notation:
+            # get global search value
+            search = self.request.GET.get('search[value]', None)
+            col_data = self.extract_datatables_column_data()
+            q = Q()
+            for col_no, col in enumerate(col_data):
+                # apply global search to all searchable columns
+                if search and col['searchable']:
+                    q |= Q(**{'{0}__contains'.format(self.columns[col_no].replace('.', '__')): search})
+
+                # column specific filter
+                if col['search.value']:
+                    qs = qs.filter(**{'{0}__contains'.format(self.columns[col_no].replace('.', '__')): col['search.value']})
+            qs = qs.filter(q)
+        return qs
+
+@method_decorator(team_decorators, name='dispatch')
+class AuthorizationJson(BaseDatatableView):
+    # The model we're going to show
+    model = Authorization
+    def get_initial_queryset(self):
+        # pk here is the Contractor ID
+        pk = self.request.GET.get('pk',None)
+
+        # return queryset used as base for futher sorting/filtering
+        # these are simply objects displayed in datatable
+        # You should not filter data returned here by any filter values entered by user. This is because
+        # we need some base queryset to count total number of records.
+        if pk is None:
+            return self.model.objects.all()
+
+        return self.model.objects.filter(task__pk=pk).all()
+
+
+    # define the columns that will be returned
+    columns = ['task.task_no', 'authorize_commitment', 'authorize_expenditure', 'ref_no', 'authorization_date', 'id']
+
+    # Hide Columns
+    hidden_columns = [ i for i, x in enumerate(columns) if x in
+                       []
+                       ]
+
+    column_names = [x for x in capitalize(columns)]
+    column_names[0] = 'Task No'
+    column_names[-1] = 'Option'
+    # define column names that will be used in sorting
+    # order is important and should be same as order of columns
+    # displayed by datatables. For non sortable columns use empty
+    # value like ''
+    order_columns = columns
+
+    # set max limit of records returned, this is used to protect our site if someone tries to attack our site
+    # and make it return huge amount of data
+    max_display_length = 500
+
+    def render_column(self, row, column):
+        # We want to render user as a custom column
+        if column == 'authorize_commitment':
+            val = getattr(row, column)
+            return '{0:,.2f}'.format(val)
+
+        elif column == 'authorize_expenditure':
+            val = getattr(row, column)
+            return '{0:,.2f}'.format(val)
+
+        elif column == 'authorization_date':
+            val = getattr(row, column)
+            return '{0:%d-%b-%Y}'.format(val)
+
+        elif column == 'id':
+
+            return '<a target="_blank" href="{1}?pk={0}" class="btn default btn-xs red-stripe">Edit</a>' \
+                .format(
+                    row.id,
+                    reverse('budget_mgt:add_edit_authorization'),
+            )
+
+        else:
+            return super(AuthorizationJson, self).render_column(row, column)
 
     def filter_queryset(self, qs):
         """
@@ -346,7 +446,7 @@ class PccJson(BaseDatatableView):
 
 
     # define the columns that will be returned
-    columns = ['task.task_no', 'ref_no', 'amount', 'id']
+    columns = ['task.task_no', 'pcc_date', 'ref_no', 'amount', 'id']
 
     # Hide Columns
     hidden_columns = [ i for i, x in enumerate(columns) if x in
@@ -371,6 +471,10 @@ class PccJson(BaseDatatableView):
         if column == 'amount':
             val = getattr(row, column)
             return '{0:,.2f}'.format(val)
+
+        elif column == 'pcc_date':
+            val = getattr(row, column)
+            return '{0:%d-%b-%Y}'.format(val)
 
         elif column == 'id':
 
