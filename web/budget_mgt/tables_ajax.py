@@ -185,7 +185,7 @@ class InvoiceJson(BaseDatatableView):
 
     # define the columns that will be returned
     columns = ['contractor.name', 'task.task_no', 'region', 'invoice_no', 'invoice_amount',
-               'state__name', 'remarks', 'id']
+               'state__name', 'remarks']
 
     # Hide Columns
     hidden_columns = [ i for i, x in enumerate(columns) if x in
@@ -195,8 +195,8 @@ class InvoiceJson(BaseDatatableView):
     column_names = [x for x in capitalize(columns)]
     column_names[0] = 'Contractor Name'
     column_names[1] = 'Task Number'
-    column_names[-3] = 'Current Process'
-    column_names[-1] = 'Option'
+    column_names[-2] = 'Current Process'
+
     # define column names that will be used in sorting
     # order is important and should be same as order of columns
     # displayed by datatables. For non sortable columns use empty
@@ -211,15 +211,13 @@ class InvoiceJson(BaseDatatableView):
 
     def render_column(self, row, column):
         # We want to render user as a custom column
-        if column == 'id':
 
-            return '<a target="_blank" href="{1}?pk={0}" class="btn default btn-xs red-stripe">Edit</a>' \
-                   '<a target="_blank" href="{2}?pk={0}" class="btn default btn-xs blue-stripe">Workflow</a>' \
-                .format(
-                    row.id,
-                    reverse('budget_mgt:add_edit_invoice'),
-                    reverse('budget_mgt:invoice_workflow'),
-            )
+        if column == 'state__name':
+            val = getattr(row, column)
+            html_val = '<a target="_blank" href="{1}?pk={2}">{0}</a>'.format(val,
+                                                             reverse('budget_mgt:invoice_workflow'),
+                                                             row.id)
+            return html_val
 
         elif column == 'task.task_no':
             status = 'danger' if row.task.is_overrun is True else 'info'
@@ -229,10 +227,16 @@ class InvoiceJson(BaseDatatableView):
             return '<span class="label label-{2}"> <i class="icon-{1}"></i></span> <a target="_blank" href="{3}">{0}</a>'.format(value, icon, status, url)
 
         elif column == 'invoice_no':
+            val = getattr(row, column)
+
             status = 'danger' if row.status == 'Reject' else 'info'
             icon = 'close' if row.status == 'Reject' else 'check'
-            value = row.invoice_no
-            return '<span class="label label-{2}"> <i class="icon-{1}"></i></span> {0}'.format(value, icon, status)
+            html_indicator = '<span class="label label-{0}"> <i class="icon-{1}"></i></span>'.format(status, icon)
+            html_val = '<a target="_blank" href="{1}?pk={2}">{0}</a>'.format(val,
+                                                             reverse('budget_mgt:add_edit_invoice'),
+                                                             row.id)
+            html = html_indicator + ' ' + html_val
+            return html
 
         elif column == 'invoice_amount':
             val = getattr(row, column)

@@ -49,8 +49,8 @@ class Task(ConcurrentTransitionMixin, FsmLogMixin, TimeStampedBaseModel):
     wip_amount = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
     total_pcc_amount = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
 
-    sicet_type = models.CharField(max_length=100)
-    section = models.CharField(max_length=100)
+    sicet_type = models.CharField(max_length=100, blank=True)
+    section = models.CharField(max_length=100, blank=True)
 
     cear_title = models.TextField(blank=True)
     remarks = models.TextField(blank=True)
@@ -190,6 +190,7 @@ class Authorization(TimeStampedBaseModel):
     authorize_commitment = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
     authorize_expenditure = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
     authorization_date = models.DateTimeField(blank=True, null=True)
+    remarks = models.TextField()
 
     ref_no = models.CharField(max_length=100)
     counter = models.PositiveIntegerField()
