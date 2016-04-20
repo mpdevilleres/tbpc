@@ -8,10 +8,10 @@ from contract_mgt.models import Contractor, Contract
 from decimal import Decimal
 from django.db import models
 
-from utils.models import TimeStampedBaseModel, ProcessModel, ChangeLogModel, FsmLogMixin
+from utils.models import TimeStampedBaseModel, ProcessModel, ChangeLogModel, FsmLogMixin, ManytoManyMixin
 
 import datetime as dt
-
+from taggit.managers import TaggableManager
 
 # Create your models here.
 
@@ -21,7 +21,8 @@ class TaskProcess(ProcessModel):
     """
     pass
 
-class Task(ConcurrentTransitionMixin, FsmLogMixin, TimeStampedBaseModel):
+class Task(ConcurrentTransitionMixin, FsmLogMixin, ManytoManyMixin, TimeStampedBaseModel):
+
     class Transitions:
             trans_1 = ['Work in Progress', 'PCC to be Issued', 'PCC Issued']
 
@@ -55,6 +56,12 @@ class Task(ConcurrentTransitionMixin, FsmLogMixin, TimeStampedBaseModel):
     cear_title = models.TextField(blank=True)
     remarks = models.TextField(blank=True)
     finance_remarks = models.TextField(blank=True)
+
+    tags = TaggableManager()
+    # get initial values for tags
+    @property
+    def initial_tags(self):
+        return [i.name for i in self.tags.all()]
 
     @property
     def state__name(self):

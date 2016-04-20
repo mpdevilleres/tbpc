@@ -30,7 +30,8 @@ python:
   - 3.4
   - 3.5
 
-services: postgresql
+services:
+  - postgresql
 
 env:
   - DJANGO=1.9.2
@@ -41,14 +42,17 @@ before_install:
   - export PIP_USE_MIRRORS=true
 
 install:
+  - pip install -q . --use-mirrors
   - pip install -r web/requirements.txt
 #  - pip install django==$DJANGO --quiet
 #  - pip install psycopg2 --quiet
 
 before_script:
-  - psql -c "CREATE DATABASE mydb;" -U postgres
+  - psql -c "CREATE DATABASE postgres;" -U postgres
   - cd web
   - python manage.py makemigrations
   - python manage.py migrate
 script:
   - py.test
+after_success:
+  coveralls

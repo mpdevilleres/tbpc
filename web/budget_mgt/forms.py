@@ -1,16 +1,18 @@
+from taggit.models import Tag
 from django.core.validators import RegexValidator
 
 from contract_mgt.models import Contractor, Contract
 
 import utils.forms as uforms
 
+from taggit.forms import *
 from .models import Task
 from django import forms
 
 class InvoiceForm(uforms.EnhancedForm):
     model_choices = {
         'contractor_id': Contractor.objects.values_list('id', 'name'),
-        'task_id': Task.objects.values_list('id', 'task_no'),
+        'task_id': Task.objects.exclude(tags__name='Backlog').values_list('id', 'task_no'),
         'contract_id': Contract.objects.values_list('id', 'contract_no'),
     }
 
@@ -91,11 +93,12 @@ class TaskForm(uforms.EnhancedForm):
     model_choices = {
         'contractor_id': Contractor.objects.values_list('id', 'name'),
         'contract_id': Contract.objects.values_list('id', 'contract_no'),
+        'tags': Tag.objects.values_list('name', 'name')
     }
 
     form_order = [
         ['contractor_id', 'contract_id'],
-        ['task_no'],
+        ['task_no', 'tags'],
 
         ['sicet_type', 'section'],
         # ['authorize_commitment', 'authorize_expenditure'],
@@ -154,6 +157,7 @@ class TaskForm(uforms.EnhancedForm):
     # wip_amount
     # total_pcc_amount
 
+    tags = uforms.EnhancedMultipleChoiceField(required=False)
     sicet_type = uforms.EnhancedChoiceField(choices=[(x,x) for x in sicet_type_choices])
     section = uforms.EnhancedChoiceField(choices=sorted([(x,x) for x in section_choices]))
     cear_title = uforms.EnhancedTextField()

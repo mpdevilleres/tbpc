@@ -9,12 +9,11 @@ import datetime as dt
 import pandas as pd
 import numpy as np
 from django.contrib.auth.models import Permission, User
-from django.contrib.contenttypes.models import ContentType
 import json
 from django.db import IntegrityError
 
 from budget_mgt.forms import InvoiceForm, TaskForm, AccrualForm, PccForm, AuthorizationForm
-from budget_mgt.utils import summarize_invoice, summarize_accrual
+from budget_mgt.utils import summarize_accrual
 from budget_mgt.utils.invoice_report_generator import InvoiceReportPrinter
 
 from contract_mgt.models import Contractor
@@ -109,7 +108,10 @@ class AddEditTaskView(View):
 
         else:
             record = get_object_or_404(self.model, pk=pk)
-            forms = self.form_class(initial=record.__dict__)
+            # initial tags here came from many to many
+            # returns ['tagname1', 'tagname2']
+            forms = self.form_class(initial={**record.__dict__,
+                                             'tags':record.initial_tags})
 
         return render(request, self.template_name, {'forms': forms})
 
@@ -124,9 +126,11 @@ class AddEditTaskView(View):
 
         if form.is_valid():
             cleaned_data = form.clean()
+            tags = cleaned_data.pop('tags')
             populate_obj(cleaned_data, record)
             try:
                 record.save()
+                record.tags.set(*tags)
                 messages.success(request, "Successfully Updated the Database")
                 return redirect(self.success_redirect_link)
             except IntegrityError:
@@ -416,14 +420,29 @@ class TableTaskView(View):
     def get(self, request, *args, **kwargs):
 
         pk = request.GET.get('pk', None)
+        tags = request.GET.get('tags', None)
         if pk is not None:
-            self.data_table_url = self.data_table_url + pk
+            self.data_table_url = self.data_table_url + '?pk=' + pk
 
+        if tags is not None:
+            self.data_table_url = self.data_table_url + '?tags=' + tags
+
+        # ["TITLE", ["LIST OF PARAMS"]]
+        # ["LIST OF PARAMS"] = ("NAME", "COUNT", "URL")
+        url = reverse_lazy("budget_mgt:table_task")
+        option1 = ["Filter by Tags", [(i.name, 0, url + "?tag=" + i.name)
+                                      for i in Task.tags.all()]
+                   ]
+        option2 = ["Sort by", [('Proj Percentage', 0, url + "?sort_by=pcc_percent"),
+                               ('PCC Duration', 0, url + "?sort_by=pcc_duration")
+                               ]
+                   ]
         context = {
             'table_title': self.table_title,
             'columns': self.columns,
             'data_table_url': self.data_table_url,
             'add_record_link': self.add_record_link,
+           'options':[option1, option2]
         }
         return render(request, self.template_name, context)
 
@@ -432,7 +451,7 @@ class TableInvoiceView(View):
     add_record_link = reverse_lazy('budget_mgt:add_edit_invoice')
     columns = getattr(InvoiceJson,'column_names')
     data_table_url = reverse_lazy('budget_mgt:table_invoice_json')
-    template_name = 'budget_mgt/report_invoice.html'
+    template_name = 'budget_mgt/invoice_table.html'
     table_title = 'Invoices'
 
     def get(self, request, *args, **kwargs):

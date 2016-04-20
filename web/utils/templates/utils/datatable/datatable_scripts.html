@@ -1,5 +1,5 @@
 <script>
-$('#dataset_table tfoot tr#filterrow th').each( function () {
+$('#dataset_table thead tr#filterrow th').each( function () {
     //var title = $('#dataset_table thead th').eq( $(this).index() ).text();
     $(this).html( '<input type="text" placeholder="" size="" style="width:100%"/>' );
 } );
@@ -48,7 +48,7 @@ var table = $('#dataset_table').DataTable(
                     action: function ( e, dt, node, config ) {
                         //dt.ajax.reload();
                         //alert('Custom Button');
-                        $("#dataset_table tfoot tr#filterrow").toggle('show');
+                        $("#dataset_table thead tr#filterrow").toggle('show');
                     }
                 },
                 { extend: 'print', className: 'btn dark btn-outline hidden-sm hidden-xs' },
@@ -80,15 +80,24 @@ var table = $('#dataset_table').DataTable(
             // So when dropdowns used the scrollable div should be removed.
             //"dom": "<'row' <'col-md-12'T>><'row'<'col-md-6 col-sm-12'l><'col-md-6 col-sm-12'f>r>t<'row'<'col-md-5 col-sm-12'i><'col-md-7 col-sm-12'p>>",
         }
-
 );
 
 // Apply the filter
-$("#dataset_table tfoot input").on( 'keyup change', function () {
+$("#dataset_table thead input").on( 'keyup change', function () {
     table
         .column( $(this).parent().index()+':visible' )
         .search( this.value )
         .draw();
 } );
 
+// Show total in footer not working
+table.columns( '.sum' ).every( function () {
+    var sum = this
+        .data()
+        .reduce( function (a,b) {
+            return a + b;
+        } );
+
+    $( this.footer() ).html( 'Sum: '+sum );
+} );
 </script>

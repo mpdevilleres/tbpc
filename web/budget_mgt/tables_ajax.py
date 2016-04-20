@@ -125,10 +125,11 @@ class TaskJson(BaseDatatableView):
             html_val = '<a target="_blank" href="{1}?pk={2}">{0}</a>'.format(val,
                                                              reverse('budget_mgt:task_workflow'),
                                                              row.id)
-            if row.state == "Work Completed without PCC" :
+            if row.state == "PCC to be Issued" :
                 if isinstance(row.state_date, dt.datetime):
-                    duration = dt.datetime.now(tz=utc) - row.state_date
-                    days = 30 - duration.days
+                    # results is negative
+                    duration = row.state_date - dt.datetime.now(tz=utc)
+                    days = 30 + duration.days
                 else:
                     days = 0
                 label_color = 'info' if days > 0 else 'danger'

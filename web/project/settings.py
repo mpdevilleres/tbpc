@@ -21,7 +21,6 @@ if 'TRAVIS' in os.environ:
             'ENGINE':   'django.db.backends.postgresql_psycopg2',
             'NAME':     'mydb',
             'USER':     'postgres',
-            'PASSWORD': '',
             'HOST':     'localhost',
             'PORT':     '',
         }
@@ -71,7 +70,7 @@ INSTALLED_APPS = [
 #    'more_testing.apps.MoreTestingConfig',
 
     'django_fsm_log',
-
+    'taggit',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
