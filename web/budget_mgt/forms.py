@@ -34,7 +34,17 @@ class InvoiceForm(uforms.EnhancedForm):
         'Cable',
         'Development',
         'Service Provisioning',
-        'Supply of Material'
+        'Supply of Material',
+        'FTTM',
+        'Mega Projects'
+    ]
+
+    payment_type_choices = [
+        'Delivery',
+        'RFS',
+        'Services',
+        'Support',
+        'Others'
     ]
 
     form_order = [
@@ -44,6 +54,7 @@ class InvoiceForm(uforms.EnhancedForm):
         ['contract_id', 'proj_no'],
         ['invoice_no','cost_center'],
         ['invoice_type', 'expense_code'],
+        ['payment_type'],
         ['description'],
         ['hr'],
         ['revenue_amount', 'penalty'],
@@ -67,6 +78,7 @@ class InvoiceForm(uforms.EnhancedForm):
     region = uforms.EnhancedChoiceField(choices=[(x,x) for x in region_choices])
     invoice_no = uforms.EnhancedCharField()
     invoice_type = uforms.EnhancedChoiceField(choices=[(x,x) for x in invoice_type_choices])
+    payment_type = uforms.EnhancedChoiceField(choices=[(x,x) for x in payment_type_choices])
     revenue_amount = uforms.EnhancedDecimalField()
     opex_amount = uforms.EnhancedDecimalField()
     capex_amount = uforms.EnhancedDecimalField()

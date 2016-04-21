@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse
-from django.db.models import Q
+from django.db.models import Q, F
 from django.utils.decorators import method_decorator
 
 from django_datatables_view.base_datatable_view import BaseDatatableView
@@ -24,14 +24,15 @@ class TaskJson(BaseDatatableView):
         # You should not filter data returned here by any filter values entered by user. This is because
         # we need some base queryset to count total number of records.
         if pk is None:
-            return self.model.objects.all()
+            return self.model.objects.annotate(remaining_accrual=F('total_accrual')-F('actual_expenditure')).all()
 
         return self.model.objects.filter(contractor__pk=pk)
 
 
     # define the columns that will be returned
     columns = ['task_no', 'total_authorize_commitment', 'total_authorize_expenditure', 'total_accrual',
-               'total_pcc_amount', 'actual_expenditure', 'state__name']
+               'total_pcc_amount', 'actual_expenditure', 'remaining_accrual', 'invoice.payment_type',
+               'state__name', 'tags.name']
 
     # Hide Columns
     hidden_columns = [ i for i, x in enumerate(columns) if x in
@@ -42,7 +43,11 @@ class TaskJson(BaseDatatableView):
     column_names[1] = 'A. Commitment'
     column_names[2] = 'A. Expenditure'
     column_names[4] = 'Total PCC Amount'
-    column_names[-1] = 'Current Process'
+    column_names[-5] = 'Invoice Paid'
+    column_names[-4] = 'Remaining Accrual'
+    column_names[-3] = 'Payment Type'
+    column_names[-2] = 'Current Process'
+    column_names[-1] = 'Tags'
     # define column names that will be used in sorting
     # order is important and should be same as order of columns
     # displayed by datatables. For non sortable columns use empty
@@ -67,6 +72,30 @@ class TaskJson(BaseDatatableView):
                     val
             )
 
+        elif column == 'tags.name':
+            html_label = '<span class="label bg-green-jungle">{}</span> '
+
+            html_tags = ''.join(sorted([html_label.format(i.name) for i in row.tags.all()]))
+            return html_tags
+
+        elif column == 'invoice.payment_type':
+            invoice = row.invoice_set.order_by('-pk').first()
+            if invoice is None:
+                return 'No Invoice'
+            else:
+                return invoice.payment_type
+
+        elif column == 'remaining_accrual':
+            val = getattr(row, column)
+            status = 'danger' if row.is_overbook else 'info'
+            icon = 'close' if row.is_overbook else 'check'
+            html_indicator = '<span class="label label-{0}"> <i class="icon-{1}"></i></span>'.format(status, icon)
+            html_val = '<a target="_blank" href="{1}?pk={2}">{0:,.2f}</a>'.format(val,
+                                                             reverse('budget_mgt:table_accrual'),
+                                                             row.id)
+            html = html_indicator + ' ' + html_val
+            return '{:,.2f}'.format(val)
+        
         elif column == 'total_accrual':
             val = getattr(row, column)
 

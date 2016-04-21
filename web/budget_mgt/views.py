@@ -288,11 +288,13 @@ class InvoiceSummaryView(View):
     def get(self, request, *args, **kwargs):
         pk = request.GET.get('pk', None)
         field_arrangement = [
-            'id',
+#            'id',
             'contractor_name',
             'invoice_no',
             'contract_no',
             'region',
+            'invoice_type',
+            'payment_type',
 #            'invoice_cert_date',
             'invoice_amount',
         ]
