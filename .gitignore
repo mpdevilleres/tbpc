@@ -15,6 +15,7 @@ migrations/
 /nginx/ssl
 /nginx/logs
 
+/web/csv_backup
 /web/dump
 /web/dump_new
 /web/dump_actual

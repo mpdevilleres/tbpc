@@ -53,7 +53,6 @@ class TaskChoicesView(View):
         results = list(self.model.objects.filter(task_no__contains=term).values('pk', 'task_no'))
         return HttpResponse(json.dumps({'err': 'nil', 'results': results}), content_type='application/json')
 
-
 # Add Edit Views
 @method_decorator(team_decorators, name='dispatch')
 class AddEditInvoiceView(View):
@@ -415,6 +414,8 @@ class TablePccView(View):
 class TableTaskView(View):
     add_record_link = reverse_lazy('budget_mgt:add_edit_task')
     columns = getattr(TaskJson,'column_names')
+    sum_columns = getattr(TaskJson,'sum_columns')
+    hidden_columns = getattr(TaskJson,'hidden_columns')
     data_table_url = reverse_lazy('budget_mgt:table_task_json')
     template_name = 'default/datatable.html'
     table_title = 'Expenditure Tasks'
@@ -442,6 +443,8 @@ class TableTaskView(View):
         context = {
             'table_title': self.table_title,
             'columns': self.columns,
+            'hidden_columns': self.hidden_columns,
+            'sum_columns': self.sum_columns,
             'data_table_url': self.data_table_url,
             'add_record_link': self.add_record_link,
            'options':[option1, option2]

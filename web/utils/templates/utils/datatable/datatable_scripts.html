@@ -7,6 +7,44 @@ $('#dataset_table thead tr#filterrow th').each( function () {
 // DataTable
 var table = $('#dataset_table').DataTable(
         {
+        "footerCallback": function (row, data, start, end, display) {
+            var api = this.api(),
+                data;
+
+            // Remove the formatting to get integer data for summation
+            var intVal = function (i) {
+                return typeof i === 'string' ? i.replace(/[\$,]/g, '')*1 : typeof i === 'number' ? i : 0;
+            };
+
+            // Total Visible Columns
+            ColumnsToSum = {% if sum_columns != None %}{{ sum_columns }}{% else %}[]{% endif %};
+
+            $.each(ColumnsToSum, function( index, value ) {
+                // Total over all pages
+                total = api.column(value)
+                    .data()
+                    .reduce(function (total, b) {
+                    b = $(b).text();
+                    return total + intVal(b);
+                },0);
+                // Total over this page
+                pageTotal = api.column(value, {
+                    page: 'current'
+                })
+                    .data()
+                    .reduce(function (total, b) {
+                    b = $(b).text();
+                    return total + intVal(b);
+                }, 0);
+
+                // Update footer
+                $(api.column(value).footer()).html(
+                    total.toLocaleString('en-US', {minimumFractionDigits: 2})
+                );
+            });
+
+        },
+
             "processing": true,
             "serverSide": true,
             "ajax": "{{ data_table_url }}",
@@ -60,7 +98,7 @@ var table = $('#dataset_table').DataTable(
             ],
 
             // setup responsive extension: http://datatables.net/extensions/responsive/
-            responsive: true,
+            responsive: false,
 
 //            "order": [
 //                [0, 'asc']
@@ -85,7 +123,7 @@ var table = $('#dataset_table').DataTable(
 // Apply the filter
 $("#dataset_table thead input").on( 'keyup change', function () {
     table
-        .column( $(this).parent().index()+':visible' )
+        .column( $(this).parent().index())
         .search( this.value )
         .draw();
 } );

@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse
-from django.db.models import Q, F
+from django.db.models import Q, F, When, Value, Case, DecimalField
 from django.utils.decorators import method_decorator
 
 from django_datatables_view.base_datatable_view import BaseDatatableView
@@ -24,20 +24,28 @@ class TaskJson(BaseDatatableView):
         # You should not filter data returned here by any filter values entered by user. This is because
         # we need some base queryset to count total number of records.
         if pk is None:
-            return self.model.objects.annotate(remaining_accrual=F('total_accrual')-F('actual_expenditure')).all()
+            return self.model.objects.annotate(remaining_accrual=F('total_accrual')-F('actual_expenditure'),
+                                               task_progress=Case(When(total_authorize_expenditure=0, then=Value('0.00')),
+                                                                  default=F('total_pcc_amount')/F('total_authorize_expenditure'),
+                                                                  output_field=DecimalField(),
+                                                                  )
+                                               ).all()
+
+                                        #           When(F('total_authorize_expenditure'), then=Value('0'),
+                                        #
+                                        #                     When(F('total_authorize_expenditure'), then=Value('0')),
+                                        #       F('total_pcc_amount')/)
 
         return self.model.objects.filter(contractor__pk=pk)
 
 
     # define the columns that will be returned
     columns = ['task_no', 'total_authorize_commitment', 'total_authorize_expenditure', 'total_accrual',
-               'total_pcc_amount', 'actual_expenditure', 'remaining_accrual', 'invoice.payment_type',
+               'total_pcc_amount', 'actual_expenditure', 'remaining_accrual', 'task_progress',
                'state__name', 'tags.name']
 
     # Hide Columns
-    hidden_columns = [ i for i, x in enumerate(columns) if x in
-                       []
-                       ]
+    hidden_columns = []
 
     column_names = [x for x in capitalize(columns)]
     column_names[1] = 'A. Commitment'
@@ -54,8 +62,8 @@ class TaskJson(BaseDatatableView):
     # value like ''
     order_columns = columns
 
-    # define hidden columns
-
+    # columns to be summed
+    sum_columns = [1, 2, 3, 4, 5, 6]
 
     # set max limit of records returned, this is used to protect our site if someone tries to attack our site
     # and make it return huge amount of data
@@ -78,23 +86,9 @@ class TaskJson(BaseDatatableView):
             html_tags = ''.join(sorted([html_label.format(i.name) for i in row.tags.all()]))
             return html_tags
 
-        elif column == 'invoice.payment_type':
-            invoice = row.invoice_set.order_by('-pk').first()
-            if invoice is None:
-                return 'No Invoice'
-            else:
-                return invoice.payment_type
-
         elif column == 'remaining_accrual':
             val = getattr(row, column)
-            status = 'danger' if row.is_overbook else 'info'
-            icon = 'close' if row.is_overbook else 'check'
-            html_indicator = '<span class="label label-{0}"> <i class="icon-{1}"></i></span>'.format(status, icon)
-            html_val = '<a target="_blank" href="{1}?pk={2}">{0:,.2f}</a>'.format(val,
-                                                             reverse('budget_mgt:table_accrual'),
-                                                             row.id)
-            html = html_indicator + ' ' + html_val
-            return '{:,.2f}'.format(val)
+            return '<span>{:,.2f}</span>'.format(val)
         
         elif column == 'total_accrual':
             val = getattr(row, column)
@@ -102,26 +96,33 @@ class TaskJson(BaseDatatableView):
             status = 'danger' if row.is_overbook else 'info'
             icon = 'close' if row.is_overbook else 'check'
             html_indicator = '<span class="label label-{0}"> <i class="icon-{1}"></i></span>'.format(status, icon)
-            html_val = '<a target="_blank" href="{1}?pk={2}">{0:,.2f}</a>'.format(val,
+            html_val = '<a class="sum" target="_blank" href="{1}?pk={2}">{0:,.2f}</a>'.format(val,
                                                              reverse('budget_mgt:table_accrual'),
                                                              row.id)
             html = html_indicator + ' ' + html_val
             return html
 
+        elif column == 'task_progress':
+            val = getattr(row, column)
+            invoice = row.invoice_set.order_by('-pk').first()
+            if invoice is None:
+                payment_type =  'No Invoice'
+            else:
+                payment_type =  invoice.payment_type
+
+            status = 'danger' if not row.is_within_work_criteria else 'info'
+            html_indicator = '<span class="label label-{0}">{1:.2%}</span>'.format(status, val)
+            html_val = payment_type
+            html = html_indicator + ' ' + html_val
+            return html
+
         elif column == 'total_pcc_amount':
             val = getattr(row, column)
-            if row.total_authorize_expenditure != 0:
-                percentage = row.total_pcc_amount / row.total_authorize_expenditure
-            else:
-                percentage = 0
-            status = 'danger' if not row.is_within_work_criteria else 'info'
-            #icon = 'close' if not row.is_within_work_criteria else 'check'
-            html_indicator = '<span class="label label-{0}">{1:.0%}</span>'.format(status, percentage)
             html_val = '<a target="_blank" href="{1}?pk={2}">{0:,.2f}</a>'.format(val,
                                                                                   reverse('budget_mgt:table_pcc'),
                                                                                   row.id,
-                                                             )
-            html = html_indicator + ' ' + html_val
+                                                                                  )
+            html = html_val
             return html
 
         elif column == 'actual_expenditure':
@@ -215,7 +216,7 @@ class InvoiceJson(BaseDatatableView):
 
     # define the columns that will be returned
     columns = ['contractor.name', 'task.task_no', 'region', 'invoice_no', 'invoice_amount',
-               'state__name', 'remarks']
+               'state__name']
 
     # Hide Columns
     hidden_columns = [ i for i, x in enumerate(columns) if x in
@@ -226,6 +227,9 @@ class InvoiceJson(BaseDatatableView):
     column_names[0] = 'Contractor Name'
     column_names[1] = 'Task Number'
     column_names[-2] = 'Current Process'
+
+    # columns to be summed
+    sum_columns = [4]
 
     # define column names that will be used in sorting
     # order is important and should be same as order of columns
@@ -270,7 +274,7 @@ class InvoiceJson(BaseDatatableView):
 
         elif column == 'invoice_amount':
             val = getattr(row, column)
-            return '{:,.2f}'.format(val)
+            return '<span>{:,.2f}</span>'.format(val)
 
         else:
             return super(InvoiceJson, self).render_column(row, column)
