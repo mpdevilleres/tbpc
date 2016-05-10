@@ -8,11 +8,12 @@ import os
 import datetime as dt
 import pandas as pd
 import numpy as np
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Permission, User
 import json
 from django.db import IntegrityError
 
-from budget_mgt.forms import InvoiceForm, TaskForm, AccrualForm, PccForm, AuthorizationForm
+from budget_mgt.forms import InvoiceForm, TaskForm, AccrualForm, PccForm, AuthorizationForm, GeneratePccRefForm
 from budget_mgt.utils import summarize_accrual
 from budget_mgt.utils.invoice_report_generator import InvoiceReportPrinter
 
@@ -266,7 +267,7 @@ class AddEditPccView(View):
         else:
             record = get_object_or_404(self.model, pk=pk)
 
-        form = self.form_class(request.POST)
+        form = self.form_class(request.POST, request.FILES)
 
         if form.is_valid():
             cleaned_data = form.clean()
@@ -684,10 +685,10 @@ class DashboardView(View):
         df_task = pd.DataFrame.from_records(Task.objects.values('task_no',
                                                                      'actual_expenditure',
                                                                      'total_accrual',
-                                                                     'authorize_expenditure'))
+                                                                     'total_authorize_expenditure'))
 
-        df_task['overrun']=(df_task['actual_expenditure'] > df_task['total_accrual']).astype('int')
-        df_task['overbook']=(df_task['total_accrual'] > df_task['authorize_expenditure']).astype('int')
+        df_task['overrun']=(df_task['total_authorize_expenditure'] > df_task['total_accrual']).astype('int')
+        df_task['overbook']=(df_task['total_accrual'] > df_task['total_authorize_expenditure']).astype('int')
         df_task['good']=(np.logical_not(np.logical_or(df_task['overrun'], df_task['overbook']))).astype('int')
         summary = df_task.sum()
         widgets_data['overrun']={'value': summary['overrun'], 'title': 'overrun'}
@@ -700,3 +701,64 @@ class DashboardView(View):
             'widgets_data': widgets_data
         }
         return render(request, self.template_name, context)
+
+#MISC
+@login_required
+def file_get(request, pk):
+    if pk is None:
+        raise Http404()
+
+    full_path = Pcc.objects.filter(pk=pk).first().file.path
+    path, filename = os.path.split(full_path)
+
+    file_wrapper = FileWrapper( open(full_path, 'rb'))
+    content_type = mimetypes.guess_type(full_path)[0]
+    response = HttpResponse(file_wrapper, content_type=content_type)
+    response['Content-Length'] = os.path.getsize(full_path)
+    response['Content-Disposition'] = "attachment; filename=%s" % smart_str(filename)
+    response['X-Sendfile']= smart_str(os.path.join(settings.MEDIA_ROOT, path, filename))
+    return response
+
+@method_decorator(team_decorators, name='dispatch')
+class GeneratePccRefView(View):
+    model = Pcc
+    form_class = GeneratePccRefForm
+    template_name = 'default/add_form.html'
+    success_redirect_link = 'budget_mgt:table_invoice'
+
+    def get(self, request, *args, **kwargs):
+        pk = request.GET.get('pk', None)
+
+        if pk is not None:
+            raise Http404()
+        else:
+            forms = self.form_class()
+
+        return render(request, self.template_name, {'forms': forms, 'form_title': 'Generate PCC Reference'})
+
+    def post(self, request, *args, **kwargs):
+        pk = request.GET.get('pk', None)
+
+        if pk is not None:
+            raise Http404()
+
+        form = self.form_class(request.POST)
+
+        if form.is_valid():
+            cleaned_data = form.clean()
+            if cleaned_data['option'] == "Generate & Reserve":
+                pcc = Pcc(task_id=cleaned_data['task_id'])
+                pcc.save()
+                messages.success(request, "Reserved Reference: " + pcc.ref_no)
+
+            else:
+                pcc = Pcc(task_id=cleaned_data['task_id'])
+                pcc.ref_no = pcc.generate_reference_no()
+                messages.success(request, "Generated Only: " + pcc.ref_no)
+                # populate_obj(cleaned_data, record)
+            # record.save()
+#            summarize_invoice(task_pk=record.task_id)
+
+#            return redirect(self.success_redirect_link)
+
+        return render(request, self.template_name, {'forms': form, 'form_title': 'Generate PCC Reference'})

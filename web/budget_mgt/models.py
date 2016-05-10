@@ -224,12 +224,14 @@ class Pcc(TimeStampedBaseModel):
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
     rfs_ref = models.CharField(max_length=100)
-    rfs_date = models.DateTimeField(blank=True, null=True)
-    pcc_date = models.DateTimeField(blank=True, null=True)
+    rfs_date = models.DateTimeField(blank=True, null=True, default=dt.datetime.now())
+    pcc_date = models.DateTimeField(blank=True, null=True, default=dt.datetime.now())
     partial = models.BooleanField(default=False)
 
     ref_no = models.CharField(max_length=100)
     counter = models.PositiveIntegerField()
+
+    file = models.FileField(null=True, blank=True,  upload_to='pcc')
 
     def inc_counter(self):
         if not self.id:
@@ -240,12 +242,11 @@ class Pcc(TimeStampedBaseModel):
                 self.counter =  obj.counter + 1
 
     def generate_reference_no(self):
-        return 'PCC-{0}-{1:%y-%m-%d}-{2}'.format(self.task.task_no,
-                                             self.pcc_date,
+        self.inc_counter()
+        return 'PCC-{0}-{1}'.format(self.task.task_no,
                                              str(self.counter).zfill(3))
 
     def save(self, *args, **kwargs):
-        self.inc_counter()
         self.ref_no = self.generate_reference_no()
         super(Pcc, self).save(*args, **kwargs)
 
@@ -287,6 +288,7 @@ class Invoice(ConcurrentTransitionMixin, FsmLogMixin, TimeStampedBaseModel):
     start_date = models.DateTimeField(blank=True, null=True)
     end_date = models.DateTimeField(blank=True, null=True)
     rfs_date = models.DateTimeField(blank=True, null=True)
+    reject_date = models.DateTimeField(blank=True, null=True)
     sent_finance_date = models.DateTimeField(blank=True, null=True)
     cost_center = models.CharField(max_length=100)
     expense_code = models.CharField(max_length=100)

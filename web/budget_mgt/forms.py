@@ -50,6 +50,7 @@ class InvoiceForm(uforms.EnhancedForm):
     form_order = [
 
         ['region','status'],
+        ['blank', 'reject_date'],
         ['contractor_id', 'task_id'],
         ['contract_id', 'proj_no'],
         ['invoice_no','cost_center'],
@@ -93,6 +94,7 @@ class InvoiceForm(uforms.EnhancedForm):
     start_date = uforms.EnhancedDateField()
     end_date = uforms.EnhancedDateField()
     rfs_date = uforms.EnhancedDateField()
+    reject_date = uforms.EnhancedDateField()
     sent_finance_date = uforms.EnhancedDateField()
     cost_center = uforms.EnhancedCharField()
     expense_code = uforms.EnhancedCharField()
@@ -100,6 +102,17 @@ class InvoiceForm(uforms.EnhancedForm):
     description = uforms.EnhancedTextField()
     proj_no = uforms.EnhancedCharField()
     status = uforms.EnhancedChoiceField(choices=[(x,x) for x in status_choices])
+
+    def clean(self):
+        cleaned_data = super(InvoiceForm, self).clean()
+        status = cleaned_data.get('status')
+        reject_date = cleaned_data.get('reject_date')
+
+        if status == 'Reject' and not reject_date:
+            msg = forms.ValidationError("This field is required.")
+            self.add_error('reject_date', msg)
+
+        return self.cleaned_data
 
 class TaskForm(uforms.EnhancedForm):
     model_choices = {
@@ -208,13 +221,14 @@ class PccForm(uforms.EnhancedForm):
         ['task_id','rfs_ref'],
         ['amount','partial'],
         ['pcc_date', 'rfs_date'],
+        ['file'],
 
     ]
 
     task_id = uforms.EnhancedChoiceField(label='Task No')
     amount = uforms.EnhancedDecimalField(label='PCC Amount')
     rfs_ref = uforms.EnhancedCharField()
-
+    file = uforms.EnhancedFileField(label='Attachment', required=False)
     # ref_no
 
     rfs_date = uforms.EnhancedDateField(required=True)
@@ -238,3 +252,19 @@ class AuthorizationForm(uforms.EnhancedForm):
     authorize_commitment = uforms.EnhancedDecimalField(label='Commitment')
     authorize_expenditure = uforms.EnhancedDecimalField(label='Expenditure')
     authorization_date = uforms.EnhancedDateField(required=True)
+
+class GeneratePccRefForm(uforms.EnhancedForm):
+    model_choices = {
+        'task_id': Task.objects.values_list('id', 'task_no'),
+    }
+    option_choices = [
+        "Generate Only",
+        "Generate & Reserve"
+    ]
+    form_order = [
+        ['task_id','blank'],
+        ['option']
+    ]
+
+    task_id = uforms.EnhancedChoiceField(label='Task No')
+    option = uforms.EnhancedChoiceField(label='Option', choices=[(x,x) for x in option_choices])

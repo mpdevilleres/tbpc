@@ -3,47 +3,133 @@
 
 {% block dashboard_script %}
 <script>
+
     var Dashboard = function() {
 
         return {
 
-            initAmChart4: function() {
-                if (typeof(AmCharts) === 'undefined' || $('#dashboard_amchart_4').size() === 0) {
-                    return;
-                }
+            initAmChart: function() {
+                var chart_ids = ['dashboard_amchart_4', 'dashboard_amchart_5'];
+                $.each( chart_ids, function( index, value ){
+                    console.debug();
 
-                var chart = AmCharts.makeChart("dashboard_amchart_4", {
-                    "type": "pie",
-                    "theme": "light",
-                    "path": "../assets/global/plugins/amcharts/ammap/images/",
-                    "dataProvider": {{ pie_data|safe }},
-                    "valueField": "value",
-                    "titleField": "title",
-                    "outlineAlpha": 0.4,
-                    "depth3D": 15,
-                    "balloonText": "[[title]]<br><span style='font-size:14px'><b>[[value]]</b> ([[percents]]%)</span>",
-                    "angle": 15,
-                    "export": {
-                        "enabled": true
-                    }
-                });
-                jQuery('.chart-input').off().on('input change', function() {
-                    var property = jQuery(this).data('property');
-                    var target = chart;
-                    var value = Number(this.value);
-                    chart.startDuration = 0;
-
-                    if (property == 'innerRadius') {
-                        value += "%";
+                    if (typeof(AmCharts) === 'undefined' || $("#".concat(value)).size() === 0) {
+                        return;
                     }
 
-                    target[property] = value;
-                    chart.validateNow();
+                    var chart = AmCharts.makeChart(value,
+                        {
+                            "type": "serial",
+                            "categoryField": "category",
+                            "columnSpacing": 0,
+                            "rotate": true,
+                            "autoMargins": false,
+                            "startDuration": 1,
+                            "borderColor": "#FFFFFF",
+                            "handDrawThickness": 10,
+                            "categoryAxis": {
+                                "autoRotateAngle": 0,
+                                "tickPosition": "start",
+                                "autoGridCount": false,
+                                "axisColor": "#FFFFFF",
+                                "gridColor": "#FFFFFF",
+                                "ignoreAxisWidth": true,
+                                "showFirstLabel": false,
+                                "showLastLabel": false,
+                                "titleBold": false
+                            },
+                            "trendLines": [],
+                            "graphs": [
+                                {
+                                    "balloonText": "[[title]]<br>[[value]]%",
+                                    "fillAlphas": 1,
+                                    "fillColors": "#C49F47",
+                                    "fixedColumnWidth": 100,
+                                    "id": "AmGraph-1",
+                                    "labelText": "[[title]]<br>[[value]]%",
+                                    "lineColor": "#C49F47",
+                                    "title": "Work In Progress",
+                                    "type": "column",
+                                    "valueField": "wip"
+                                },
+                                {
+                                    "balloonText": "[[title]]<br>[[value]]%",
+                                    "bulletHitAreaSize": -1,
+                                    "fillAlphas": 1,
+                                    "fillColors": "#E7505A",
+                                    "fixedColumnWidth": 100,
+                                    "id": "AmGraph-2",
+                                    "labelText": "[[title]]<br>[[value]]%",
+                                    "lineColor": "#E7505A",
+                                    "title": "PCC to be Issued",
+                                    "type": "column",
+                                    "valueField": "pcc_to_be_issued"
+                                },
+                                {
+                                    "balloonText": "[[title]]<br>[[value]]%",
+                                    "fillAlphas": 1,
+                                    "fillColors": "#26C281",
+                                    "fixedColumnWidth": 100,
+                                    "id": "AmGraph-3",
+                                    "labelPosition": "middle",
+                                    "labelText": "[[title]]<br> [[value]]%",
+                                    "lineAlpha": 0,
+                                    "lineColor": "#26C281",
+                                    "title": "PCC Issued",
+                                    "type": "column",
+                                    "valueField": "pcc_issued"
+                                }
+                            ],
+                            "guides": [],
+                            "valueAxes": [
+                                {
+                                    "axisFrequency": 0,
+                                    "id": "ValueAxis-1",
+                                    "position": "bottom",
+                                    "stackType": "100%",
+                                    "autoGridCount": false,
+                                    "axisColor": "#FFFFFF",
+                                    "gridColor": "#FFFFFF",
+                                    "gridCount": 0,
+                                    "labelsEnabled": false,
+                                    "showFirstLabel": false,
+                                    "showLastLabel": false,
+                                    "tickLength": 1,
+                                    "title": ""
+                                }
+                            ],
+                            "allLabels": [],
+                            "balloon": {
+                                "fixedPosition": false
+                            },
+                            "titles": [],
+                            "dataProvider": [
+                                {
+                                    "pcc_issued": "50",
+                                    "wip": "30",
+                                    "pcc_to_be_issued": "20"
+                                }
+                            ]
+                        }
+                    );
+                    jQuery('.chart-input').off().on('input change', function() {
+                        var property = jQuery(this).data('property');
+                        var target = chart;
+                        var value = Number(this.value);
+                        chart.startDuration = 0;
+
+                        if (property == 'innerRadius') {
+                            value += "%";
+                        }
+
+                        target[property] = value;
+                        chart.validateNow();
+                    });
                 });
             },
             init: function() {
 
-                this.initAmChart4();
+                this.initAmChart();
 
             }
         };
@@ -60,130 +146,154 @@
 
 {% block dashboard %}
 <div class="row widget-row">
-        <div class="col-md-2">
-            <!-- BEGIN WIDGET THUMB -->
-            {% with var=widgets_data|return_item:'Work in Progress' %}
-            <div class="widget-thumb widget-bg-color-white text-uppercase margin-bottom-20 bordered">
-                <h4 class="widget-thumb-heading">{{ var|return_item:'title' }}</h4>
-                <div class="widget-thumb-wrap">
-                    <i class="widget-thumb-icon bg-yellow icon-bulb"></i>
-                    <div class="widget-thumb-body">
-                        <span class="widget-thumb-subtitle">Count</span>
-                        <span class="widget-thumb-body-stat" data-counter="counterup" data-value="{{ var|return_item:'value' }}">0</span>
-                    </div>
-                </div>
+    <!-- BEGIN WIDGET AUTHORIZE EXPENDITURE -->
+    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+        <div class="dashboard-stat blue">
+            <div class="visual">
+                <i class="fa fa-comments"></i>
             </div>
-            {% endwith %}
-            <!-- END WIDGET THUMB -->
-        </div>
-        <div class="col-md-2">
-            <!-- BEGIN WIDGET THUMB -->
-            {% with var=widgets_data|return_item:'Work Completed without PCC' %}
-            <div class="widget-thumb widget-bg-color-white text-uppercase margin-bottom-20 bordered">
-                <h4 class="widget-thumb-heading">Work Completed w/o PCC</h4>
-                <div class="widget-thumb-wrap">
-                    <i class="widget-thumb-icon bg-red icon-bulb"></i>
-                    <div class="widget-thumb-body">
-                        <span class="widget-thumb-subtitle">COUNT</span>
-                        <span class="widget-thumb-body-stat" data-counter="counterup" data-value="{{ var|return_item:'value' }}">0</span>
-                    </div>
+            <div class="details">
+                <div class="number">
+                    <span data-counter="counterup" data-value="1,349,000,000">0</span>
                 </div>
-            </div>
-            {% endwith %}
-            <!-- END WIDGET THUMB -->
-        </div>
-        <div class="col-md-2">
-            <!-- BEGIN WIDGET THUMB -->
-            {% with var=widgets_data|return_item:'Work Completed with PCC' %}
-            <div class="widget-thumb widget-bg-color-white text-uppercase margin-bottom-20 bordered">
-                <h4 class="widget-thumb-heading">{{ var|return_item:'title' }}</h4>
-                <div class="widget-thumb-wrap">
-                    <i class="widget-thumb-icon bg-green-jungle icon-bulb"></i>
-                    <div class="widget-thumb-body">
-                        <span class="widget-thumb-subtitle">COUNT</span>
-                        <span class="widget-thumb-body-stat" data-counter="counterup" data-value="{{ var|return_item:'value' }}">0</span>
-                    </div>
-                </div>
-            </div>
-            {% endwith %}
-            <!-- END WIDGET THUMB -->
-        </div>
-        <div class="col-md-2">
-            <!-- BEGIN WIDGET THUMB -->
-            {% with var=widgets_data|return_item:'overrun' %}
-            <div class="widget-thumb widget-bg-color-white text-uppercase margin-bottom-20 bordered">
-                <h4 class="widget-thumb-heading">{{ var|return_item:'title' }}</h4>
-                <div class="widget-thumb-wrap">
-                    <i class="widget-thumb-icon bg-red-flamingo icon-bulb"></i>
-                    <div class="widget-thumb-body">
-                        <span class="widget-thumb-subtitle">COUNT</span>
-                        <span class="widget-thumb-body-stat" data-counter="counterup" data-value="{{ var|return_item:'value' }}">0</span>
-                    </div>
-                </div>
-            </div>
-            {% endwith %}
-            <!-- END WIDGET THUMB -->
-        </div>
-        <div class="col-md-2">
-            <!-- BEGIN WIDGET THUMB -->
-            {% with var=widgets_data|return_item:'overbook' %}
-            <div class="widget-thumb widget-bg-color-white text-uppercase margin-bottom-20 bordered">
-                <h4 class="widget-thumb-heading">{{ var|return_item:'title' }}</h4>
-                <div class="widget-thumb-wrap">
-                    <i class="widget-thumb-icon bg-red-haze icon-bulb"></i>
-                    <div class="widget-thumb-body">
-                        <span class="widget-thumb-subtitle">COUNT</span>
-                        <span class="widget-thumb-body-stat" data-counter="counterup" data-value="{{ var|return_item:'value' }}">0</span>
-                    </div>
-                </div>
-            </div>
-            {% endwith %}
-            <!-- END WIDGET THUMB -->
-        </div>
-        <div class="col-md-2">
-            <!-- BEGIN WIDGET THUMB -->
-            {% with var=widgets_data|return_item:'good' %}
-            <div class="widget-thumb widget-bg-color-white text-uppercase margin-bottom-20 bordered">
-                <h4 class="widget-thumb-heading">{{ var|return_item:'title' }}</h4>
-                <div class="widget-thumb-wrap">
-                    <i class="widget-thumb-icon bg-green-jungle icon-bulb"></i>
-                    <div class="widget-thumb-body">
-                        <span class="widget-thumb-subtitle">COUNT</span>
-                        <span class="widget-thumb-body-stat" data-counter="counterup" data-value="{{ var|return_item:'value' }}">0</span>
-                    </div>
-                </div>
-            </div>
-            {% endwith %}
-            <!-- END WIDGET THUMB -->
-        </div>
-</div>
-    <div class="row">
-        <div class="col-md-6 col-sm-6">
-            <div class="portlet light bordered">
-                <div class="portlet-title">
-                    <div class="caption font-green">
-                        <span class="caption-subject bold uppercase">Task By Status</span>
-                        <span class="caption-helper">overall</span>
-                    </div>
-                </div>
-                <div class="portlet-body">
-                    <div id="dashboard_amchart_4" class="CSSAnimationChart"></div>
-                </div>
+                <div class="desc"> Total Authorized Expenditure </div>
             </div>
         </div>
-        <div class="col-md-6 col-sm-6">
-            <div class="portlet light bordered">
-                <div class="portlet-title">
-                    <div class="caption font-green">
-                        <span class="caption-subject bold uppercase">Accrual vs Expenditure</span>
-                        <span class="caption-helper">overall</span>
-                    </div>
-                </div>
-                <div class="portlet-body">
-                    <div id="dashboard_amchart_5" class="CSSAnimationChart"></div>
-                </div>
-            </div>
-        </div>
-
     </div>
+    <!-- END WIDGET AUTHORIZE EXPENDITURE -->
+    <!-- BEGIN WIDGET GAP -->
+    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+        <div class="dashboard-stat red">
+            <div class="visual">
+                <i class="fa fa-warning"></i>
+            </div>
+            <div class="details">
+                <div class="number">
+                    <span data-counter="counterup" data-value="654,212,900">0</span>
+                </div>
+                <div class="desc"> Total Gap </div>
+            </div>
+        </div>
+    </div>
+    <!-- END WIDGET GAP -->
+</div>
+
+<div class="row widget-row">
+
+    <!-- BEGIN WIDGET AUTHORIZE EXPENDITURE -->
+    <div class="col-md-2">
+        <!-- BEGIN WIDGET THUMB -->
+        {% with var=widgets_data|return_item:'Work in Progress' %}
+        <div class="widget-thumb widget-bg-color-white text-uppercase margin-bottom-20 bordered">
+            <h4 class="widget-thumb-heading">{{ var|return_item:'title' }}</h4>
+            <div class="widget-thumb-wrap">
+                <i class="widget-thumb-icon bg-yellow icon-bulb"></i>
+                <div class="widget-thumb-body">
+                    <span class="widget-thumb-subtitle">Count</span>
+                    <span class="widget-thumb-body-stat" data-counter="counterup" data-value="{{ var|return_item:'value' }}">0</span>
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+        <!-- END WIDGET THUMB -->
+    </div>
+    <div class="col-md-2">
+        <!-- BEGIN WIDGET THUMB -->
+        {% with var=widgets_data|return_item:'PCC to be Issued' %}
+        <div class="widget-thumb widget-bg-color-white text-uppercase margin-bottom-20 bordered">
+            <h4 class="widget-thumb-heading">{{ var|return_item:'title' }}</h4>
+            <div class="widget-thumb-wrap">
+                <i class="widget-thumb-icon bg-red icon-bulb"></i>
+                <div class="widget-thumb-body">
+                    <span class="widget-thumb-subtitle">COUNT</span>
+                    <span class="widget-thumb-body-stat" data-counter="counterup" data-value="{{ var|return_item:'value' }}">0</span>
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+        <!-- END WIDGET THUMB -->
+    </div>
+    <div class="col-md-2">
+        <!-- BEGIN WIDGET THUMB -->
+        {% with var=widgets_data|return_item:'PCC Issued' %}
+        <div class="widget-thumb widget-bg-color-white text-uppercase margin-bottom-20 bordered">
+            <h4 class="widget-thumb-heading">{{ var|return_item:'title' }}</h4>
+            <div class="widget-thumb-wrap">
+                <i class="widget-thumb-icon bg-green-jungle icon-bulb"></i>
+                <div class="widget-thumb-body">
+                    <span class="widget-thumb-subtitle">COUNT</span>
+                    <span class="widget-thumb-body-stat" data-counter="counterup" data-value="{{ var|return_item:'value' }}">0</span>
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+        <!-- END WIDGET THUMB -->
+    </div>
+
+    <!-- END WIDGET AUTHORIZE EXPENDITURE -->
+    <!-- BEGIN WIDGET GAP -->
+    <div class="col-md-2">
+        <!-- BEGIN WIDGET THUMB -->
+        {% with var=widgets_data|return_item:'Work in Progress' %}
+        <div class="widget-thumb widget-bg-color-white text-uppercase margin-bottom-20 bordered">
+            <h4 class="widget-thumb-heading">{{ var|return_item:'title' }}</h4>
+            <div class="widget-thumb-wrap">
+                <i class="widget-thumb-icon bg-yellow icon-bulb"></i>
+                <div class="widget-thumb-body">
+                    <span class="widget-thumb-subtitle">Count</span>
+                    <span class="widget-thumb-body-stat" data-counter="counterup" data-value="{{ var|return_item:'value' }}">0</span>
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+        <!-- END WIDGET THUMB -->
+    </div>
+    <div class="col-md-2">
+        <!-- BEGIN WIDGET THUMB -->
+        {% with var=widgets_data|return_item:'PCC to be Issued' %}
+        <div class="widget-thumb widget-bg-color-white text-uppercase margin-bottom-20 bordered">
+            <h4 class="widget-thumb-heading">{{ var|return_item:'title' }}</h4>
+            <div class="widget-thumb-wrap">
+                <i class="widget-thumb-icon bg-red icon-bulb"></i>
+                <div class="widget-thumb-body">
+                    <span class="widget-thumb-subtitle">COUNT</span>
+                    <span class="widget-thumb-body-stat" data-counter="counterup" data-value="{{ var|return_item:'value' }}">0</span>
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+        <!-- END WIDGET THUMB -->
+    </div>
+    <div class="col-md-2">
+        <!-- BEGIN WIDGET THUMB -->
+        {% with var=widgets_data|return_item:'PCC Issued' %}
+        <div class="widget-thumb widget-bg-color-white text-uppercase margin-bottom-20 bordered">
+            <h4 class="widget-thumb-heading">{{ var|return_item:'title' }}</h4>
+            <div class="widget-thumb-wrap">
+                <i class="widget-thumb-icon bg-green-jungle icon-bulb"></i>
+                <div class="widget-thumb-body">
+                    <span class="widget-thumb-subtitle">COUNT</span>
+                    <span class="widget-thumb-body-stat" data-counter="counterup" data-value="{{ var|return_item:'value' }}">0</span>
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+        <!-- END WIDGET THUMB -->
+    </div>
+    <!-- END WIDGET GAP -->
+
+</div>
+<div class="row">
+    <div class="col-md-6 col-sm-6">
+        <div class="portlet light bordered"  style="margin: 0; padding: 0;">
+            <div id="dashboard_amchart_4" class="CSSAnimationChart" style="height: 150px;"></div>
+        </div>
+    </div>
+    <div class="col-md-6 col-sm-6">
+        <div class="portlet light bordered"  style="margin: 0; padding: 0;">
+            <div id="dashboard_amchart_5" class="CSSAnimationChart" style="height: 150px;"></div>
+        </div>
+    </div>
+</div>
+
 {% endblock dashboard %}

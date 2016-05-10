@@ -68,7 +68,7 @@ INSTALLED_APPS = [
     'section_kpi_mgt.apps.SectionKpiMgtConfig',
     'utils.apps.UtilsConfig',
 #    'more_testing.apps.MoreTestingConfig',
-
+    'django_extensions',
     'django_fsm_log',
     'taggit',
     'django.contrib.admin',
@@ -176,3 +176,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+GRAPH_MODELS = {
+    'pygraphviz': True,
+    'group_models': True,
+    'exclude_models': 'BasePasscode, AbstractBaseUser, PermissionsMixin, Group, Permission'
+}

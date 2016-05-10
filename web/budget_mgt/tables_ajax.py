@@ -31,11 +31,6 @@ class TaskJson(BaseDatatableView):
                                                                   )
                                                ).all()
 
-                                        #           When(F('total_authorize_expenditure'), then=Value('0'),
-                                        #
-                                        #                     When(F('total_authorize_expenditure'), then=Value('0')),
-                                        #       F('total_pcc_amount')/)
-
         return self.model.objects.filter(contractor__pk=pk)
 
 
@@ -216,7 +211,7 @@ class InvoiceJson(BaseDatatableView):
 
     # define the columns that will be returned
     columns = ['contractor.name', 'task.task_no', 'region', 'invoice_no', 'invoice_amount',
-               'state__name']
+               'state__name', 'status', 'reject_date']
 
     # Hide Columns
     hidden_columns = [ i for i, x in enumerate(columns) if x in
@@ -226,7 +221,7 @@ class InvoiceJson(BaseDatatableView):
     column_names = [x for x in capitalize(columns)]
     column_names[0] = 'Contractor Name'
     column_names[1] = 'Task Number'
-    column_names[-2] = 'Current Process'
+    column_names[-3] = 'Current Process'
 
     # columns to be summed
     sum_columns = [4]
@@ -272,6 +267,11 @@ class InvoiceJson(BaseDatatableView):
             html = html_indicator + ' ' + html_val
             return html
 
+        elif column == 'reject_date':
+            val = getattr(row, column)
+            if val:
+                return '{0:%d-%b-%Y}'.format(val)
+            return ""
         elif column == 'invoice_amount':
             val = getattr(row, column)
             return '<span>{:,.2f}</span>'.format(val)
@@ -484,7 +484,7 @@ class PccJson(BaseDatatableView):
 
 
     # define the columns that will be returned
-    columns = ['task.task_no', 'pcc_date', 'ref_no', 'amount', 'id']
+    columns = ['task.task_no', 'pcc_date', 'ref_no', 'amount', 'file', 'id']
 
     # Hide Columns
     hidden_columns = [ i for i, x in enumerate(columns) if x in
@@ -513,6 +513,27 @@ class PccJson(BaseDatatableView):
         elif column == 'pcc_date':
             val = getattr(row, column)
             return '{0:%d-%b-%Y}'.format(val)
+
+        elif column == 'file':
+            val = getattr(row, column)
+
+            if bool(val):
+                status = 'info' if bool(val) else 'danger'
+                icon = 'check' if bool(val) else 'close'
+                html_indicator = '<span class="label label-{0}"> <i class="icon-{1}"></i></span>'.format(status, icon)
+                html_val = '<a target="_blank" href="{1}pcc/{2}">{0}</a>'.format(html_indicator,
+                                                                 reverse('main:get_file'),
+                                                                 row.id)
+
+            else:
+                status = 'danger'
+                icon = 'close'
+                html_indicator = '<span class="label label-{0}"> <i class="icon-{1}"></i></span>'.format(status, icon)
+                html_val = html_indicator
+
+            html = html_val
+
+            return html
 
         elif column == 'id':
 
