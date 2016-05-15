@@ -30,6 +30,7 @@ class Task(ConcurrentTransitionMixin, FsmLogMixin, ManytoManyMixin, TimeStampedB
     contractor = models.ForeignKey(Contractor, null=True, on_delete=models.CASCADE)
 
     state = FSMKeyField(TaskProcess, default="Work in Progress")
+    state_date = models.DateTimeField(blank=True, null=True)
 
     status = models.CharField(max_length=100)
     task_no = models.CharField(max_length=100, unique=True)

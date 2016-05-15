@@ -14,7 +14,6 @@ import json
 from django.db import IntegrityError
 
 from budget_mgt.forms import InvoiceForm, TaskForm, AccrualForm, PccForm, AuthorizeForm, GeneratePccRefForm
-from budget_mgt.utils import summarize_accrual
 from budget_mgt.utils.invoice_report_generator import InvoiceReportPrinter
 
 from contract_mgt.models import Contractor

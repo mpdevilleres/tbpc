@@ -177,7 +177,7 @@ MEDIA_URL = '/media/'
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 GRAPH_MODELS = {
-    'pygraphviz': True,
+    'all_applications': True,
     'group_models': True,
     'exclude_models': 'BasePasscode, AbstractBaseUser, PermissionsMixin, Group, Permission'
 }
