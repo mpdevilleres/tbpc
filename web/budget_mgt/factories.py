@@ -18,21 +18,19 @@ class TaskFactory(factory.django.DjangoModelFactory):
     contract = factory.SubFactory(ContractFactory)
     contractor = factory.SubFactory(ContractorFactory)
 
-    state = factory.Iterator(["New", "Work in Progress", "Work Completed without PCC", "Work Completed with PCC"])
-    #['AU-HO-13742-C-0394-15', 'DX-DX-13281-C-0069-13', 'HO-HO-13691-H-0005-14']
+    state = factory.Iterator(['Work in Progress', 'PCC to be Issued', 'PCC Issued', 'Closed'])
+
     task_no = factory.Sequence(lambda n: 'AU-HO-13742-C-{0:04d}-{1}'.format(n,
                                                                            random.choice(['13','14','15','16','17','18']
                                                                                             )
                                                                            )
                                )
-    authorize_commitment = factory.fuzzy.FuzzyDecimal(1.11,999999.99,2)
-    authorize_expenditure = factory.fuzzy.FuzzyDecimal(1.11,999999.99,2)
+    status = 'Open'
     cear_title = factory.fuzzy.FuzzyText(length=12)
     remarks = factory.fuzzy.FuzzyText(length=12)
     category = factory.fuzzy.FuzzyText(length=12)
     sicet_type = factory.Iterator(['Freight', 'Customs Duty', 'Staff Cost'])
     section = factory.fuzzy.FuzzyText(length=12)
-    is_cancelled = factory.Iterator([True, False])
 
 class AccrualFactory(factory.django.DjangoModelFactory):
     class Meta:

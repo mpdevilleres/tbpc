@@ -25,12 +25,20 @@ urlpatterns = [
     url(r'^pcc/$', views.AddEditPccView.as_view(), name='add_edit_pcc'),
     url(r'^pcc/table/$', views.TablePccView.as_view(), name='table_pcc'),
 
-    url(r'^authorization/$', views.AddEditAuthorizationView.as_view(), name='add_edit_authorization'),
-    url(r'^authorization/table/$', views.TableAuthorizationView.as_view(), name='table_authorization'),
+    url(r'^authorize-expenditure/$', views.AddEditAuthorizeExpenditureView.as_view(), name='add_edit_authorize_expenditure'),
+    url(r'^authorize-expenditure/table/$', views.TableAuthorizeExpenditureView.as_view(), name='table_authorize_expenditure'),
+
+    url(r'^authorize-commitment/$', views.AddEditAuthorizeCommitmentView.as_view(), name='add_edit_authorize_commitment'),
+    url(r'^authorize-commitment/table/$', views.TableAuthorizeCommitmentView.as_view(), name='table_authorize_commitment'),
 
     url(r'^invoice-summary/print/$', views.ForCertificationSummaryView.as_view(), name='invoice_print'),
 
     url(r'^dashboard/$', views.DashboardView.as_view(), name='dashboard'),
+    url(r'^dashboard-test/$', views.DashboardTestView.as_view(), name='dashboard_test'),
+
+    # DASHBOARD DATA PROVIDERS
+    # /dashboard/data/?item=item0
+    url(r'^dashboard/data/$', views.DashboardDataProviderView.as_view(), name='data_provider'),
 
     # Datatables Ajax Link
     url(r'^task/data/$',
@@ -46,9 +54,13 @@ urlpatterns = [
         login_required(views.PccJson.as_view()),
         name='table_pcc_json'),
 
-    url(r'^authorization/data/$',
-        login_required(views.AuthorizationJson.as_view()),
-        name='table_authorization_json'),
+    url(r'^authorize-expenditure/data/$',
+        login_required(views.AuthorizeExpenditureJson.as_view()),
+        name='table_authorize_expenditure_json'),
+
+    url(r'^authorize-commitment/data/$',
+        login_required(views.AuthorizeCommitmentJson.as_view()),
+        name='table_authorize_commitment_json'),
 
     # Task Choices
     url(r'^choices/task/$',

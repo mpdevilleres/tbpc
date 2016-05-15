@@ -13,7 +13,7 @@ from django.contrib.auth.models import Permission, User
 import json
 from django.db import IntegrityError
 
-from budget_mgt.forms import InvoiceForm, TaskForm, AccrualForm, PccForm, AuthorizationForm, GeneratePccRefForm
+from budget_mgt.forms import InvoiceForm, TaskForm, AccrualForm, PccForm, AuthorizeForm, GeneratePccRefForm
 from budget_mgt.utils import summarize_accrual
 from budget_mgt.utils.invoice_report_generator import InvoiceReportPrinter
 
@@ -22,7 +22,7 @@ from contract_mgt.models import Contractor
 from django.contrib import messages
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.db.models import Sum, Q, F
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
 from django.utils.encoding import smart_str
@@ -36,8 +36,10 @@ from utils.forms import populate_obj
 from utils.tools import capitalize
 
 
-from .models import Invoice, Task, InvoiceProcess, InvoiceReport, Accrual, TaskProcess, Pcc, Authorization
-from .tables_ajax import TaskJson, InvoiceJson, AccrualJson, PccJson, AuthorizationJson
+from .models import Invoice, Task, InvoiceProcess, InvoiceReport, Accrual,\
+    TaskProcess, Pcc, AuthorizeCommitment, AuthorizeExpenditure
+from .tables_ajax import TaskJson, InvoiceJson, AccrualJson, \
+    PccJson, AuthorizeExpenditureJson, AuthorizeCommitmentJson
 
 
 # Task Choices
@@ -176,7 +178,6 @@ class AddEditAccrualView(View):
             cleaned_data = form.clean()
             populate_obj(cleaned_data, record)
             record.save()
-            summarize_accrual(task_pk=record.task_id)
 
             messages.success(request, "Successfully Updated the Database")
             return redirect(self.success_redirect_link)
@@ -184,11 +185,59 @@ class AddEditAccrualView(View):
         return render(request, self.template_name, {'forms': form})
 
 @method_decorator(team_decorators, name='dispatch')
-class AddEditAuthorizationView(View):
-    model = Authorization
-    form_class = AuthorizationForm
+class AddEditAuthorizeCommitmentView(View):
+    model = AuthorizeCommitment
+    form_class = AuthorizeForm
     template_name = 'default/add_form.html'
-    success_redirect_link = reverse_lazy('budget_mgt:table_authorization')
+    success_redirect_link = reverse_lazy('budget_mgt:table_authorize_commitment')
+
+    def get(self, request, *args, **kwargs):
+        pk = request.GET.get('pk', None)
+        task_pk = request.GET.get('task_pk', None)
+
+        if task_pk is not None:
+            self.success_redirect_link += '?pk=%s' % task_pk
+
+        if pk is None:
+            initials = {'task_id': task_pk}
+            forms = self.form_class(initial=initials)
+
+        else:
+            record = get_object_or_404(self.model, pk=pk)
+            forms = self.form_class(initial=record.__dict__)
+
+        return render(request, self.template_name, {'forms': forms, 'form_title': self.model.__name__})
+
+    def post(self, request, *args, **kwargs):
+        pk = request.GET.get('pk', None)
+        task_pk = request.GET.get('task_pk', None)
+
+        if task_pk is not None:
+            self.success_redirect_link += '?pk=%s' % task_pk
+
+        if pk is None:
+            record = self.model()
+        else:
+            record = get_object_or_404(self.model, pk=pk)
+
+        form = self.form_class(request.POST)
+
+        if form.is_valid():
+            cleaned_data = form.clean()
+            populate_obj(cleaned_data, record)
+            record.save()
+
+            messages.success(request, "Successfully Updated the Database")
+            return redirect(self.success_redirect_link)
+
+        return render(request, self.template_name, {'forms': form})
+
+@method_decorator(team_decorators, name='dispatch')
+class AddEditAuthorizeExpenditureView(View):
+    model = AuthorizeExpenditure
+    form_class = AuthorizeForm
+    template_name = 'default/add_form.html'
+    success_redirect_link = reverse_lazy('budget_mgt:table_authorize_expenditure')
 
     def get(self, request, *args, **kwargs):
         pk = request.GET.get('pk', None)
@@ -224,8 +273,6 @@ class AddEditAuthorizationView(View):
             cleaned_data = form.clean()
             populate_obj(cleaned_data, record)
             record.save()
-            task = Task.objects.filter(pk=record.task.pk).first()
-            task.save()
 
             messages.success(request, "Successfully Updated the Database")
             return redirect(self.success_redirect_link)
@@ -242,6 +289,7 @@ class AddEditPccView(View):
     def get(self, request, *args, **kwargs):
         pk = request.GET.get('pk', None)
         task_pk = request.GET.get('task_pk', None)
+
         if task_pk is not None:
             self.success_redirect_link += '?pk=%s' % task_pk
 
@@ -273,7 +321,6 @@ class AddEditPccView(View):
             cleaned_data = form.clean()
             populate_obj(cleaned_data, record)
             record.save()
-            summarize_accrual(task_pk=record.task_id)
 
             messages.success(request, "Successfully Updated the Database")
             return redirect(self.success_redirect_link)
@@ -366,12 +413,35 @@ class TableAccrualView(View):
         return render(request, self.template_name, context)
 
 @method_decorator(team_decorators, name='dispatch')
-class TableAuthorizationView(View):
-    add_record_link = reverse_lazy('budget_mgt:add_edit_authorization')
-    columns = getattr(AuthorizationJson,'column_names')
-    data_table_url = reverse_lazy('budget_mgt:table_authorization_json')
+class TableAuthorizeExpenditureView(View):
+    add_record_link = reverse_lazy('budget_mgt:add_edit_authorize_expenditure')
+    columns = getattr(AuthorizeExpenditureJson,'column_names')
+    data_table_url = reverse_lazy('budget_mgt:table_authorize_expenditure_json')
     template_name = 'default/datatable.html'
-    table_title = 'Budget Authorization'
+    table_title = 'Budget Authorize Expenditure'
+
+    def get(self, request, *args, **kwargs):
+
+        pk = request.GET.get('pk', None)
+        if pk is not None:
+            self.data_table_url += '?pk={}'.format(pk)
+            self.add_record_link += '?task_pk={}'.format(pk)
+
+        context = {
+            'table_title': self.table_title,
+            'columns': self.columns,
+            'data_table_url': self.data_table_url,
+            'add_record_link': self.add_record_link,
+        }
+        return render(request, self.template_name, context)
+
+@method_decorator(team_decorators, name='dispatch')
+class TableAuthorizeCommitmentView(View):
+    add_record_link = reverse_lazy('budget_mgt:add_edit_authorize_commitment')
+    columns = getattr(AuthorizeCommitmentJson,'column_names')
+    data_table_url = reverse_lazy('budget_mgt:table_authorize_commitment_json')
+    template_name = 'default/datatable.html'
+    table_title = 'Budget Authorize Commitment'
 
     def get(self, request, *args, **kwargs):
 
@@ -670,7 +740,7 @@ class DashboardView(View):
     model = Task
     process_model = TaskProcess
 
-    template_name = 'default/dashboard.html'
+    template_name = 'budget_mgt/dashboard.html'
     table_title = 'Workflow'
 
     def get(self, request, *args, **kwargs):
@@ -701,6 +771,178 @@ class DashboardView(View):
             'widgets_data': widgets_data
         }
         return render(request, self.template_name, context)
+
+# DASHBOARD REPORTS
+@method_decorator(team_decorators, name='dispatch')
+class DashboardTestView(View):
+
+    template_name = 'budget_mgt/dashboard-test.html'
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name)
+
+@method_decorator(team_decorators, name='dispatch')
+class DashboardDataProviderView(View):
+    def get(self, request, *args, **kwargs):
+        val = [
+                    {
+                        "accrual": "2204",
+                        "accrual_indicator": "<i class='fa fa-minus'></i>",
+                        "work_in_progress": "1014",
+                        "work_in_progress_indicator": "<i class='fa fa-minus'></i>",
+                        "project_completed": "1198",
+                        "project_completed_indicator": "<i class='fa fa-minus'></i>",
+                        "pcc_issued": "677",
+                        "pcc_issued_indicator": "<i class='fa fa-minus'></i>",
+                        "pcc_to_be_isssued": "513",
+                        "pcc_to_be_isssued_indicator": "<i class='fa fa-minus'></i>",
+                        "date": "03-03-2016"
+                    },
+                    {
+                        "accrual": "2204",
+                        "accrual_indicator": "<i class='fa fa-minus'></i>",
+                        "work_in_progress": "960",
+                        "work_in_progress_indicator": "<i class='fa fa-caret-down font-red-thunderbird'></i> 5%",
+                        "project_completed": "1245",
+                        "project_completed_indicator": "<i class='fa fa-minus'></i>",
+                        "pcc_issued": "788",
+                        "pcc_issued_indicator": "<i class='fa fa-caret-up font-green-jungle'></i> 14%",
+                        "pcc_to_be_isssued": "457",
+                        "pcc_to_be_isssued_indicator": "<i class='fa fa-caret-down font-red-thunderbird'></i> 11%",
+                        "date": "03-04-2016"
+                    },
+                    {
+                        "accrual": "2204",
+                        "accrual_indicator": "<i class='fa fa-minus'></i>",
+                        "work_in_progress": "960",
+                        "work_in_progress_indicator": "<i class='fa fa-caret-down font-red-thunderbird'></i> 5%",
+                        "project_completed": "1245",
+                        "project_completed_indicator": "<i class='fa fa-minus'></i>",
+                        "pcc_issued": "788",
+                        "pcc_issued_indicator": "<i class='fa fa-caret-up font-green-jungle'></i> 14%",
+                        "pcc_to_be_isssued": "457",
+                        "pcc_to_be_isssued_indicator": "<i class='fa fa-caret-down font-red-thunderbird'></i> 11%",
+                        "date": "03-05-2016"
+                    },
+                    {
+                        "accrual": "2204",
+                        "accrual_indicator": "<i class='fa fa-minus'></i>",
+                        "work_in_progress": "960",
+                        "work_in_progress_indicator": "<i class='fa fa-caret-down font-red-thunderbird'></i> 5%",
+                        "project_completed": "1245",
+                        "project_completed_indicator": "<i class='fa fa-minus'></i>",
+                        "pcc_issued": "788",
+                        "pcc_issued_indicator": "<i class='fa fa-caret-up font-green-jungle'></i> 14%",
+                        "pcc_to_be_isssued": "457",
+                        "pcc_to_be_isssued_indicator": "<i class='fa fa-caret-down font-red-thunderbird'></i> 11%",
+                        "date": "03-06-2016"
+                    },
+                    {
+                        "accrual": "2204",
+                        "accrual_indicator": "<i class='fa fa-minus'></i>",
+                        "work_in_progress": "960",
+                        "work_in_progress_indicator": "<i class='fa fa-caret-down font-red-thunderbird'></i> 5%",
+                        "project_completed": "1245",
+                        "project_completed_indicator": "<i class='fa fa-minus'></i>",
+                        "pcc_issued": "788",
+                        "pcc_issued_indicator": "<i class='fa fa-caret-up font-green-jungle'></i> 14%",
+                        "pcc_to_be_isssued": "457",
+                        "pcc_to_be_isssued_indicator": "<i class='fa fa-caret-down font-red-thunderbird'></i> 11%",
+                        "date": "03-07-2016"
+                    },
+                    {
+                        "accrual": "2204",
+                        "accrual_indicator": "<i class='fa fa-minus'></i>",
+                        "work_in_progress": "960",
+                        "work_in_progress_indicator": "<i class='fa fa-caret-down font-red-thunderbird'></i> 5%",
+                        "project_completed": "1245",
+                        "project_completed_indicator": "<i class='fa fa-minus'></i>",
+                        "pcc_issued": "788",
+                        "pcc_issued_indicator": "<i class='fa fa-caret-up font-green-jungle'></i> 14%",
+                        "pcc_to_be_isssued": "457",
+                        "pcc_to_be_isssued_indicator": "<i class='fa fa-caret-down font-red-thunderbird'></i> 11%",
+                        "date": "03-08-2016"
+                    },
+                    {
+                        "accrual": "2204",
+                        "accrual_indicator": "<i class='fa fa-minus'></i>",
+                        "work_in_progress": "960",
+                        "work_in_progress_indicator": "<i class='fa fa-caret-down font-red-thunderbird'></i> 5%",
+                        "project_completed": "1245",
+                        "project_completed_indicator": "<i class='fa fa-minus'></i>",
+                        "pcc_issued": "788",
+                        "pcc_issued_indicator": "<i class='fa fa-caret-up font-green-jungle'></i> 14%",
+                        "pcc_to_be_isssued": "457",
+                        "pcc_to_be_isssued_indicator": "<i class='fa fa-caret-down font-red-thunderbird'></i> 11%",
+                        "date": "03-09-2016"
+                    },
+                    {
+                        "accrual": "2204",
+                        "accrual_indicator": "<i class='fa fa-minus'></i>",
+                        "work_in_progress": "960",
+                        "work_in_progress_indicator": "<i class='fa fa-caret-down font-red-thunderbird'></i> 5%",
+                        "project_completed": "1245",
+                        "project_completed_indicator": "<i class='fa fa-minus'></i>",
+                        "pcc_issued": "788",
+                        "pcc_issued_indicator": "<i class='fa fa-caret-up font-green-jungle'></i> 14%",
+                        "pcc_to_be_isssued": "457",
+                        "pcc_to_be_isssued_indicator": "<i class='fa fa-caret-down font-red-thunderbird'></i> 11%",
+                        "date": "03-10-2016"
+                    },
+                    {
+                        "accrual": "2204",
+                        "accrual_indicator": "<i class='fa fa-minus'></i>",
+                        "work_in_progress": "960",
+                        "work_in_progress_indicator": "<i class='fa fa-caret-down font-red-thunderbird'></i> 5%",
+                        "project_completed": "1245",
+                        "project_completed_indicator": "<i class='fa fa-minus'></i>",
+                        "pcc_issued": "788",
+                        "pcc_issued_indicator": "<i class='fa fa-caret-up font-green-jungle'></i> 14%",
+                        "pcc_to_be_isssued": "457",
+                        "pcc_to_be_isssued_indicator": "<i class='fa fa-caret-down font-red-thunderbird'></i> 11%",
+                        "date": "03-11-2016"
+                    },
+                    {
+                        "accrual": "2204",
+                        "accrual_indicator": "<i class='fa fa-minus'></i>",
+                        "work_in_progress": "960",
+                        "work_in_progress_indicator": "<i class='fa fa-caret-down font-red-thunderbird'></i> 5%",
+                        "project_completed": "1245",
+                        "project_completed_indicator": "<i class='fa fa-minus'></i>",
+                        "pcc_issued": "788",
+                        "pcc_issued_indicator": "<i class='fa fa-caret-up font-green-jungle'></i> 14%",
+                        "pcc_to_be_isssued": "457",
+                        "pcc_to_be_isssued_indicator": "<i class='fa fa-caret-down font-red-thunderbird'></i> 11%",
+                        "date": "03-12-2016"
+                    },
+                    {
+                        "accrual": "2204",
+                        "accrual_indicator": "<i class='fa fa-minus'></i>",
+                        "work_in_progress": "960",
+                        "work_in_progress_indicator": "<i class='fa fa-caret-down font-red-thunderbird'></i> 5%",
+                        "project_completed": "1245",
+                        "project_completed_indicator": "<i class='fa fa-minus'></i>",
+                        "pcc_issued": "788",
+                        "pcc_issued_indicator": "<i class='fa fa-caret-up font-green-jungle'></i> 14%",
+                        "pcc_to_be_isssued": "457",
+                        "pcc_to_be_isssued_indicator": "<i class='fa fa-caret-down font-red-thunderbird'></i> 11%",
+                        "date": "03-01-2017"
+                    },
+                    {
+                        "accrual": "2204",
+                        "accrual_indicator": "<i class='fa fa-minus'></i>",
+                        "work_in_progress": "960",
+                        "work_in_progress_indicator": "<i class='fa fa-caret-down font-red-thunderbird'></i> 5%",
+                        "project_completed": "1245",
+                        "project_completed_indicator": "<i class='fa fa-minus'></i>",
+                        "pcc_issued": "788",
+                        "pcc_issued_indicator": "<i class='fa fa-caret-up font-green-jungle'></i> 14%",
+                        "pcc_to_be_isssued": "457",
+                        "pcc_to_be_isssued_indicator": "<i class='fa fa-caret-down font-red-thunderbird'></i> 11%",
+                        "date": "03-01-2017"
+                    },
+                ]
+        return JsonResponse(val, safe=False)
 
 #MISC
 @login_required

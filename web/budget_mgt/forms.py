@@ -12,7 +12,8 @@ from django import forms
 class InvoiceForm(uforms.EnhancedForm):
     model_choices = {
         'contractor_id': Contractor.objects.values_list('id', 'name'),
-        'task_id': Task.objects.exclude(tags__name='Backlog').values_list('id', 'task_no'),
+#        'task_id': Task.objects.exclude(tags__name='Backlog').values_list('id', 'task_no'),
+        'task_id': Task.objects.values_list('id', 'task_no'),
         'contract_id': Contract.objects.values_list('id', 'contract_no'),
     }
 
@@ -235,7 +236,7 @@ class PccForm(uforms.EnhancedForm):
     pcc_date = uforms.EnhancedDateField(required=True)
     partial = uforms.EnhancedChoiceField(choices=[(x,x) for x in partial_choices])
 
-class AuthorizationForm(uforms.EnhancedForm):
+class AuthorizeForm(uforms.EnhancedForm):
     model_choices = {
         'task_id': Task.objects.values_list('id', 'task_no'),
     }
@@ -244,14 +245,14 @@ class AuthorizationForm(uforms.EnhancedForm):
         True
     ]
     form_order = [
-        ['task_id','authorization_date'],
-        ['authorize_commitment','authorize_expenditure'],
+        ['task_id','date'],
+        ['task_child', 'amount']
     ]
 
     task_id = uforms.EnhancedChoiceField(label='Task No')
-    authorize_commitment = uforms.EnhancedDecimalField(label='Commitment')
-    authorize_expenditure = uforms.EnhancedDecimalField(label='Expenditure')
-    authorization_date = uforms.EnhancedDateField(required=True)
+    amount = uforms.EnhancedDecimalField(label='Amount')
+    date = uforms.EnhancedDateField(required=True)
+    task_child = uforms.EnhancedCharField(label='Task No (Child)')
 
 class GeneratePccRefForm(uforms.EnhancedForm):
     model_choices = {

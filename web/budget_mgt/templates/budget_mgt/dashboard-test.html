@@ -1,0 +1,320 @@
+{% extends '_dashboard.html' %}
+{% load custom_tags %}
+
+{% block dashboard_script %}
+<script>
+var Dashboard = function() {
+
+    return {
+
+        initAmChart1: function() {
+            if (typeof(AmCharts) === 'undefined' || $('#dashboard_amchart_1').size() === 0) {
+                return;
+            }
+
+            var chart = AmCharts.makeChart("dashboard_amchart_1", {
+
+                "type": "serial",
+                "categoryField": "date",
+                "dataDateFormat": "DD-MM-YYYY",
+                "startDuration": 1,
+                "theme": "black",
+                "categoryAxis": {
+                    "parseDates": true,
+                    "dashLength": 1,
+                    "minorGridEnabled": true,
+                    "gridPosition": "start",
+                    "minPeriod" : "MM",
+                },
+                "chartCursor": {
+                    "categoryBalloonDateFormat": "MMM-YYYY",
+                    "cursorAlpha": 0,
+                    "zoomable": false
+                },
+                "trendLines": [],
+                "graphs": [
+                    {
+                        "balloonText": "[[title]]<br/> [[value]] [[accrual_indicator]]",
+                        "fillAlphas": 1,
+                        "id": "AmGraph-1",
+                        "title": "Accrual",
+                        "type": "column",
+                        "valueField": "accrual"
+                    },
+                    {
+                        "balloonText": "[[title]]<br/> [[value]] [[work_in_progress_indicator]]",
+                        "fillAlphas": 1,
+                        "id": "AmGraph-2",
+                        "title": "Work in Progress",
+                        "type": "column",
+                        "valueField": "work_in_progress"
+                    },
+                    {
+                        "balloonText": "[[title]]<br/> [[value]] [[project_completed_indicator]]",
+                        "fillAlphas": 1,
+                        "id": "AmGraph-4",
+                        "title": "Project Completed",
+                        "type": "column",
+                        "valueField": "project_completed"
+                    },
+                    {
+                        "balloonText": "[[title]]<br/> [[value]] [[pcc_issued_indicator]]",
+                        "fillAlphas": 1,
+                        "id": "AmGraph-5",
+                        "title": "PCC Issued",
+                        "type": "column",
+                        "valueField": "pcc_issued"
+                    },
+                    {
+                        "balloonText": "[[title]]<br/> [[value]] [[pcc_to_be_isssued_indicator]]",
+                        "fillAlphas": 1,
+                        "id": "AmGraph-6",
+                        "title": "PCC to be Issued",
+                        "type": "column",
+                        "valueField": "pcc_to_be_isssued"
+                    },
+                ],
+                "guides": [],
+                "chartScrollbar": {
+                    "autoGridCount": true,
+                    "scrollbarHeight": 40,
+{#                    "graph": ["AmGraph-1", "AmGraph-2"],#}
+                },
+                "valueAxes": [
+                    {
+                        "id": "ValueAxis-1",
+{#                        "title": "Axis title"#}
+                    }
+                ],
+                "allLabels": [],
+                "balloon": {},
+                "legend": {
+                    "enabled": true,
+                    "useGraphSettings": true
+                },
+                "titles": [
+                    {
+                        "id": "Title-1",
+                        "size": 15,
+                        "text": "2015 Project Status"
+                    }
+                ],
+
+                "dataLoader": {
+                "url": "{% url 'budget_mgt:data_provider' %}",
+                "format": "json"
+                },
+
+            });
+
+        },
+
+        initAmChart2: function() {
+            if (typeof(AmCharts) === 'undefined' || $('#dashboard_amchart_2').size() === 0) {
+                return;
+            }
+
+            var chart = AmCharts.makeChart("dashboard_amchart_2", {
+
+                "type": "serial",
+                "categoryField": "date",
+                "dataDateFormat": "DD-MM-YYYY",
+                "startDuration": 1,
+                "theme": "black",
+                "categoryAxis": {
+                    "parseDates": true,
+                    "dashLength": 1,
+                    "minorGridEnabled": true,
+                    "gridPosition": "start",
+                    "minPeriod" : "MM",
+                },
+                "chartCursor": {
+                    "categoryBalloonDateFormat": "MMM-YYYY",
+                    "cursorAlpha": 0,
+                    "zoomable": false
+                },
+                "trendLines": [],
+                "graphs": [
+                    {
+                        "balloonText": "[[title]]<br/> [[value]] [[accrual_indicator]]",
+                        "fillAlphas": 1,
+                        "id": "AmGraph-1",
+                        "title": "Accrual",
+                        "type": "column",
+                        "valueField": "accrual"
+                    },
+                    {
+                        "balloonText": "[[title]]<br/> [[value]] [[work_in_progress_indicator]]",
+                        "fillAlphas": 1,
+                        "id": "AmGraph-2",
+                        "title": "Work in Progress",
+                        "type": "column",
+                        "valueField": "work_in_progress"
+                    },
+                    {
+                        "balloonText": "[[title]]<br/> [[value]] [[project_completed_indicator]]",
+                        "fillAlphas": 1,
+                        "id": "AmGraph-4",
+                        "title": "Project Completed",
+                        "type": "column",
+                        "valueField": "project_completed"
+                    },
+                    {
+                        "balloonText": "[[title]]<br/> [[value]] [[pcc_issued_indicator]]",
+                        "fillAlphas": 1,
+                        "id": "AmGraph-5",
+                        "title": "PCC Issued",
+                        "type": "column",
+                        "valueField": "pcc_issued"
+                    },
+                    {
+                        "balloonText": "[[title]]<br/> [[value]] [[pcc_to_be_isssued_indicator]]",
+                        "fillAlphas": 1,
+                        "id": "AmGraph-6",
+                        "title": "PCC to be Issued",
+                        "type": "column",
+                        "valueField": "pcc_to_be_isssued"
+                    },
+                ],
+                "guides": [],
+                "chartScrollbar": {
+                    "autoGridCount": true,
+                    "scrollbarHeight": 40,
+{#                    "graph": ["AmGraph-1", "AmGraph-2"],#}
+                },
+                "valueAxes": [
+                    {
+                        "id": "ValueAxis-1",
+{#                        "title": "Axis title"#}
+                    }
+                ],
+                "allLabels": [],
+                "balloon": {},
+                "legend": {
+                    "enabled": true,
+                    "useGraphSettings": true
+                },
+                "titles": [
+                    {
+                        "id": "Title-1",
+                        "size": 15,
+                        "text": "2016 Project Status"
+                    }
+                ],
+
+                "dataLoader": {
+                "url": "{% url 'budget_mgt:data_provider' %}",
+                "format": "json"
+                },
+
+            });
+
+        },
+
+        init: function() {
+
+            this.initAmChart1();
+            this.initAmChart2();
+
+        }
+    };
+
+}();
+
+if (App.isAngularJsApp() === false) {
+    jQuery(document).ready(function() {
+        Dashboard.init(); // init metronic core componets
+    });
+}
+</script>
+{% endblock dashboard_script %}
+
+{% block dashboard %}
+<div class="row widget-row">
+    <!-- BEGIN WIDGET AUTHORIZE EXPENDITURE -->
+    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="dashboard-stat blue">
+            <div class="visual">
+                <i class="fa fa-comments"></i>
+            </div>
+            <div class="details">
+                <div class="number">
+                    <span data-counter="counterup" data-value="1,349,000,000">0</span>
+                </div>
+                <div class="desc"> Total Authorized Expenditure </div>
+            </div>
+        </div>
+    </div>
+    <!-- END WIDGET AUTHORIZE EXPENDITURE -->
+</div>
+
+<div class="row widget-row">
+
+    <!-- BEGIN WIDGET AUTHORIZE EXPENDITURE -->
+    <div class="col-md-4">
+        <!-- BEGIN WIDGET THUMB -->
+        {% with var=widgets_data|return_item:'Work in Progress' %}
+        <div class="widget-thumb widget-bg-color-white text-uppercase margin-bottom-20 bordered">
+            <h4 class="widget-thumb-heading">{{ var|return_item:'title' }}</h4>
+            <div class="widget-thumb-wrap">
+                <i class="widget-thumb-icon bg-yellow icon-bulb"></i>
+                <div class="widget-thumb-body">
+                    <span class="widget-thumb-subtitle">Count</span>
+                    <span class="widget-thumb-body-stat" data-counter="counterup" data-value="{{ var|return_item:'value' }}">0</span>
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+        <!-- END WIDGET THUMB -->
+    </div>
+    <div class="col-md-4">
+        <!-- BEGIN WIDGET THUMB -->
+        {% with var=widgets_data|return_item:'PCC to be Issued' %}
+        <div class="widget-thumb widget-bg-color-white text-uppercase margin-bottom-20 bordered">
+            <h4 class="widget-thumb-heading">{{ var|return_item:'title' }}</h4>
+            <div class="widget-thumb-wrap">
+                <i class="widget-thumb-icon bg-red icon-bulb"></i>
+                <div class="widget-thumb-body">
+                    <span class="widget-thumb-subtitle">COUNT</span>
+                    <span class="widget-thumb-body-stat" data-counter="counterup" data-value="{{ var|return_item:'value' }}">0</span>
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+        <!-- END WIDGET THUMB -->
+    </div>
+    <div class="col-md-4">
+        <!-- BEGIN WIDGET THUMB -->
+        {% with var=widgets_data|return_item:'PCC Issued' %}
+        <div class="widget-thumb widget-bg-color-white text-uppercase margin-bottom-20 bordered">
+            <h4 class="widget-thumb-heading">{{ var|return_item:'title' }}</h4>
+            <div class="widget-thumb-wrap">
+                <i class="widget-thumb-icon bg-green-jungle icon-bulb"></i>
+                <div class="widget-thumb-body">
+                    <span class="widget-thumb-subtitle">COUNT</span>
+                    <span class="widget-thumb-body-stat" data-counter="counterup" data-value="{{ var|return_item:'value' }}">0</span>
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+        <!-- END WIDGET THUMB -->
+    </div>
+    <!-- END WIDGET AUTHORIZE EXPENDITURE -->
+
+</div>
+<div class="row">
+    <div class="col-md-12 col-sm-12">
+        <div class="portlet light bordered" style="background-color: #222222;" >
+            <div id="dashboard_amchart_1" class="CSSAnimationChart"></div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12 col-sm-12">
+        <div class="portlet light bordered" style="background-color: #222222;" >
+            <div id="dashboard_amchart_2" class="CSSAnimationChart"></div>
+        </div>
+    </div>
+</div>
+
+{% endblock dashboard %}
