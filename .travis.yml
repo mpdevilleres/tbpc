@@ -31,7 +31,7 @@ python:
   - 3.5
 
 services:
-  - postgresql
+  - docker
 
 env:
   - DJANGO=1.9.2
