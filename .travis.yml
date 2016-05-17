@@ -33,9 +33,6 @@ python:
 services:
   - docker
 
-#addons:
-#  postgresql: "9.4"
-
 env:
   - DJANGO=1.9.2
 
