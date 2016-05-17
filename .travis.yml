@@ -1,24 +1,55 @@
+#language: python
+#python:
+#  - "2.6"
+#  - "2.7"
+#  - "3.2"
+#  - "3.3"
+#  - "3.4"
+#  - "3.5"
+## command to install dependencies
+#install:
+#  - pip install .
+#  - pip install -r requirements.txt
+## command to run tests
+#script: py.test
+#
+#
+#   A basic travis.yml boilerplate for Django projects
+#
+#   The set-up assumes a postgreSQL database.
+#
+#   Replace the following variables in the code:
+# * your_project_settings
+# * your_github_username
+# * your_repo
+
 language: python
 
 python:
+#  - 3.3
+#  - 3.4
   - 3.5
 
 services:
-  - docker
+  - postgresql
 
 env:
-  - DEBUG=True
-  - TEMPLATE_DEBUG=True
-  - SECRET_KEY=secret
-  - DB_NAME=postgres
-  - DB_USER=postgres
-  - DB_PASS=postgres
-  - DB_SERVICE=postgres
-  - DB_PORT=5432
+  - DJANGO=1.9.2
 
 before_install:
-  - docker-compose build
+  - touch .env
+  - echo DEBUG=True >> .env
+  - echo TEMPLATE_DEBUG=True >> .env
+  - echo SECRET_KEY=secret >> .env
+  - echo DB_NAME=postgres >> .env
+  - echo DB_USER=postgres >> .env
+  - echo DB_PASS=postgres >> .env
+  - echo DB_SERVICE=postgres >> .env
+  - echo DB_PORT=5432 >> .env
 
+  - export PIP_USE_MIRRORS=true
+
+  - docker-compose build
 install:
 #  - pip install -q . --use-mirrors
 #  - pip install -r web/requirements.txt
@@ -27,10 +58,12 @@ install:
 
 before_script:
   - docker-compose up -d
-  - cd web
+#  - psql -c "CREATE DATABASE mydb;" -U postgres
+#  - cd web
+#  - python manage.py makemigrations
+#  - python manage.py migrate
 
 script:
   - docker-compose run web py.test -v
-
 after_success:
   coveralls
