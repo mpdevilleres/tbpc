@@ -31,31 +31,28 @@ python:
   - 3.5
 
 services:
-  - postgresql
+  - docker
 
-addons:
-  postgresql: "9.4"
+#addons:
+#  postgresql: "9.4"
 
 env:
   - DJANGO=1.9.2
 
 before_install:
-  - export DJANGO_SETTINGS_MODULE=project.settings
-#  - export PYTHONPATH=$HOME/builds/your_github_username/your_repo
-  - export PIP_USE_MIRRORS=true
+  -  docker-compose --file docker-compose-travis.yml build
 
 install:
 #  - pip install -q . --use-mirrors
-  - pip install -r web/requirements.txt
+#  - pip install -r web/requirements.txt
 #  - pip install django==$DJANGO --quiet
 #  - pip install psycopg2 --quiet
 
 before_script:
-  - psql -c "CREATE DATABASE travisci;" -U postgres
-  - cd web
-  - python manage.py makemigrations
-  - python manage.py migrate
+  -  docker-compose --file docker-compose-travis.yml up -d
 script:
-  - py.test
+
+  -  docker-compose --file docker-compose-travis.yml run web py.test
+
 after_success:
   coveralls

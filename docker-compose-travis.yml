@@ -1,0 +1,54 @@
+web:
+  restart: always
+  build: ./web
+  dockerfile: Dockerfile-alternate
+
+  expose:
+    - "8000"
+  links:
+    - postgres:postgres
+  volumes:
+    - ./web:/web
+  environment:
+    - DEBUG=True
+    - TEMPLATE_DEBUG=True
+    - SECRET_KEY=secret
+    - DB_NAME=postgres
+    - DB_USER=postgres
+    - DB_PASS=postgres
+    - DB_SERVICE=postgres
+    - DB_PORT=5432
+    - THEME_VERSION=1.3.5
+
+  command: /usr/local/bin/gunicorn project.wsgi:application  --reload -w 2 -b :8000
+
+nginx:
+  restart: always
+  build: ./nginx/
+  ports:
+    - "80:80"
+    - "443:443"
+  volumes:
+    - ./web/static:/static
+    - ./nginx/ssl:/etc/nginx/ssl
+    - ./nginx/logs:/etc/nginx/logs
+  volumes_from:
+    - web
+  links:
+    - web:web
+
+data:
+  image: postgres:latest
+  volumes:
+    - /var/lib/postgresql
+  command: "true"
+
+postgres:
+  restart: always
+  image: postgres:latest
+  volumes:
+    - ./db_backup:/db_backup
+  volumes_from:
+    - data
+  ports:
+    - "5432:5432"
