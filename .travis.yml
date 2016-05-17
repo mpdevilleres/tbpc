@@ -47,8 +47,8 @@ install:
 
 before_script:
   -  docker-compose --file docker-compose-travis.yml up -d
-script:
 
+script:
   -  docker-compose --file docker-compose-travis.yml run web py.test
 
 after_success:
