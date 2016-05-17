@@ -37,7 +37,9 @@ env:
   - DJANGO=1.9.2
 
 before_install:
-  -  docker-compose --file docker-compose-travis.yml build
+  - docker kill $(docker ps -a -q)
+  - docker rm $(docker ps -a -q)
+  - docker-compose --file docker-compose-travis.yml build
 
 install:
 #  - pip install -q . --use-mirrors
