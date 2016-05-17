@@ -33,25 +33,36 @@ python:
 services:
   - docker
 
+addons:
+  postgresql: "9.4"
+
 env:
   - DJANGO=1.9.2
 
 before_install:
-  - docker kill $(docker ps -a -q)
-  - docker rm $(docker ps -a -q)
-  - docker-compose --file docker-compose-travis.yml build
+  - export DEBUG=True
+  - export TEMPLATE_DEBUG=True
+  - export SECRET_KEY=secret
+  - export DB_NAME=postgres
+  - export DB_USER=postgres
+  - export DB_PASS=postgres
+  - export DB_SERVICE=postgres
+  - export DB_PORT=5432
+  - export THEME_VERSION=1.3.5
 
 install:
 #  - pip install -q . --use-mirrors
-#  - pip install -r web/requirements.txt
+  - pip install -r web/requirements.txt
 #  - pip install django==$DJANGO --quiet
 #  - pip install psycopg2 --quiet
 
 before_script:
-  -  docker-compose --file docker-compose-travis.yml up -d
+  - cd web
+  - ./manage.py makemigrations
+  - ./manage.py migrate
 
 script:
-  -  docker-compose --file docker-compose-travis.yml run web py.test
+  -py.test -v
 
 after_success:
   coveralls
