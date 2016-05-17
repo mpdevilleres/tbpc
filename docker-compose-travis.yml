@@ -1,7 +1,7 @@
 web:
   restart: always
   build: ./web
-  dockerfile: Dockerfile-alternate
+  dockerfile: Dockerfile-travis
 
   expose:
     - "8000"
