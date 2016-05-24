@@ -214,13 +214,13 @@ class PccForm(uforms.EnhancedForm):
     model_choices = {
         'task_id': Task.objects.values_list('id', 'task_no'),
     }
-    partial_choices = [
+    complete_choices = [
         False,
         True
     ]
     form_order = [
         ['task_id','rfs_ref'],
-        ['amount','partial'],
+        ['amount','is_complete'],
         ['pcc_date', 'rfs_date'],
         ['file'],
 
@@ -234,7 +234,7 @@ class PccForm(uforms.EnhancedForm):
 
     rfs_date = uforms.EnhancedDateField(required=True)
     pcc_date = uforms.EnhancedDateField(required=True)
-    partial = uforms.EnhancedChoiceField(choices=[(x,x) for x in partial_choices])
+    is_complete = uforms.EnhancedChoiceField(label="PCC Complete?", choices=[(x,x) for x in complete_choices])
 
 class AuthorizeForm(uforms.EnhancedForm):
     model_choices = {

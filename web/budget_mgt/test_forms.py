@@ -33,7 +33,9 @@ class TestInvoiceForm:
         ('Cable','Cable'),
         ('Development','Development'),
         ('Service Provisioning','Service Provisioning'),
-        ('Supply of Material','Supply of Material')
+        ('Supply of Material','Supply of Material'),
+        ('FTTM', 'FTTM'),
+        ('Mega Projects', 'Mega Projects')
     ]
 
     def test_invoice_form_instance(self):

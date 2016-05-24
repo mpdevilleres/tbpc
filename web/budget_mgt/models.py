@@ -38,10 +38,14 @@ class Task(ConcurrentTransitionMixin, FsmLogMixin, ManytoManyMixin, TimeStampedB
 
     sicet_type = models.CharField(max_length=100, blank=True)
     section = models.CharField(max_length=100, blank=True)
+    sub_section = models.CharField(max_length=100, blank=True)
     cear_title = models.TextField(blank=True)
     remarks = models.TextField(blank=True)
 
+    modernization = models.BooleanField(default=False)
+
     finance_actual_expenditure = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
+    transferable = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0.00'))
     finance_remarks = models.TextField(blank=True)
 
     proj_no = models.CharField(max_length=100)
@@ -84,6 +88,10 @@ class Task(ConcurrentTransitionMixin, FsmLogMixin, ManytoManyMixin, TimeStampedB
     @property
     def is_pcc_amount_ok(self):
         return self.total_pcc_amount <= self.total_authorize_expenditure
+
+    @property
+    def is_pcc_complete(self):
+            return self.pcc_set.order_by('-pk').first().is_complete
 
     @property
     def is_within_work_criteria(self):
@@ -237,7 +245,7 @@ class Pcc(TimeStampedBaseModel):
     rfs_ref = models.CharField(max_length=100)
     rfs_date = models.DateTimeField(blank=True, null=True, default=dt.datetime.now())
     pcc_date = models.DateTimeField(blank=True, null=True, default=dt.datetime.now())
-    partial = models.BooleanField(default=False)
+    is_complete = models.BooleanField(default=False)
 
     ref_no = models.CharField(max_length=100)
     counter = models.PositiveIntegerField()

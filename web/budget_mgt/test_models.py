@@ -113,36 +113,36 @@ class TestInvoiceModel(TestCase):
         self.assertRaises(TransitionNotAllowed, invoice.set_completed)
 
         # Case 1 is overrun and is overbook must not pass
-        # overbook = total_accrual > authorize_expenditure
+        # overbook = total_accrual > total_authorize_expenditure
         # overrun = actual_expenditure > total_accrual
-        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        task = TaskFactory.create(total_authorize_expenditure=Decimal('500'))
         invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('1000'))
         acrrual = AccrualFactory.create(task=task, amount=Decimal('2000'))
         invoice.state_id='Overrun Check'
         self.assertRaises(TransitionNotAllowed, invoice.set_print_summary)
 
         # Case 2 is not overrun and is not overbook must pass
-        # not overbook = total_accrual =< authorize_expenditure
+        # not overbook = total_accrual =< total_authorize_expenditure
         # not overrun = actual_expenditure =< total_accrual
-        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        task = TaskFactory.create(total_authorize_expenditure=Decimal('500'))
         invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('300'))
         acrrual = AccrualFactory.create(task=task, amount=Decimal('400'))
         invoice.state_id='Overrun Check'
         self.assertEqual(None, invoice.set_print_summary())
 
         # Case 3 is not overrun and is overbook must not pass
-        # overbook = total_accrual > authorize_expenditure
+        # overbook = total_accrual > total_authorize_expenditure
         # not overrun = actual_expenditure =< total_accrual
-        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        task = TaskFactory.create(total_authorize_expenditure=Decimal('500'))
         invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('300'))
         acrrual = AccrualFactory.create(task=task, amount=Decimal('600'))
         invoice.state_id='Overrun Check'
         self.assertRaises(TransitionNotAllowed, invoice.set_print_summary)
 
         # Case 4 is overrun and is not overbook must not pass
-        # not overbook = total_accrual =< authorize_expenditure
+        # not overbook = total_accrual =< total_authorize_expenditure
         # overrun = actual_expenditure > total_accrual
-        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        task = TaskFactory.create(total_authorize_expenditure=Decimal('500'))
         invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('600'))
         acrrual = AccrualFactory.create(task=task, amount=Decimal('400'))
         invoice.state_id='Overrun Check'
@@ -197,7 +197,7 @@ class TestTaskModel(TestCase):
 
     def test_is_overbook(self):
         task = Task.objects.first()
-        self.assertEqual(task.is_overbook, task.total_accrual > task.authorize_expenditure)
+        self.assertEqual(task.is_overbook, task.total_accrual > task.total_authorize_expenditure)
 
     def test_is_pcc_issued(self):
         task = TaskFactory.create()
@@ -208,7 +208,7 @@ class TestTaskModel(TestCase):
 
     def test_wip_amount(self):
         task = Task.objects.first()
-        self.assertEqual(task.wip_amount, task.authorize_expenditure - task.total_pcc_amount)
+        self.assertEqual(task.wip_amount, task.total_authorize_expenditure - task.total_pcc_amount)
 
     def test_year(self):
         task = Task.objects.first()
@@ -261,7 +261,7 @@ class TestTaskModel(TestCase):
         # Case 1 can pass
         # overbook, overrun, pcc_issued
         # 0,        0,       1
-        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        task = TaskFactory.create(total_authorize_expenditure=Decimal('500'))
         invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('300'))
         acrrual = AccrualFactory.create(task=task, amount=Decimal('400'))
         pcc = PccFactory.create(task=task)
@@ -271,7 +271,7 @@ class TestTaskModel(TestCase):
         # Case 2 can pass
         # overbook, overrun, pcc_issued
         # 0,        0,       0
-        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        task = TaskFactory.create(total_authorize_expenditure=Decimal('500'))
         invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('300'))
         acrrual = AccrualFactory.create(task=task, amount=Decimal('400'))
         task.state = 'Work in Progress'
@@ -280,7 +280,7 @@ class TestTaskModel(TestCase):
         # Case 3 must not pass
         # overbook, overrun, pcc_issued
         # 0,        1,       0
-        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        task = TaskFactory.create(total_authorize_expenditure=Decimal('500'))
         invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('600'))
         acrrual = AccrualFactory.create(task=task, amount=Decimal('400'))
         task.state = 'Work in Progress'
@@ -289,7 +289,7 @@ class TestTaskModel(TestCase):
         # Case 4 must not pass
         # overbook, overrun, pcc_issued
         # 0,        1,       1
-        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        task = TaskFactory.create(total_authorize_expenditure=Decimal('500'))
         invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('600'))
         acrrual = AccrualFactory.create(task=task, amount=Decimal('400'))
         pcc = PccFactory.create(task=task)
@@ -299,7 +299,7 @@ class TestTaskModel(TestCase):
         # Case 5 must not pass
         # overbook, overrun, pcc_issued
         # 1,        0,       0
-        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        task = TaskFactory.create(total_authorize_expenditure=Decimal('500'))
         invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('300'))
         acrrual = AccrualFactory.create(task=task, amount=Decimal('600'))
         task.state = 'Work in Progress'
@@ -308,7 +308,7 @@ class TestTaskModel(TestCase):
         # Case 6 must not pass
         # overbook, overrun, pcc_issued
         # 1,        0,       1
-        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        task = TaskFactory.create(total_authorize_expenditure=Decimal('500'))
         invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('300'))
         acrrual = AccrualFactory.create(task=task, amount=Decimal('600'))
         pcc = PccFactory.create(task=task)
@@ -318,7 +318,7 @@ class TestTaskModel(TestCase):
         # Case 7 must not pass
         # overbook, overrun, pcc_issued
         # 1,        1,       0
-        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        task = TaskFactory.create(total_authorize_expenditure=Decimal('500'))
         invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('1000'))
         acrrual = AccrualFactory.create(task=task, amount=Decimal('2000'))
         task.state = 'Work in Progress'
@@ -327,7 +327,7 @@ class TestTaskModel(TestCase):
         # Case 8 must not pass
         # overbook, overrun, pcc_issued
         # 1,        1,       1
-        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        task = TaskFactory.create(total_authorize_expenditure=Decimal('500'))
         invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('1000'))
         acrrual = AccrualFactory.create(task=task, amount=Decimal('2000'))
         pcc = PccFactory.create(task=task)
@@ -338,7 +338,7 @@ class TestTaskModel(TestCase):
         # Case 1 can pass
         # overbook, overrun, pcc_issued
         # 0,        0,       1
-        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        task = TaskFactory.create(total_authorize_expenditure=Decimal('500'))
         invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('300'))
         acrrual = AccrualFactory.create(task=task, amount=Decimal('400'))
         pcc = PccFactory.create(task=task)
@@ -348,7 +348,7 @@ class TestTaskModel(TestCase):
         # Case 2 must not pass
         # overbook, overrun, pcc_issued
         # 0,        0,       0
-        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        task = TaskFactory.create(total_authorize_expenditure=Decimal('500'))
         invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('300'))
         acrrual = AccrualFactory.create(task=task, amount=Decimal('400'))
         task.state = 'Work in Progress'
@@ -357,7 +357,7 @@ class TestTaskModel(TestCase):
         # Case 3 must not pass
         # overbook, overrun, pcc_issued
         # 0,        1,       0
-        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        task = TaskFactory.create(total_authorize_expenditure=Decimal('500'))
         invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('600'))
         acrrual = AccrualFactory.create(task=task, amount=Decimal('400'))
         task.state = 'Work in Progress'
@@ -366,7 +366,7 @@ class TestTaskModel(TestCase):
         # Case 4 must not pass
         # overbook, overrun, pcc_issued
         # 0,        1,       1
-        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        task = TaskFactory.create(total_authorize_expenditure=Decimal('500'))
         invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('600'))
         acrrual = AccrualFactory.create(task=task, amount=Decimal('400'))
         pcc = PccFactory.create(task=task)
@@ -376,7 +376,7 @@ class TestTaskModel(TestCase):
         # Case 5 must not pass
         # overbook, overrun, pcc_issued
         # 1,        0,       0
-        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        task = TaskFactory.create(total_authorize_expenditure=Decimal('500'))
         invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('300'))
         acrrual = AccrualFactory.create(task=task, amount=Decimal('600'))
         task.state = 'Work in Progress'
@@ -385,7 +385,7 @@ class TestTaskModel(TestCase):
         # Case 6 must not pass
         # overbook, overrun, pcc_issued
         # 1,        0,       1
-        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        task = TaskFactory.create(total_authorize_expenditure=Decimal('500'))
         invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('300'))
         acrrual = AccrualFactory.create(task=task, amount=Decimal('600'))
         pcc = PccFactory.create(task=task)
@@ -395,7 +395,7 @@ class TestTaskModel(TestCase):
         # Case 7 must not pass
         # overbook, overrun, pcc_issued
         # 1,        1,       0
-        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        task = TaskFactory.create(total_authorize_expenditure=Decimal('500'))
         invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('1000'))
         acrrual = AccrualFactory.create(task=task, amount=Decimal('2000'))
         task.state = 'Work in Progress'
@@ -404,7 +404,7 @@ class TestTaskModel(TestCase):
         # Case 8 must not pass
         # overbook, overrun, pcc_issued
         # 1,        1,       1
-        task = TaskFactory.create(authorize_expenditure=Decimal('500'))
+        task = TaskFactory.create(total_authorize_expenditure=Decimal('500'))
         invoice = InvoiceFactory.create(task=task, capex_amount=Decimal('1000'))
         acrrual = AccrualFactory.create(task=task, amount=Decimal('2000'))
         pcc = PccFactory.create(task=task)

@@ -58,8 +58,8 @@ install:
 
 before_script:
   - cd web
-  - ./manage.py makemigrations
-  - ./manage.py migrate
+  - python manage.py makemigrations
+  - python manage.py migrate
 
 script:
   -py.test -v

@@ -37,7 +37,7 @@ class TaskJson(BaseDatatableView):
     # define the columns that will be returned
     columns = ['task_no', 'total_authorize_commitment', 'total_authorize_expenditure', 'finance_actual_expenditure',
                'total_accrual', 'total_pcc_amount', 'actual_expenditure', 'remaining_accrual', 'task_progress',
-               'state__name']
+               'state__name', 'tags.name']
 
     # Hide Columns
     hidden_columns = []
@@ -47,10 +47,11 @@ class TaskJson(BaseDatatableView):
     column_names[2] = 'A. Expenditure'
     column_names[3] = 'F. Expenditure'
     column_names[5] = 'Total PCC'
-    column_names[-4] = 'Invoice Paid'
-    column_names[-3] = 'Remaining Accrual'
-    column_names[-2] = 'Payment Type'
-    column_names[-1] = 'Current Process'
+    column_names[-5] = 'Invoice Paid'
+    column_names[-4] = 'Remaining Accrual'
+    column_names[-3] = 'Payment Type'
+    column_names[-2] = 'Current Process'
+    column_names[-1] = 'Tags'
     # define column names that will be used in sorting
     # order is important and should be same as order of columns
     # displayed by datatables. For non sortable columns use empty
@@ -84,7 +85,18 @@ class TaskJson(BaseDatatableView):
         elif column == 'remaining_accrual':
             val = getattr(row, column)
             return '<span>{:,.2f}</span>'.format(val)
-        
+
+        elif column == 'total_pcc_amount':
+            val = getattr(row, column)
+
+            status = 'danger' if not row.is_pcc_complete else 'info'
+            icon = 'close' if not row.is_pcc_complete else 'check'
+            html_indicator = '<span class="label label-{0}"> <i class="icon-{1}"></i></span>'.format(status, icon)
+            html_val = '<a class="sum" target="_blank" href="{1}?pk={2}">{0:,.2f}</a>'.format(val,
+                                                             reverse('budget_mgt:table_pcc'),
+                                                             row.id)
+            html = html_indicator + ' ' + html_val
+            return html
         elif column == 'total_authorize_expenditure':
             val = getattr(row, column)
 
@@ -92,7 +104,7 @@ class TaskJson(BaseDatatableView):
             icon = 'close' if not row.is_expenditure_within_commitment else 'check'
             html_indicator = '<span class="label label-{0}"> <i class="icon-{1}"></i></span>'.format(status, icon)
             html_val = '<a class="sum" target="_blank" href="{1}?pk={2}">{0:,.2f}</a>'.format(val,
-                                                             reverse('budget_mgt:table_accrual'),
+                                                             reverse('budget_mgt:table_authorize_expenditure'),
                                                              row.id)
             html = html_indicator + ' ' + html_val
             return html
@@ -123,14 +135,14 @@ class TaskJson(BaseDatatableView):
             html = html_indicator + ' ' + html_val
             return html
 
-        elif column == 'total_pcc_amount':
-            val = getattr(row, column)
-            html_val = '<a target="_blank" href="{1}?pk={2}">{0:,.2f}</a>'.format(val,
-                                                                                  reverse('budget_mgt:table_pcc'),
-                                                                                  row.id,
-                                                                                  )
-            html = html_val
-            return html
+        # elif column == 'total_pcc_amount':
+        #     val = getattr(row, column)
+        #     html_val = '<a target="_blank" href="{1}?pk={2}">{0:,.2f}</a>'.format(val,
+        #                                                                           reverse('budget_mgt:table_pcc'),
+        #                                                                           row.id,
+        #                                                                           )
+        #     html = html_val
+        #     return html
 
         elif column == 'actual_expenditure':
             val = getattr(row, column)
@@ -147,13 +159,6 @@ class TaskJson(BaseDatatableView):
             val = getattr(row, column)
             html = '<a target="_blank" href="{1}?pk={2}">{0:,.2f}</a>'.format(val,
                                                              reverse('budget_mgt:table_authorize_commitment'),
-                                                             row.id)
-            return html
-
-        elif column == 'total_authorize_expenditure':
-            val = getattr(row, column)
-            html = '<a target="_blank" href="{1}?pk={2}">{0:,.2f}</a>'.format(val,
-                                                             reverse('budget_mgt:table_authorize_expenditure'),
                                                              row.id)
             return html
 
@@ -577,7 +582,7 @@ class PccJson(BaseDatatableView):
 
 
     # define the columns that will be returned
-    columns = ['task.task_no', 'pcc_date', 'ref_no', 'amount', 'file', 'id']
+    columns = ['task.task_no', 'is_complete', 'pcc_date', 'ref_no', 'amount', 'file', 'id']
 
     # Hide Columns
     hidden_columns = [ i for i, x in enumerate(columns) if x in
