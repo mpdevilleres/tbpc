@@ -91,7 +91,8 @@ class Task(ConcurrentTransitionMixin, FsmLogMixin, ManytoManyMixin, TimeStampedB
 
     @property
     def is_pcc_complete(self):
-            return self.pcc_set.order_by('-pk').first().is_complete
+            pcc = self.pcc_set.order_by('-pk').first()
+            return pcc.is_complete if pcc else False
 
     @property
     def is_within_work_criteria(self):
